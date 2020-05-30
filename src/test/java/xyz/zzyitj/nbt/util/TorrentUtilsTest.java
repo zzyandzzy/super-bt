@@ -16,6 +16,11 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 class TorrentUtilsTest {
 
+    /**
+     * 测试根据种子得到torrent信息
+     * {@link TorrentUtils#getTorrent(File)}
+     * @throws IOException 文件打开错误
+     */
     @Test
     void getTorrent() throws IOException {
         File file = new File("/Users/intent/Desktop/sbt/1.torrent");
