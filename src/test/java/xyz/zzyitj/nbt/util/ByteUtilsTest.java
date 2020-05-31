@@ -21,11 +21,12 @@ class ByteUtilsTest {
     @Test
     void bytes2int() {
         byte[] data = {
-                0x7F, 0x1C, 0x7F, 0x1C, 0x05
+                0x7F, 0x1C, 0x7F, 0x1C
         };
         Assertions.assertEquals(ByteUtils.bytesToInt(data, 0, 3), 2132573980);
         Assertions.assertEquals(ByteUtils.bytesToInt(data, 1, 3), 1867548);
         Assertions.assertEquals(ByteUtils.bytesToInt(data, 2, 3), 32540);
         Assertions.assertEquals(ByteUtils.bytesToInt(data, 3, 3), 28);
+        Assertions.assertEquals(ByteUtils.bytesToInt(data, 0, 4), 0);
     }
 }

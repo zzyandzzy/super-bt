@@ -16,7 +16,6 @@ import java.util.Map;
 /**
  * @author intent
  * @date 2019/7/24 12:50
- * @about <link href='http://zzyitj.xyz/'/>
  */
 public class TorrentUtils {
     /**
@@ -30,7 +29,9 @@ public class TorrentUtils {
         Bencode bencode = new Bencode(true);
         Map<String, Object> torrentMap = bencode.decode(data, Type.DICTIONARY);
         ByteBuffer announceByteBuffer = (ByteBuffer) torrentMap.get("announce");
-        torrent.setAnnounce(new String(announceByteBuffer.array()));
+        if (announceByteBuffer != null) {
+            torrent.setAnnounce(new String(announceByteBuffer.array()));
+        }
         Map<String, Object> infoMap = (Map<String, Object>) torrentMap.get("info");
         // info
         List<Object> files = (List<Object>) infoMap.get("files");

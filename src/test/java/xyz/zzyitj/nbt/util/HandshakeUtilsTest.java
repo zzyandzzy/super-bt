@@ -61,7 +61,7 @@ class HandshakeUtilsTest {
 
     /**
      * 测试data字节数组转换为PeerWire
-     * {@link HandshakeUtils#parsePeerWire(byte[])}
+     * {@link HandshakeUtils#parsePeerWire(byte[], int, int)}
      */
     @Test
     void parsePeerWire() {
@@ -73,8 +73,14 @@ class HandshakeUtilsTest {
                 -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
                 -1, -1, -1, -1, -1, -1, -1, -1, -1, -2
         };
-        PeerWire<?> peerWire = HandshakeUtils.parsePeerWire(data);
+        PeerWire<byte[]> peerWire = HandshakeUtils.parsePeerWire(data);
         System.out.println(peerWire);
-        System.out.println(peerWire.getPayloadAsBytes().length);
+        byte[] data1 = {
+                0x0, 0x0, 0x0, 0x2, 0x5, -128, 0x0, 0x0, 0x0, 0x1, 0x2,
+        };
+        peerWire = HandshakeUtils.parsePeerWire(data1, 0, 2);
+        System.out.println(peerWire);
+        peerWire = HandshakeUtils.parsePeerWire(data1, 6, 1);
+        System.out.println(peerWire);
     }
 }

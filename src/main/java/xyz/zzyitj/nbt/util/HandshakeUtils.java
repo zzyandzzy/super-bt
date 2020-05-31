@@ -106,6 +106,19 @@ public class HandshakeUtils {
     public static final int PEER_WIRE_ID_INDEX = 4;
 
     /**
+     * BT协议1.0
+     */
+    public static final byte BIT_TORRENT_PROTOCOL_VERSION_1_0 = 0x13;
+
+    /**
+     * peer第一次回复的Handshake长度，为68，即
+     * {@link #BIT_TORRENT_PROTOCOL_VERSION_1_0} 1 byte
+     * {@link #BIT_TORRENT_PROTOCOL} 20 byte
+     * info_hash 20 byte
+     * peer_id 20 byte
+     */
+    public static final int HANDSHAKE_LENGTH = 68;
+    /**
      * Peer Wire协议
      * 握手消息的格式是这样的：
      * <pstrlen><pstr><reserved><info_hash><peer_id>
@@ -119,7 +132,7 @@ public class HandshakeUtils {
      * 0-67总共68个字节
      */
     private static final byte[] HANDSHAKE_PACKAGE = {
-            0x13,
+            BIT_TORRENT_PROTOCOL_VERSION_1_0,
             0x42, 0x69, 0x74, 0x54, 0x6f, 0x72, 0x72, 0x65, 0x6e, 0x74, 0x20, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x63, 0x6f, 0x6c,
             0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -141,15 +154,12 @@ public class HandshakeUtils {
      * @return true 是bt协议 false 不是bt协议
      */
     public static boolean isHandshake(byte[] data) {
-        if (data.length >= HANDSHAKE_PACKAGE.length) {
-            for (int i = 0; i < BIT_TORRENT_PROTOCOL.length; i++) {
-                if (BIT_TORRENT_PROTOCOL[i] != data[i + 1]) {
-                    return false;
-                }
+        for (int i = 0; i < BIT_TORRENT_PROTOCOL.length; i++) {
+            if (BIT_TORRENT_PROTOCOL[i] != data[i]) {
+                return false;
             }
-            return true;
         }
-        return false;
+        return true;
     }
 
     /**
@@ -217,7 +227,7 @@ public class HandshakeUtils {
         //<Buffer 00 00 00 0d 06 00 00 00 07 00 00 c0 00 00 00 40 00>
         // { index: 7, begin: 0, length: 16384 }
         return new byte[]{
-                0x0, 0x0, 0x0, 0xd, 0x6, 0x0, 0x0, 0x0, 0x7, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x40, 0x0,
+                0x0, 0x0, 0x0, 0xd, 0x6, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x1, 0x70,
         };
     }
 
@@ -238,20 +248,34 @@ public class HandshakeUtils {
      * @return PeerWire
      */
     public static <T> PeerWire<T> parsePeerWire(byte[] data) {
-        if (data == null || data.length < PEER_WIRE_ID_INDEX) {
+        // size 为data的0-3位
+        int size = ByteUtils.bytesToInt(data, 0, 3);
+        return parsePeerWire(data, 0, size);
+    }
+
+    /**
+     * 把data转换为PeerWire
+     *
+     * @param data  字节数组
+     * @param start 开始的位置
+     * @param size  payload的大小
+     * @return PeerWire
+     */
+    public static <T> PeerWire<T> parsePeerWire(byte[] data, int start, int size) {
+        if (data == null || data.length < (start + PEER_WIRE_ID_INDEX)) {
             return null;
         }
         // id 为data的第4位
-        byte id = data.length > PEER_WIRE_ID_INDEX ? data[PEER_WIRE_ID_INDEX] : 0;
+        byte id = data.length > (start + PEER_WIRE_ID_INDEX) ? data[start + PEER_WIRE_ID_INDEX] : 0;
         PeerWire<T> peerWire = new PeerWire<>();
-        // size 为data的0-3位
-        int size = ByteUtils.bytesToInt(data, 0, 3);
         peerWire.setId(id);
         peerWire.setSize(size);
-        // 根据id判断payload类型
-        byte[] payload = new byte[data.length - 5];
-        System.arraycopy(data, 5, payload, 0, data.length - 5);
-        peerWire.setPayload(payload);
+        if (size > 1) {
+            // 根据id判断payload类型
+            byte[] payload = new byte[size - 1];
+            System.arraycopy(data, start + 5, payload, 0, size - 1);
+            peerWire.setPayload(payload);
+        }
         return peerWire;
     }
 }

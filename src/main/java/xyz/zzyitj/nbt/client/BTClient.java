@@ -9,6 +9,7 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
+import xyz.zzyitj.nbt.bean.Torrent;
 
 import java.net.InetSocketAddress;
 
@@ -21,12 +22,12 @@ import java.net.InetSocketAddress;
 public class BTClient {
     private final String host;
     private final int port;
-    private final byte[] infoHash;
+    private final Torrent torrent;
 
-    public BTClient(String host, int port, byte[] infoHash) {
+    public BTClient(String host, int port, Torrent torrent) {
         this.host = host;
         this.port = port;
-        this.infoHash = infoHash;
+        this.torrent = torrent;
     }
 
     public void start() throws InterruptedException {
@@ -39,7 +40,7 @@ public class BTClient {
                         @Override
                         public void initChannel(SocketChannel ch) {
                             ch.pipeline().addLast("logging", new LoggingHandler(LogLevel.INFO));
-                            ch.pipeline().addLast(new BTClientHandler(infoHash));
+                            ch.pipeline().addLast(new BTClientHandler(torrent));
                         }
                     });
             ChannelFuture f = b.connect(new InetSocketAddress(host, port)).sync();
