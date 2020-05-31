@@ -100,6 +100,12 @@ public class HandshakeUtils {
     public static final int PORT = 9;
 
     /**
+     * Peer返回的PeerWire消息中
+     * PeerWire的 id 为data字节数组的第4位
+     */
+    public static final int PEER_WIRE_ID_INDEX = 4;
+
+    /**
      * Peer Wire协议
      * 握手消息的格式是这样的：
      * <pstrlen><pstr><reserved><info_hash><peer_id>
@@ -109,12 +115,12 @@ public class HandshakeUtils {
      * 第20-27个字节为0
      * 第28到47个字节为info_hash，即种子info块的hash{@link TorrentUtils#hash(byte[])}
      * 第48到67个字节为peerId，即客服端类型和版本号，比如：Transmission 2.84
-     * 更多peerId查看<a href="http://bittorrent.org/beps/bep_0020.html"></a>
+     * 更多peerId查看<a href="http://bittorrent.org/beps/bep_0x0,20.html"></a>
      * 0-67总共68个字节
      */
     private static final byte[] HANDSHAKE_PACKAGE = {
-            19,
-            66, 105, 116, 84, 111, 114, 114, 101, 110, 116, 32, 112, 114, 111, 116, 111, 99, 111, 108,
+            0x13,
+            0x42, 0x69, 0x74, 0x54, 0x6f, 0x72, 0x72, 0x65, 0x6e, 0x74, 0x20, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x63, 0x6f, 0x6c,
             0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
@@ -124,7 +130,7 @@ public class HandshakeUtils {
      * bt协议头：BitTorrent Protocol的字节码
      */
     public static final byte[] BIT_TORRENT_PROTOCOL = {
-            66, 105, 116, 84, 111, 114, 114, 101, 110, 116, 32, 112, 114, 111, 116, 111, 99, 111, 108
+            0x42, 0x69, 0x74, 0x54, 0x6f, 0x72, 0x72, 0x65, 0x6e, 0x74, 0x20, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x63, 0x6f, 0x6c
     };
 
     /**
@@ -147,14 +153,14 @@ public class HandshakeUtils {
     }
 
     /**
-     * Generate handshake
+     * build handshake
      * 生成握手
      *
      * @param infoHash info hash
      * @param peerId   客服端标志
      * @return 握手字节数组
      */
-    public static byte[] generateHandshake(byte[] infoHash, byte[] peerId) {
+    public static byte[] buildHandshake(byte[] infoHash, byte[] peerId) {
         byte[] bytes = HANDSHAKE_PACKAGE;
         System.arraycopy(infoHash, 0, bytes, 28, 20);
         System.arraycopy(peerId, 0, bytes, 48, 20);
@@ -171,11 +177,11 @@ public class HandshakeUtils {
      *
      * <a href="https://github.com/transmission/transmission/wiki/Peer-Status-Text"></a>
      *
-     * @param id   message id
-     * @param type message type
+     * @param id   message id，第3位
+     * @param type message type，第4位
      * @return 消息体
      */
-    public static byte[] generateMessage(int id, int type) {
+    public static byte[] buildMessage(int id, int type) {
         if (type == -1) {
             id = 0;
             type = 0;
@@ -191,15 +197,61 @@ public class HandshakeUtils {
      * @param type 类型
      * @return 消息体
      */
-    public static byte[] generateMessage(int type) {
-        return generateMessage(1, type);
+    public static byte[] buildMessage(int type) {
+        return buildMessage(1, type);
     }
 
-    public static PeerWire<?> parsePeerWire(byte[] bytes) {
-        if (bytes == null || bytes.length < 4) {
+    /**
+     * 处理bitField
+     *
+     * @return 请求下载的块
+     */
+    public static byte[] bitFieldHandler() {
+        // { index: 7, begin: 0, length: 16384 }
+        //<Buffer 00 00 00 0d 06 00 00 00 07 00 00 00 00 00 00 40 00>
+        // { index: 7, begin: 16384, length: 16384 }
+        //<Buffer 00 00 00 0d 06 00 00 00 07 00 00 40 00 00 00 40 00>
+        // { index: 7, begin: 32768, length: 16384 }
+        //<Buffer 00 00 00 0d 06 00 00 00 07 00 00 80 00 00 00 40 00>
+        // { index: 7, begin: 49152, length: 16384 }
+        //<Buffer 00 00 00 0d 06 00 00 00 07 00 00 c0 00 00 00 40 00>
+        // { index: 7, begin: 0, length: 16384 }
+        return new byte[]{
+                0x0, 0x0, 0x0, 0xd, 0x6, 0x0, 0x0, 0x0, 0x7, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x40, 0x0,
+        };
+    }
+
+    /**
+     * 判断bitFiled长度是否符合规则
+     *
+     * @param peerWire peerWire
+     * @return true符合规则，false 不符合规则
+     */
+    public static boolean isBitField(PeerWire<byte[]> peerWire) {
+        return (peerWire.getSize() - 1) == peerWire.getPayload().length;
+    }
+
+    /**
+     * 把data转换为PeerWire
+     *
+     * @param data 字节数组
+     * @return PeerWire
+     */
+    public static <T> PeerWire<T> parsePeerWire(byte[] data) {
+        if (data == null || data.length < PEER_WIRE_ID_INDEX) {
             return null;
         }
-        int id = bytes.length == 4 ? bytes[2] : bytes.length == 5 ? bytes[3] : 0;
-        return null;
+        // id 为data的第4位
+        byte id = data.length > PEER_WIRE_ID_INDEX ? data[PEER_WIRE_ID_INDEX] : 0;
+        PeerWire<T> peerWire = new PeerWire<>();
+        // size 为data的0-3位
+        int size = ByteUtils.bytesToInt(data, 0, 3);
+        peerWire.setId(id);
+        peerWire.setSize(size);
+        // 根据id判断payload类型
+        byte[] payload = new byte[data.length - 5];
+        System.arraycopy(data, 5, payload, 0, data.length - 5);
+        peerWire.setPayload(payload);
+        return peerWire;
     }
 }

@@ -1,6 +1,7 @@
 package xyz.zzyitj.nbt.util;
 
 import org.junit.jupiter.api.Test;
+import xyz.zzyitj.nbt.bean.PeerWire;
 
 import java.util.Arrays;
 
@@ -32,29 +33,48 @@ class HandshakeUtilsTest {
     }
 
     /**
-     * {@link HandshakeUtils#generateHandshake(byte[], byte[])}
+     * {@link HandshakeUtils#buildHandshake(byte[], byte[])}
      */
     @Test
-    void generateHandshake() {
-        System.out.println(Arrays.toString(HandshakeUtils.generateHandshake(Const.TEST_INFO_HASH, Const.TEST_PEER_ID)));
+    void buildHandshake() {
+        System.out.println(Arrays.toString(HandshakeUtils.buildHandshake(Const.TEST_INFO_HASH, Const.TEST_PEER_ID)));
     }
 
     /**
      * 测试生成Peer Wire协议的握手消息
-     * {@link HandshakeUtils#generateMessage(int, int)} ()}
+     * {@link HandshakeUtils#buildMessage(int, int)} ()}
      */
     @Test
-    void generateMessage() {
-        System.out.println(Arrays.toString(HandshakeUtils.generateMessage(HandshakeUtils.KEEP_ALIVE)));
-        System.out.println(Arrays.toString(HandshakeUtils.generateMessage(HandshakeUtils.CHOKE)));
-        System.out.println(Arrays.toString(HandshakeUtils.generateMessage(HandshakeUtils.UN_CHOKE)));
-        System.out.println(Arrays.toString(HandshakeUtils.generateMessage(HandshakeUtils.INTERESTED)));
-        System.out.println(Arrays.toString(HandshakeUtils.generateMessage(HandshakeUtils.NOT_INTERESTED)));
-        System.out.println(Arrays.toString(HandshakeUtils.generateMessage(HandshakeUtils.HAVE)));
-        System.out.println(Arrays.toString(HandshakeUtils.generateMessage(HandshakeUtils.BIT_FIELD)));
-        System.out.println(Arrays.toString(HandshakeUtils.generateMessage(HandshakeUtils.REQUEST)));
-        System.out.println(Arrays.toString(HandshakeUtils.generateMessage(HandshakeUtils.PIECE)));
-        System.out.println(Arrays.toString(HandshakeUtils.generateMessage(HandshakeUtils.CANCEL)));
-        System.out.println(Arrays.toString(HandshakeUtils.generateMessage(HandshakeUtils.PORT)));
+    void buildMessage() {
+        System.out.println(Arrays.toString(HandshakeUtils.buildMessage(HandshakeUtils.KEEP_ALIVE)));
+        System.out.println(Arrays.toString(HandshakeUtils.buildMessage(HandshakeUtils.CHOKE)));
+        System.out.println(Arrays.toString(HandshakeUtils.buildMessage(HandshakeUtils.UN_CHOKE)));
+        System.out.println(Arrays.toString(HandshakeUtils.buildMessage(HandshakeUtils.INTERESTED)));
+        System.out.println(Arrays.toString(HandshakeUtils.buildMessage(HandshakeUtils.NOT_INTERESTED)));
+        System.out.println(Arrays.toString(HandshakeUtils.buildMessage(HandshakeUtils.HAVE)));
+        System.out.println(Arrays.toString(HandshakeUtils.buildMessage(HandshakeUtils.BIT_FIELD)));
+        System.out.println(Arrays.toString(HandshakeUtils.buildMessage(HandshakeUtils.REQUEST)));
+        System.out.println(Arrays.toString(HandshakeUtils.buildMessage(HandshakeUtils.PIECE)));
+        System.out.println(Arrays.toString(HandshakeUtils.buildMessage(HandshakeUtils.CANCEL)));
+        System.out.println(Arrays.toString(HandshakeUtils.buildMessage(HandshakeUtils.PORT)));
+    }
+
+    /**
+     * 测试data字节数组转换为PeerWire
+     * {@link HandshakeUtils#parsePeerWire(byte[])}
+     */
+    @Test
+    void parsePeerWire() {
+        byte[] data = {
+                0x0, 0x0, 0x0, 0x56, 0x05, -2, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+                -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+                -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+                -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+                -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+                -1, -1, -1, -1, -1, -1, -1, -1, -1, -2
+        };
+        PeerWire<?> peerWire = HandshakeUtils.parsePeerWire(data);
+        System.out.println(peerWire);
+        System.out.println(peerWire.getPayloadAsBytes().length);
     }
 }

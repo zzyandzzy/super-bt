@@ -1,5 +1,7 @@
 package xyz.zzyitj.nbt.bean;
 
+import java.util.Arrays;
+
 /**
  * @author intent
  * @version 1.0
@@ -7,24 +9,40 @@ package xyz.zzyitj.nbt.bean;
  * @email zzy.main@gmail.com
  */
 public class PeerWire<T> {
-    protected int id;
-    protected int size;
-    protected T payload;
+    private byte id;
+    private int size;
+    private T payload;
 
     public PeerWire() {
     }
 
-    public PeerWire(int id, int size, T payload) {
+    public PeerWire(byte id, int size, T payload) {
         this.id = id;
         this.size = size;
         this.payload = payload;
     }
 
-    public int getId() {
+    @Override
+    public String toString() {
+        if (payload instanceof byte[]) {
+            return "PeerWire{" +
+                    "id=" + id +
+                    ", size=" + size +
+                    ", payload=" + Arrays.toString((byte[]) payload) +
+                    '}';
+        }
+        return "PeerWire{" +
+                "id=" + id +
+                ", size=" + size +
+                ", payload=" + payload +
+                '}';
+    }
+
+    public byte getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(byte id) {
         this.id = id;
     }
 
@@ -40,7 +58,15 @@ public class PeerWire<T> {
         return payload;
     }
 
+    public byte[] getPayloadAsBytes(){
+        return (byte[]) payload;
+    }
+
     public void setPayload(T payload) {
         this.payload = payload;
+    }
+
+    public void setPayload(byte[] payload) {
+        this.payload = (T) payload;
     }
 }
