@@ -111,6 +111,13 @@ public class HandshakeUtils {
     public static final byte BIT_TORRENT_PROTOCOL_VERSION_1_0 = 0x13;
 
     /**
+     * 块最大长度为2^14，即16KB
+     * 超过此大小peer可能拒绝
+     */
+    public static final int PIECE_MAX_LENGTH = 2 << 13;
+
+
+    /**
      * peer第一次回复的Handshake长度，为68，即
      * {@link #BIT_TORRENT_PROTOCOL_VERSION_1_0} 1 byte
      * {@link #BIT_TORRENT_PROTOCOL} 20 byte
@@ -212,26 +219,6 @@ public class HandshakeUtils {
     }
 
     /**
-     * 处理bitField
-     *
-     * @return 请求下载的块
-     */
-    public static byte[] bitFieldHandler() {
-        // { index: 7, begin: 0, length: 16384 }
-        //<Buffer 00 00 00 0d 06 00 00 00 07 00 00 00 00 00 00 40 00>
-        // { index: 7, begin: 16384, length: 16384 }
-        //<Buffer 00 00 00 0d 06 00 00 00 07 00 00 40 00 00 00 40 00>
-        // { index: 7, begin: 32768, length: 16384 }
-        //<Buffer 00 00 00 0d 06 00 00 00 07 00 00 80 00 00 00 40 00>
-        // { index: 7, begin: 49152, length: 16384 }
-        //<Buffer 00 00 00 0d 06 00 00 00 07 00 00 c0 00 00 00 40 00>
-        // { index: 7, begin: 0, length: 16384 }
-        return new byte[]{
-                0x0, 0x0, 0x0, 0xd, 0x6, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x1, 0x70,
-        };
-    }
-
-    /**
      * 判断bitFiled长度是否符合规则
      *
      * @param peerWire peerWire
@@ -277,5 +264,29 @@ public class HandshakeUtils {
             peerWire.setPayload(payload);
         }
         return peerWire;
+    }
+
+    /**
+     * 构造请求下载指定块参数
+     *
+     * @param index  指定从零开始的piece索引。
+     * @param begin  指定piece中从零开始的字节偏移。
+     * @param length 指定请求的长度。
+     * @return 字节数组
+     */
+    public static byte[] requestPieceHandler(int index, int begin, int length) {
+        byte[] data = new byte[]{
+                0x0, 0x0, 0x0, 0xd, REQUEST,
+                0x0, 0x0, 0x0, 0x0,
+                0x0, 0x0, 0x0, 0x0,
+                0x0, 0x0, 0x0, 0x0
+        };
+        byte[] indexData = ByteUtils.intToBytesLittleEndian(index);
+        System.arraycopy(indexData, 0, data, data.length - 12, 4);
+        byte[] beginData = ByteUtils.intToBytesLittleEndian(begin);
+        System.arraycopy(beginData, 0, data, data.length - 8, 4);
+        byte[] lengthData = ByteUtils.intToBytesLittleEndian(length);
+        System.arraycopy(lengthData, 0, data, data.length - 4, 4);
+        return data;
     }
 }

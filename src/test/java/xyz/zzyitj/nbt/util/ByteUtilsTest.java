@@ -3,6 +3,8 @@ package xyz.zzyitj.nbt.util;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -28,5 +30,11 @@ class ByteUtilsTest {
         Assertions.assertEquals(ByteUtils.bytesToInt(data, 2, 3), 32540);
         Assertions.assertEquals(ByteUtils.bytesToInt(data, 3, 3), 28);
         Assertions.assertEquals(ByteUtils.bytesToInt(data, 0, 4), 0);
+    }
+
+    @Test
+    void intToBytes() {
+        System.out.println(Arrays.toString(ByteUtils.intToBytesBigEndian(237651)));
+        System.out.println(Arrays.toString(ByteUtils.intToBytesLittleEndian(237651)));
     }
 }

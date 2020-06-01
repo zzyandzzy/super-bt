@@ -23,11 +23,13 @@ public class BTClient {
     private final String host;
     private final int port;
     private final Torrent torrent;
+    private final String savePath;
 
-    public BTClient(String host, int port, Torrent torrent) {
+    public BTClient(String host, int port, Torrent torrent, String savePath) {
         this.host = host;
         this.port = port;
         this.torrent = torrent;
+        this.savePath = savePath;
     }
 
     public void start() throws InterruptedException {
@@ -40,7 +42,7 @@ public class BTClient {
                         @Override
                         public void initChannel(SocketChannel ch) {
                             ch.pipeline().addLast("logging", new LoggingHandler(LogLevel.INFO));
-                            ch.pipeline().addLast(new BTClientHandler(torrent));
+                            ch.pipeline().addLast(new BTClientHandler(torrent, savePath));
                         }
                     });
             ChannelFuture f = b.connect(new InetSocketAddress(host, port)).sync();

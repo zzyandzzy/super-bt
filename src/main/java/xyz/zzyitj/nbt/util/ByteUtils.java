@@ -28,4 +28,38 @@ public class ByteUtils {
         }
         return num;
     }
+
+    /**
+     * 大端存储：Big-endian
+     * 10进制的int转16进制的字节数组
+     * 将int转为低字节在前，高字节在后的byte数组
+     *
+     * @param val int
+     * @return 字节数组
+     */
+    public static byte[] intToBytesBigEndian(int val) {
+        byte[] data = new byte[4];
+        data[0] = (byte) (val & 0xff);
+        data[1] = (byte) ((val >> 8) & 0xff);
+        data[2] = (byte) ((val >> 16) & 0xff);
+        data[3] = (byte) ((val >> 24) & 0xff);
+        return data;
+    }
+
+    /**
+     * 小端存储：Little-endian
+     * 10进制的int转16进制的字节数组
+     * 将int转为高字节在前，低字节在后的byte数组
+     *
+     * @param val int
+     * @return byte[]
+     */
+    public static byte[] intToBytesLittleEndian(int val) {
+        byte[] data = new byte[4];
+        data[3] = (byte) (val & 0xff);
+        data[2] = (byte) (val >> 8 & 0xff);
+        data[1] = (byte) (val >> 16 & 0xff);
+        data[0] = (byte) (val >> 24 & 0xff);
+        return data;
+    }
 }

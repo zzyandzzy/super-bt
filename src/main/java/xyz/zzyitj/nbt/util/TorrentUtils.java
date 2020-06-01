@@ -4,7 +4,7 @@ import com.dampcake.bencode.Bencode;
 import com.dampcake.bencode.Type;
 import org.apache.commons.io.FileUtils;
 import xyz.zzyitj.nbt.bean.Torrent;
-import xyz.zzyitj.nbt.bean.TorrentFile;
+import xyz.zzyitj.nbt.bean.TorrentFileItem;
 
 import java.io.File;
 import java.io.IOException;
@@ -153,7 +153,7 @@ public class TorrentUtils {
         torrent.setName(new String(nameBuffer.array()));
         // pieceLength
         Long pieceLength = (Long) infoMap.get(PIECE_LENGTH_NAME);
-        torrent.setPieceLength(pieceLength);
+        torrent.setPieceLength(pieceLength.intValue());
         // pieces
         ByteBuffer piecesBuffer = (ByteBuffer) infoMap.get(PIECES_NAME);
         torrent.setPieces(piecesBuffer.array());
@@ -166,11 +166,11 @@ public class TorrentUtils {
         List<Map<String, Object>> fileList = (List<Map<String, Object>>) infoMap.get(FILES_NAME);
         // 多文件
         if (fileList != null) {
-            long torrentLength = 0;
-            List<TorrentFile> torrentFileList = new ArrayList<>();
+            int torrentLength = 0;
+            List<TorrentFileItem> torrentFileItemList = new ArrayList<>();
             for (Map<String, Object> fileListItemMap : fileList) {
                 Long length = (Long) fileListItemMap.get(LENGTH_NAME);
-                torrentLength += length;
+                torrentLength += length.intValue();
                 List<ByteBuffer> pathList = (List<ByteBuffer>) fileListItemMap.get(PATH_NAME);
                 StringBuilder path = new StringBuilder();
                 if (pathList.size() > 1) {
@@ -183,13 +183,13 @@ public class TorrentUtils {
                 } else {
                     path.append(new String(pathList.get(0).array()));
                 }
-                torrentFileList.add(new TorrentFile(path.toString(), length));
+                torrentFileItemList.add(new TorrentFileItem(path.toString(), length.intValue()));
             }
-            torrent.setTorrentFileList(torrentFileList);
+            torrent.setTorrentFileItemList(torrentFileItemList);
             torrent.setTorrentLength(torrentLength);
         } else {
             Long length = (Long) infoMap.get(LENGTH_NAME);
-            torrent.setTorrentLength(length);
+            torrent.setTorrentLength(length.intValue());
         }
         return torrent;
     }

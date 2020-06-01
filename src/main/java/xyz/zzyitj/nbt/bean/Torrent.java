@@ -19,7 +19,7 @@ public class Torrent implements Serializable {
     private String comment;
     private String encoding;
     private byte[] infoHash;
-    private long pieceLength;
+    private int pieceLength;
     private byte[] pieces;
     /**
      * 是否是私有种子
@@ -35,11 +35,11 @@ public class Torrent implements Serializable {
     /**
      * 种子总大小
      */
-    private long torrentLength;
+    private int torrentLength;
     /**
      * 多文件文件路径以及大小
      */
-    private List<TorrentFile> torrentFileList;
+    private List<TorrentFileItem> torrentFileItemList;
 
     @Override
     public String toString() {
@@ -56,7 +56,7 @@ public class Torrent implements Serializable {
                 ", isPrivate=" + isPrivate +
                 ", name='" + name + '\'' +
                 ", torrentLength=" + torrentLength +
-                ", torrentFileList=" + torrentFileList +
+                ", torrentFileList=" + torrentFileItemList +
                 '}';
     }
 
@@ -68,11 +68,11 @@ public class Torrent implements Serializable {
         this.infoHash = infoHash;
     }
 
-    public long getTorrentLength() {
+    public int getTorrentLength() {
         return torrentLength;
     }
 
-    public void setTorrentLength(long torrentLength) {
+    public void setTorrentLength(int torrentLength) {
         this.torrentLength = torrentLength;
     }
 
@@ -108,11 +108,11 @@ public class Torrent implements Serializable {
         this.name = name;
     }
 
-    public long getPieceLength() {
+    public int getPieceLength() {
         return pieceLength;
     }
 
-    public void setPieceLength(long pieceLength) {
+    public void setPieceLength(int pieceLength) {
         this.pieceLength = pieceLength;
     }
 
@@ -156,11 +156,11 @@ public class Torrent implements Serializable {
         isPrivate = aPrivate;
     }
 
-    public List<TorrentFile> getTorrentFileList() {
-        return torrentFileList;
+    public List<TorrentFileItem> getTorrentFileItemList() {
+        return torrentFileItemList;
     }
 
-    public void setTorrentFileList(List<TorrentFile> torrentFileList) {
-        this.torrentFileList = torrentFileList;
+    public void setTorrentFileItemList(List<TorrentFileItem> torrentFileItemList) {
+        this.torrentFileItemList = torrentFileItemList;
     }
 }

@@ -23,7 +23,14 @@ import java.io.IOException;
  * @email zzy.main@gmail.com
  */
 public class BTClientHandler extends SimpleChannelInboundHandler<ByteBuf> {
+    /**
+     * 种子信息
+     */
     private final Torrent torrent;
+    /**
+     * 文件下载位置
+     */
+    private final String savePath;
     /**
      * 是否允许下载
      */
@@ -33,8 +40,9 @@ public class BTClientHandler extends SimpleChannelInboundHandler<ByteBuf> {
      */
     private boolean isFirstHandshake = true;
 
-    public BTClientHandler(Torrent torrent) {
+    public BTClientHandler(Torrent torrent, String savePath) {
         this.torrent = torrent;
+        this.savePath = savePath;
     }
 
     @Override
@@ -100,8 +108,10 @@ public class BTClientHandler extends SimpleChannelInboundHandler<ByteBuf> {
     /**
      * 根据peer返回的数据判断下一步操作
      *
-     * @param ctx  ctx
-     * @param data 字节数组
+     * @param ctx    ctx
+     * @param data   字节数组
+     * @param start  字节数组开始位置
+     * @param length 字节数组开始位置之后的长度
      */
     private void doHandshakeHandler(ChannelHandlerContext ctx, byte[] data, int start, int length) {
         switch (data[start + HandshakeUtils.PEER_WIRE_ID_INDEX]) {
@@ -109,37 +119,22 @@ public class BTClientHandler extends SimpleChannelInboundHandler<ByteBuf> {
                 closePeer(ctx);
                 break;
             case HandshakeUtils.UN_CHOKE:
-                // peer给我们发送UN_CHOKE
-                unChoke = true;
-                // 这里还得检查peer有没有该区块
-                // 之后就可以下载区块了
-                doDownload(ctx);
+                unChokeHandler(ctx, data, start, length);
                 break;
             case HandshakeUtils.BIT_FIELD:
-                PeerWire<byte[]> peerWire = HandshakeUtils.parsePeerWire(data, start, length - 4);
-                // 先验证消息长度是否正确
-                if (HandshakeUtils.isBitField(peerWire)) {
-                    System.out.println(peerWire);
-                    // 检查UN_CHOKE状态并生成要下载的区块
-                    if (unChoke) {
-                        // 这里还得检查peer有没有该区块
-                        // 之后就可以下载区块了
-                        doDownload(ctx);
-                    }
-                } else {
-                    closePeer(ctx);
-                }
+                bitFieldHandler(ctx, data, start, length);
                 break;
             case HandshakeUtils.PIECE:
                 // 这里就可以保存文件了
-                try {
-                    FileUtils.writeByteArrayToFile(
-                            new File("./1.txt"),
-                            data, start + 13, length - 13, true);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+//                try {
+//                    FileUtils.writeByteArrayToFile(
+//                            new File(savePath + torrent.getName()),
+//                            data, start + 13, length - 13, true);
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                }
                 if (data.length - start - 13 >= torrent.getTorrentLength()) {
+                    System.out.printf("download %s complete!\n", torrent.getName());
                     closePeer(ctx);
                     return;
                 }
@@ -150,10 +145,59 @@ public class BTClientHandler extends SimpleChannelInboundHandler<ByteBuf> {
         }
     }
 
+    /**
+     * 生成区块下载队列
+     *
+     * @param ctx    ctx
+     * @param data   字节数组
+     * @param start  字节数组开始位置
+     * @param length 字节数组开始位置之后的长度
+     */
+    private void bitFieldHandler(ChannelHandlerContext ctx, byte[] data, int start, int length) {
+        PeerWire<byte[]> peerWire = HandshakeUtils.parsePeerWire(data, start, length - 4);
+        // 先验证消息长度是否正确
+        if (HandshakeUtils.isBitField(peerWire)) {
+            System.out.println(peerWire);
+            // 检查UN_CHOKE状态并生成要下载的区块
+            if (unChoke) {
+                // 这里还得检查peer有没有该区块
+                // 之后就可以下载区块了
+                doDownload(ctx);
+            }
+        } else {
+            closePeer(ctx);
+        }
+    }
+
+    /**
+     * 设置unChoke和开始下载
+     *
+     * @param ctx    ctx
+     * @param data   字节数组
+     * @param start  字节数组开始位置
+     * @param length 字节数组开始位置之后的长度
+     */
+    private void unChokeHandler(ChannelHandlerContext ctx, byte[] data, int start, int length) {
+        unChoke = true;
+        // 之后就可以请求下载区块了
+        doDownload(ctx);
+    }
+
+    /**
+     * 下载第0个块
+     *
+     * @param ctx ctx
+     */
     private void doDownload(ChannelHandlerContext ctx) {
-        System.out.println("request download begin: 0, length: 368");
-        ctx.writeAndFlush(Unpooled.copiedBuffer(
-                HandshakeUtils.bitFieldHandler()));
+        if (torrent.getTorrentLength() > HandshakeUtils.PIECE_MAX_LENGTH) {
+            System.out.println("request download piece: 0 begin: 0, length: " + HandshakeUtils.PIECE_MAX_LENGTH);
+            ctx.writeAndFlush(Unpooled.copiedBuffer(
+                    HandshakeUtils.requestPieceHandler(0, 0, HandshakeUtils.PIECE_MAX_LENGTH)));
+        } else {
+            System.out.println("request download piece: 0 begin: 0, length: " + torrent.getTorrentLength());
+            ctx.writeAndFlush(Unpooled.copiedBuffer(
+                    HandshakeUtils.requestPieceHandler(0, 0, torrent.getTorrentLength())));
+        }
     }
 
     /**

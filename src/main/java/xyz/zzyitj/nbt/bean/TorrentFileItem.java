@@ -7,14 +7,14 @@ package xyz.zzyitj.nbt.bean;
  * @date 2020/6/1 12:49 下午
  * @since 1.0
  */
-public class TorrentFile {
+public class TorrentFileItem {
     private String path;
-    private Long length;
+    private int length;
 
-    public TorrentFile() {
+    public TorrentFileItem() {
     }
 
-    public TorrentFile(String path, Long length) {
+    public TorrentFileItem(String path, int length) {
         this.path = path;
         this.length = length;
     }
@@ -35,11 +35,11 @@ public class TorrentFile {
         this.path = path;
     }
 
-    public Long getLength() {
+    public int getLength() {
         return length;
     }
 
-    public void setLength(Long length) {
+    public void setLength(int length) {
         this.length = length;
     }
 }

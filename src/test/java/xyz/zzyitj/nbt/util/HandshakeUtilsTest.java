@@ -83,4 +83,16 @@ class HandshakeUtilsTest {
         peerWire = HandshakeUtils.parsePeerWire(data1, 6, 1);
         System.out.println(peerWire);
     }
+
+    /**
+     * 测试函数
+     * {@link HandshakeUtils#requestPieceHandler(int, int, int)}
+     */
+    @Test
+    void requestPieceHandler() {
+        System.out.println(Arrays.toString(HandshakeUtils.requestPieceHandler(0, 0, 237651)));
+        System.out.println(Arrays.toString(HandshakeUtils.requestPieceHandler(0, 237651, 237651)));
+        System.out.println(Arrays.toString(HandshakeUtils.requestPieceHandler(1, 237651, 237651)));
+        System.out.println(Arrays.toString(HandshakeUtils.requestPieceHandler(237651, 237651, 237651)));
+    }
 }
