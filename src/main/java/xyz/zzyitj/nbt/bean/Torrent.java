@@ -2,6 +2,7 @@ package xyz.zzyitj.nbt.bean;
 
 import java.io.Serializable;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author intent
@@ -12,17 +13,50 @@ public class Torrent implements Serializable {
 
     private static final long serialVersionUID = -3617303636715796178L;
     private String announce;
+    private List<String> announceList;
+    private long creationDate;
+    private String createdBy;
+    private String comment;
+    private String encoding;
     private byte[] infoHash;
-    private Long torrentSize;
-    private Long torrentCount;
+    private long pieceLength;
+    private byte[] pieces;
+    /**
+     * 是否是私有种子
+     * 私有种子不在DHT网络获取peer
+     * 只在tracker上获取peer
+     */
+    private boolean isPrivate;
+    /**
+     * 单文件是种子名称
+     * 多文件是种子所在目录即根目录的名称
+     */
+    private String name;
+    /**
+     * 种子总大小
+     */
+    private long torrentLength;
+    /**
+     * 多文件文件路径以及大小
+     */
+    private List<TorrentFile> torrentFileList;
 
     @Override
     public String toString() {
         return "Torrent{" +
                 "announce='" + announce + '\'' +
+                ", announceList=" + announceList +
+                ", creationDate=" + creationDate +
+                ", createdBy='" + createdBy + '\'' +
+                ", comment='" + comment + '\'' +
+                ", encoding='" + encoding + '\'' +
                 ", infoHash=" + Arrays.toString(infoHash) +
-                ", torrentSize=" + torrentSize +
-                ", torrentCount=" + torrentCount +
+                ", pieceLength=" + pieceLength +
+                ", pieces=" + Arrays.toString(pieces) +
+                ", isPrivate=" + isPrivate +
+                ", name='" + name + '\'' +
+                ", torrentLength=" + torrentLength +
+                ", torrentFileList=" + torrentFileList +
                 '}';
     }
 
@@ -34,20 +68,12 @@ public class Torrent implements Serializable {
         this.infoHash = infoHash;
     }
 
-    public Long getTorrentSize() {
-        return torrentSize;
+    public long getTorrentLength() {
+        return torrentLength;
     }
 
-    public void setTorrentSize(Long torrentSize) {
-        this.torrentSize = torrentSize;
-    }
-
-    public Long getTorrentCount() {
-        return torrentCount;
-    }
-
-    public void setTorrentCount(Long torrentCount) {
-        this.torrentCount = torrentCount;
+    public void setTorrentLength(long torrentLength) {
+        this.torrentLength = torrentLength;
     }
 
     public String getAnnounce() {
@@ -56,5 +82,85 @@ public class Torrent implements Serializable {
 
     public void setAnnounce(String announce) {
         this.announce = announce;
+    }
+
+    public long getCreationDate() {
+        return creationDate;
+    }
+
+    public void setCreationDate(long creationDate) {
+        this.creationDate = creationDate;
+    }
+
+    public String getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(String createdBy) {
+        this.createdBy = createdBy;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public long getPieceLength() {
+        return pieceLength;
+    }
+
+    public void setPieceLength(long pieceLength) {
+        this.pieceLength = pieceLength;
+    }
+
+    public byte[] getPieces() {
+        return pieces;
+    }
+
+    public void setPieces(byte[] pieces) {
+        this.pieces = pieces;
+    }
+
+    public String getComment() {
+        return comment;
+    }
+
+    public void setComment(String comment) {
+        this.comment = comment;
+    }
+
+    public String getEncoding() {
+        return encoding;
+    }
+
+    public void setEncoding(String encoding) {
+        this.encoding = encoding;
+    }
+
+    public List<String> getAnnounceList() {
+        return announceList;
+    }
+
+    public void setAnnounceList(List<String> announceList) {
+        this.announceList = announceList;
+    }
+
+    public boolean isPrivate() {
+        return isPrivate;
+    }
+
+    public void setPrivate(boolean aPrivate) {
+        isPrivate = aPrivate;
+    }
+
+    public List<TorrentFile> getTorrentFileList() {
+        return torrentFileList;
+    }
+
+    public void setTorrentFileList(List<TorrentFile> torrentFileList) {
+        this.torrentFileList = torrentFileList;
     }
 }

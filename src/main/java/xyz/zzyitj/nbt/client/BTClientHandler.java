@@ -139,7 +139,7 @@ public class BTClientHandler extends SimpleChannelInboundHandler<ByteBuf> {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                if (data.length - start - 13 >= torrent.getTorrentSize()) {
+                if (data.length - start - 13 >= torrent.getTorrentLength()) {
                     closePeer(ctx);
                     return;
                 }
