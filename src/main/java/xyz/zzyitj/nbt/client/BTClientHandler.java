@@ -156,17 +156,17 @@ public class BTClientHandler extends SimpleChannelInboundHandler<ByteBuf> {
     private void bitFieldHandler(ChannelHandlerContext ctx, byte[] data, int start, int length) {
         PeerWire<byte[]> peerWire = HandshakeUtils.parsePeerWire(data, start, length - 4);
         // 先验证消息长度是否正确
-        if (HandshakeUtils.isBitField(peerWire)) {
-            System.out.println(peerWire);
-            // 检查UN_CHOKE状态并生成要下载的区块
-            if (unChoke) {
-                // 这里还得检查peer有没有该区块
-                // 之后就可以下载区块了
-                doDownload(ctx);
-            }
-        } else {
-            closePeer(ctx);
+//        if (HandshakeUtils.isBitField(peerWire)) {
+        System.out.println(peerWire);
+        // 检查UN_CHOKE状态并生成要下载的区块
+        if (unChoke) {
+            // 这里还得检查peer有没有该区块
+            // 之后就可以下载区块了
+            doDownload(ctx);
         }
+//        } else {
+//            closePeer(ctx);
+//        }
     }
 
     /**

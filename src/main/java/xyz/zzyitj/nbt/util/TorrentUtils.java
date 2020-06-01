@@ -120,7 +120,7 @@ public class TorrentUtils {
             torrent.setAnnounce(new String(announceBuffer.array()));
         }
         // 获取种子备用announce
-        List<String> announceList = (List<String>) torrentMap.get(ANNOUNCE_NAME);
+        List<String> announceList = (List<String>) torrentMap.get(ANNOUNCE_LIST_NAME);
         if (announceList != null) {
             torrent.setAnnounceList(announceList);
         }
