@@ -82,6 +82,11 @@ class HandshakeUtilsTest {
         System.out.println(peerWire);
         peerWire = HandshakeUtils.parsePeerWire(data1, 6, 1);
         System.out.println(peerWire);
+        byte[] data2 = {
+                0x0, 0x0, 0x0, 0xb, 0x7, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x40, 0x0, 0x12, 0x32
+        };
+        peerWire = HandshakeUtils.parsePeerWire(data2);
+        System.out.println(peerWire);
     }
 
     /**

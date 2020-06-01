@@ -248,11 +248,11 @@ public class HandshakeUtils {
         peerWire.setSize(size);
         if (size > 1) {
             // 根据id判断payload类型
-            if (id >= 6 && id <= 7) {
+            if (id >= 6 && id <= 8) {
                 int index = ByteUtils.bytesToInt(data, start + 5, start + 8);
                 int begin = ByteUtils.bytesToInt(data, start + 9, start + 12);
-                byte[] block = new byte[size - 1];
-                System.arraycopy(data, start + 13, block, 0, size - 1);
+                byte[] block = new byte[size - 9];
+                System.arraycopy(data, start + 13, block, 0, size - 9);
                 peerWire.setPayload(new PeerWirePayload(index, begin, block));
             } else {
                 byte[] payload = new byte[size - 1];

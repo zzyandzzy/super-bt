@@ -1,5 +1,7 @@
 package xyz.zzyitj.nbt.bean;
 
+import java.util.Arrays;
+
 /**
  * @author intent
  * @version 1.0
@@ -18,6 +20,15 @@ public class PeerWirePayload {
         this.index = index;
         this.begin = begin;
         this.block = block;
+    }
+
+    @Override
+    public String toString() {
+        return "PeerWirePayload{" +
+                "index=" + index +
+                ", begin=" + begin +
+                ", block=" + Arrays.toString(block) +
+                '}';
     }
 
     public int getIndex() {
