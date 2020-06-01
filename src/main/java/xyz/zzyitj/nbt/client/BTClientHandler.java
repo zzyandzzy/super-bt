@@ -154,7 +154,7 @@ public class BTClientHandler extends SimpleChannelInboundHandler<ByteBuf> {
      * @param length 字节数组开始位置之后的长度
      */
     private void bitFieldHandler(ChannelHandlerContext ctx, byte[] data, int start, int length) {
-        PeerWire<byte[]> peerWire = HandshakeUtils.parsePeerWire(data, start, length - 4);
+        PeerWire peerWire = HandshakeUtils.parsePeerWire(data, start, length - 4);
         // 先验证消息长度是否正确
 //        if (HandshakeUtils.isBitField(peerWire)) {
         System.out.println(peerWire);

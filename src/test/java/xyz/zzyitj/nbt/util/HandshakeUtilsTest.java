@@ -73,7 +73,7 @@ class HandshakeUtilsTest {
                 -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
                 -1, -1, -1, -1, -1, -1, -1, -1, -1, -2
         };
-        PeerWire<byte[]> peerWire = HandshakeUtils.parsePeerWire(data);
+        PeerWire peerWire = HandshakeUtils.parsePeerWire(data);
         System.out.println(peerWire);
         byte[] data1 = {
                 0x0, 0x0, 0x0, 0x2, 0x5, -128, 0x0, 0x0, 0x0, 0x1, 0x2,

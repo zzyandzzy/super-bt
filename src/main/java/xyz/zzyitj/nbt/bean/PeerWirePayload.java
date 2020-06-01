@@ -10,7 +10,6 @@ public class PeerWirePayload {
     private int index;
     private int begin;
     private byte[] block;
-    private int length;
 
     public PeerWirePayload() {
     }
@@ -19,12 +18,6 @@ public class PeerWirePayload {
         this.index = index;
         this.begin = begin;
         this.block = block;
-    }
-
-    public PeerWirePayload(int index, int begin, int length) {
-        this.index = index;
-        this.begin = begin;
-        this.length = length;
     }
 
     public int getIndex() {
@@ -49,13 +42,5 @@ public class PeerWirePayload {
 
     public void setBlock(byte[] block) {
         this.block = block;
-    }
-
-    public int getLength() {
-        return length;
-    }
-
-    public void setLength(int length) {
-        this.length = length;
     }
 }

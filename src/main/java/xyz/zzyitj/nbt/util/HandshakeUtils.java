@@ -1,6 +1,7 @@
 package xyz.zzyitj.nbt.util;
 
 import xyz.zzyitj.nbt.bean.PeerWire;
+import xyz.zzyitj.nbt.bean.PeerWirePayload;
 
 /**
  * @author intent
@@ -212,8 +213,8 @@ public class HandshakeUtils {
      * @param peerWire peerWire
      * @return true符合规则，false 不符合规则
      */
-    public static boolean isBitField(PeerWire<byte[]> peerWire) {
-        return (peerWire.getSize() - 1) == peerWire.getPayload().length;
+    public static boolean isBitField(PeerWire peerWire) {
+        return (peerWire.getSize() - 1) == peerWire.getPayloadAsBytes().length;
     }
 
     /**
@@ -222,7 +223,7 @@ public class HandshakeUtils {
      * @param data 字节数组
      * @return PeerWire
      */
-    public static <T> PeerWire<T> parsePeerWire(byte[] data) {
+    public static PeerWire parsePeerWire(byte[] data) {
         // size 为data的0-3位
         int size = ByteUtils.bytesToInt(data, 0, 3);
         return parsePeerWire(data, 0, size);
@@ -236,20 +237,28 @@ public class HandshakeUtils {
      * @param size  payload的大小
      * @return PeerWire
      */
-    public static <T> PeerWire<T> parsePeerWire(byte[] data, int start, int size) {
+    public static PeerWire parsePeerWire(byte[] data, int start, int size) {
         if (data == null || data.length < (start + PEER_WIRE_ID_INDEX)) {
             return null;
         }
         // id 为data的第4位
         byte id = data.length > (start + PEER_WIRE_ID_INDEX) ? data[start + PEER_WIRE_ID_INDEX] : 0;
-        PeerWire<T> peerWire = new PeerWire<>();
+        PeerWire peerWire = new PeerWire();
         peerWire.setId(id);
         peerWire.setSize(size);
         if (size > 1) {
             // 根据id判断payload类型
-            byte[] payload = new byte[size - 1];
-            System.arraycopy(data, start + 5, payload, 0, size - 1);
-            peerWire.setPayload(payload);
+            if (id >= 6 && id <= 7) {
+                int index = ByteUtils.bytesToInt(data, start + 5, start + 8);
+                int begin = ByteUtils.bytesToInt(data, start + 9, start + 12);
+                byte[] block = new byte[size - 1];
+                System.arraycopy(data, start + 13, block, 0, size - 1);
+                peerWire.setPayload(new PeerWirePayload(index, begin, block));
+            } else {
+                byte[] payload = new byte[size - 1];
+                System.arraycopy(data, start + 5, payload, 0, size - 1);
+                peerWire.setPayload(payload);
+            }
         }
         return peerWire;
     }

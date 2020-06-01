@@ -8,15 +8,15 @@ import java.util.Arrays;
  * @date 2020/3/18 10:01 上午
  * @email zzy.main@gmail.com
  */
-public class PeerWire<T> {
+public class PeerWire {
     private byte id;
     private int size;
-    private T payload;
+    private Object payload;
 
     public PeerWire() {
     }
 
-    public PeerWire(byte id, int size, T payload) {
+    public PeerWire(byte id, int size, Object payload) {
         this.id = id;
         this.size = size;
         this.payload = payload;
@@ -54,19 +54,15 @@ public class PeerWire<T> {
         this.size = size;
     }
 
-    public T getPayload() {
+    public Object getPayload() {
         return payload;
     }
 
-    public byte[] getPayloadAsBytes(){
+    public byte[] getPayloadAsBytes() {
         return (byte[]) payload;
     }
 
-    public void setPayload(T payload) {
+    public void setPayload(Object payload) {
         this.payload = payload;
-    }
-
-    public void setPayload(byte[] payload) {
-        this.payload = (T) payload;
     }
 }
