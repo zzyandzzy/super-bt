@@ -10,92 +10,80 @@ import xyz.zzyitj.nbt.bean.PeerWire;
  */
 public class HandshakeUtils {
     /**
-     * keep-alive消息是一个0字节的消息，将length prefix设置成0。没有message ID和payload。
-     * <p>
-     * 如果peers在一个固定时间段内没有收到任何报文(keep-alive或其他任何报文)，那么peers应该关掉这个连接，
-     * 因此如果在一个给定的时间内没有发出任何命令的话，peers必须发送一个keep-alive报文保持这个连接激活。
-     * 通常情况下，这个时间是2分钟。
+     * keep_alive消息的长度固定，为4字节，它没有消息编号和负载。
+     * 如果一段时间内客户端与peer没有交换任何消息，则与这个peer的连接将被关闭。
+     * keep_alive消息用于维持这个连接，通常如果2分钟内没有向peer发送任何消息，
+     * 则发送一个keep_alive消息。
      */
     public static final int KEEP_ALIVE = -1;
     /**
-     * choke报文长度固定，并且没有payload。
+     * choke消息的长度固定，为5字节，消息长度占4个字节，消息编号占1个字节，没有负载。
+     * 该消息的功能是，发出该消息的peer将接收该消息的peer阻塞，暂时不允许其下载自己的数据。
      */
     public static final int CHOKE = 0;
     /**
-     * unchoke报文长度固定，并且没有payload。
+     * unchoke消息的长度固定，为5字节，消息长度占4个字节，消息编号占1个字节，没有负载。
+     * 客户端每隔一定的时间，通常为10秒，计算一次各个peer的下载速度，如果某peer被解除阻塞，
+     * 则发送unchoke消息。如果某个peer原先是解除阻塞的，而此次被阻塞，则发送choke消息。
      */
     public static final int UN_CHOKE = 1;
     /**
-     * interested报文长度固定，并且没有payload。
-     * 感兴趣的
+     * interested消息的长度固定，为5字节，消息长度占4个字节，消息编号占1个字节，没有负载。
+     * 当客户端收到某peer的have消息时，如果发现peer拥有了客户端没有的piece，
+     * 则发送interested消息告知该peer，客户端对它感兴趣。
      */
     public static final int INTERESTED = 2;
     /**
-     * not interested报文长度固定，并且没有payload。
-     * 不感兴趣的
+     * not interested消息的长度固定，为5字节，消息长度占4个字节，消息编号占1个字节，没有负载。
+     * 当客户端下载了某个piece，如果发现客户端拥有了这个piece后，
+     * 某个peer拥有的所有piece，客户端都拥有，则发送not interested消息给该peer。
      */
     public static final int NOT_INTERESTED = 3;
     /**
-     * have报文长度固定。payload是piece(片)的从零开始的索引，该片已经成功下载并且通过hash校验。
-     * <p>
-     * 实现者注意：实际上，一些客户端必须严格实现该定义。因为peers不太可能下载他们已经拥有的piece(片)，
-     * 一个peer不应该通知另一个peer它拥有一个piece(片)，如果另一个peer拥有这个piece(片)。
-     * 最低限度”HAVE suppresion”会使用have报文数量减半，总的来说，大致减少25-35%的HAVE报文。
-     * 同时，给一个拥有piece(片)的peer发送HAVE报文是值得的，因为这有助于决定哪个piece是稀缺的。
-     * <p>
-     * 一个恶意的peer可能向其他的peer广播它们不可能下载的piece(片)。
-     * Due to this attempting to model peers using this information is a bad idea.
+     * have消息的长度固定，为9字节，消息长度占4个字节，消息编号占1个字节，负载为4个字节。
+     * 负载为一个整数，指明下标为index的piece，peer已经拥有。
+     * 每当客户端下载了一个piece，即将该piece的下标作为have消息的负载构造have消息，
+     * 并把该消息发送给所有与客户端建立连接的peer。
      */
     public static final int HAVE = 4;
     /**
-     * bitfield报文可能仅在握手序列发送之后，其他消息发送之前立即发送。
-     * 它是可选的，如果一个客户端没有piece(片)，就不需要发送该报文。
-     * <p>
-     * bitfield报文长度可变，其中x是bitfield的长度。
-     * payload是一个bitfield，该bitfield表示已经成功下载的piece(片)。第一个字节的高位相当于piece索引0。
-     * 设置为0的位表示一个没有的piece，设置为1的位表示有效的和可用的piece。末尾的冗余位设置为0。
-     * <p>
-     * 长度不对的bitfield将被认为是一个错误。
-     * 如果客户端接收到长度不对的bitfield或者bitfield有任一冗余位集，它应该丢弃这个连接。
+     * bitfield消息的长度不固定，其中X是bitfield(即位图)的长度。
+     * 当客户端与peer交换握手消息之后，就交换位图。
+     * 位图中，每个piece占一位，若该位的值为1，则表明已经拥有该piece；为0则表明该piece尚未下载。
+     * 具体而言，假定某共享文件共拥有801个piece，则位图为101个字节，
+     * 位图的第一个字节的最高位指明第一个piece是否拥有，位图的第一个字节的第二高位指明第二个piece是否拥有，依此类推。
+     * 对于第801个piece，需要单独一个字节，该字节的最高位指明第801个piece是否已被下载，其余的7位放弃不予使用。
      */
     public static final int BIT_FIELD = 5;
     /**
-     * request报文长度固定，用于请求一个块(block)。payload包含如下信息：
-     * <p>
-     * index: 整数，指定从零开始的piece索引。
-     * begin: 整数，指定piece中从零开始的字节偏移。
-     * length: 整数，指定请求的长度。
-     * 根据官方规范有关主要版本3，“所有当前执行应使用 2^15（32 KB），请求数量大于 2^17（128 KB）时应断开连接。
-     * ”在主要版本4中，此反应修改到了 2^14（16 KB），超过该值的用户会强迫拒绝。
-     * 注意到块请求小于片断大小（>=2^18 字节），所以为下载一个完整片断需要多次请求。
-     * <p>
-     * 由于新版本将限制定在 16 KB，尝试使用 32 KB 的块就好比用 4 发子弹来玩俄式轮盘——会遇到困难。
-     * 更小的请求会导致更大的系统时间和空间开销，因为要跟踪很多请求。结果应使用所有客户端都允许的 16 KB。
-     * <p>
-     * 请求块大小的限制执行的选择没有减少一部分清楚。在主要版本 4 中，强制使用 16 KB 的请求，
-     * 许多客户端会使用该值，只有一个严格客户端组不会使用。
-     * 大多数旧客户端使用 32 KB 请求，不允许明显减少可能用户的批次。
-     * 同时 16 KB 是现在部分官方的限制（“部分”是因为官方协议文档没有更新），所以强制使用没有错。
-     * 另外，允许更大的请求增大了可能用户的批次，除在非常低的带宽连接（小于 256 kbps）中，
-     * 多个块会在一个阻塞周期内完成下载，从而强迫使用旧的限制仅会降低很少的性能。
-     * 因此，推荐仅在旧的 128 KB 下才强行限制。
+     * request消息的长度固定，为17个字节，
+     * index是piece的索引，begin是piece内的偏移，length是请求peer发送的数据的长度。
+     * 当客户端收到某个peer发来的unchoke消息后，即构造request消息，向该peer发送数据请求。
+     * 前面提到，peer之间交换数据是以slice（长度为16KB的块）为单位的，因此request消息中length的值一般为16K。
+     * 对于一个256KB的piece，客户端分16次下载，每次下载一个16K的slice。
      */
     public static final int REQUEST = 6;
     /**
-     * piece报文长度可变，其中x是块的长度。payload包含如下信息：
-     * <p>
+     * piece消息是另外一个长度不固定的消息，长度前缀中的9是id、index、begin的长度总和，index和begin固定为4字节，
+     * X为block的长度，一般为16K。因此对于piece消息，长度前缀加上id通常为00 00 40 09 07。
+     * 当客户端收到某个peer的request消息后，如果判定当前未将该peer阻塞，且peer请求的slice，客户端已经下载，
+     * 则发送piece消息将文件数据上传给该peer。
      * index: 整数，指定从零开始的piece索引。
      * begin: 整数，指定piece中从零开始的字节偏移。
      * block: 数据块，它是由索引指定的piece的子集。
      */
     public static final int PIECE = 7;
     /**
-     * cancel报文长度固定，用于取消块请求。playload与request报文的playload相同。一般情况下用于结束下载。
+     * cancel消息的长度固定，为17个字节，len、index、begin、length都占4字节。
+     * 它与request消息对应，作用刚好相反，用于取消对某个slice的数据请求。
+     * 如果客户端发现，某个piece中的slice，客户端已经下载，而客户端又向其他peer发送了对该slice的请求，
+     * 则向该peer发送cancel消息，以取消对该slice的请求。
+     * 事实上，如果算法设计合理，基本不用发送cancel消息，只在某些特殊的情况下才需要发送cancel消息。
      */
     public static final int CANCEL = 8;
     /**
-     * port报文由新版本的Mainline发送，新版本Mainline实现了一个DHT tracker。
-     * 该监听端口是peer的DHT节点正在监听的端口。这个peer应该插入本地路由表(如果支持DHT tracker的话)。
+     * port消息的长度固定，为7字节，其中listen-port占两个字节。
+     * 该消息只在支持DHT的客户端中才会使用，用于指明DHT监听的端口号，一般不必理会，收到该消息时，直接丢弃即可。
      */
     public static final int PORT = 9;
 
