@@ -5,8 +5,6 @@ import xyz.zzyitj.nbt.bean.PeerWire;
 
 import java.util.Arrays;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 /**
  * @author intent
  * @version 1.0
@@ -32,21 +30,21 @@ class HandshakeUtilsTest {
 
     /**
      * 测试生成Peer Wire协议的握手消息
-     * {@link HandshakeUtils#buildMessage(int, int)} ()}
+     * {@link HandshakeUtils#buildMessage(byte, byte[])}
      */
     @Test
     void buildMessage() {
+        // no payload
         System.out.println(Arrays.toString(HandshakeUtils.buildMessage(HandshakeUtils.KEEP_ALIVE)));
         System.out.println(Arrays.toString(HandshakeUtils.buildMessage(HandshakeUtils.CHOKE)));
         System.out.println(Arrays.toString(HandshakeUtils.buildMessage(HandshakeUtils.UN_CHOKE)));
         System.out.println(Arrays.toString(HandshakeUtils.buildMessage(HandshakeUtils.INTERESTED)));
         System.out.println(Arrays.toString(HandshakeUtils.buildMessage(HandshakeUtils.NOT_INTERESTED)));
-        System.out.println(Arrays.toString(HandshakeUtils.buildMessage(HandshakeUtils.HAVE)));
-        System.out.println(Arrays.toString(HandshakeUtils.buildMessage(HandshakeUtils.BIT_FIELD)));
-        System.out.println(Arrays.toString(HandshakeUtils.buildMessage(HandshakeUtils.REQUEST)));
-        System.out.println(Arrays.toString(HandshakeUtils.buildMessage(HandshakeUtils.PIECE)));
-        System.out.println(Arrays.toString(HandshakeUtils.buildMessage(HandshakeUtils.CANCEL)));
-        System.out.println(Arrays.toString(HandshakeUtils.buildMessage(HandshakeUtils.PORT)));
+        // need payload
+        byte[] havePayload = new byte[]{
+                0, 0, 0, -128
+        };
+        System.out.println(Arrays.toString(HandshakeUtils.buildMessage(HandshakeUtils.HAVE, havePayload)));
     }
 
     /**
