@@ -108,14 +108,15 @@ public class HandshakeUtils {
     public static final int PIECE_MAX_LENGTH = 2 << 13;
 
     /**
-     * "BitTorrent protocol"共20个字节
+     * "BitTorrent protocol"共19个字节
      */
-    public static final int BIT_TORRENT_PROTOCOL_LENGTH = 20;
+    public static final int BIT_TORRENT_PROTOCOL_LENGTH = 19;
 
     /**
      * peer第一次回复的Handshake长度，为68，即
      * {@link #BIT_TORRENT_PROTOCOL_VERSION_1_0} 1 byte
-     * {@link #BIT_TORRENT_PROTOCOL_LENGTH} 20 byte
+     * {@link #BIT_TORRENT_PROTOCOL_LENGTH} 19 byte
+     * 8个字节为0的保留位
      * info_hash 20 byte
      * peer_id 20 byte
      */
@@ -125,11 +126,11 @@ public class HandshakeUtils {
      * 握手消息的格式是这样的：
      * <pstrlen><pstr><reserved><info_hash><peer_id>
      * ----0------19-----27----------47-------67----
-     * 第0个字节: 在BitTorrent协议的v1.0版本, pstrlen = 19
-     * 第1-19个字节: pstr = "BitTorrent protocol"的字节码
-     * 第20-27个字节为0
-     * 第28到47个字节为info_hash，即种子info块的hash{@link TorrentUtils#hash(byte[])}
-     * 第48到67个字节为peerId，即客服端类型和版本号，比如：Transmission 2.84
+     * 第0个字节: 在BitTorrent协议的v1.0版本, pstrlen = 19。1个字节
+     * 第1-19个字节: pstr = "BitTorrent protocol"的字节码共19个字节
+     * 第20-27个字节为0，保留位，共8个字节
+     * 第28到47个字节为info_hash，即种子info块的hash{@link TorrentUtils#hash(byte[])}，共20个字节
+     * 第48到67个字节为peerId，即客服端类型和版本号，比如：Transmission 2.84，共20个字节
      * 更多peerId查看<a href="http://bittorrent.org/beps/bep_0x0,20.html"></a>
      * 0-67总共68个字节
      */
