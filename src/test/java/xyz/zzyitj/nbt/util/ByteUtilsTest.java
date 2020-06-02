@@ -1,5 +1,7 @@
 package xyz.zzyitj.nbt.util;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -18,18 +20,23 @@ class ByteUtilsTest {
 
     /**
      * 测试16进制的byte[]转换为10进制int
-     * {@link ByteUtils#bytesToInt(byte[], int, int)}
      */
     @Test
     void bytes2int() {
         byte[] data = {
                 0x7F, 0x1C, 0x7F, 0x1C
         };
-        Assertions.assertEquals(ByteUtils.bytesToInt(data, 0, 3), 2132573980);
-        Assertions.assertEquals(ByteUtils.bytesToInt(data, 1, 3), 1867548);
-        Assertions.assertEquals(ByteUtils.bytesToInt(data, 2, 3), 32540);
-        Assertions.assertEquals(ByteUtils.bytesToInt(data, 3, 3), 28);
-        Assertions.assertEquals(ByteUtils.bytesToInt(data, 0, 4), 0);
+        // ByteBuf也可以实现，后续可能会替换
+        ByteBuf buf = Unpooled.copiedBuffer(data);
+        System.out.println(buf.getUnsignedInt(0));
+        System.out.println(buf.getUnsignedMedium(1));
+        System.out.println(buf.getUnsignedShort(2));
+        System.out.println(buf.getUnsignedByte(3));
+        byte[] data2 = {
+                0, 0, -128, 0
+        };
+        ByteBuf buf2 = Unpooled.copiedBuffer(data2);
+        System.out.println(buf2.getUnsignedInt(0));
     }
 
     @Test

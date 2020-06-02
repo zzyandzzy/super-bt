@@ -1,14 +1,13 @@
 package xyz.zzyitj.nbt.client;
 
-import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.channel.ChannelInboundHandlerAdapter;
 import org.apache.commons.io.FileUtils;
 import xyz.zzyitj.nbt.bean.PeerWire;
+import xyz.zzyitj.nbt.bean.PeerWirePayload;
 import xyz.zzyitj.nbt.bean.Torrent;
-import xyz.zzyitj.nbt.util.ByteUtils;
 import xyz.zzyitj.nbt.util.Const;
 import xyz.zzyitj.nbt.util.HandshakeUtils;
 
@@ -22,7 +21,7 @@ import java.io.IOException;
  * @date 2020/3/15 2:45 下午
  * @email zzy.main@gmail.com
  */
-public class BTClientHandler extends SimpleChannelInboundHandler<ByteBuf> {
+public class BTClientHandler extends ChannelInboundHandlerAdapter {
     /**
      * 种子信息
      */
@@ -36,9 +35,9 @@ public class BTClientHandler extends SimpleChannelInboundHandler<ByteBuf> {
      */
     private boolean unChoke = false;
     /**
-     * 是否是第一次握手
+     * 是否是第一次发送握手消息
      */
-    private boolean isFirstHandshake = true;
+    private boolean isFirstWriteHandshake = true;
 
     public BTClientHandler(Torrent torrent, String savePath) {
         this.torrent = torrent;
@@ -54,90 +53,46 @@ public class BTClientHandler extends SimpleChannelInboundHandler<ByteBuf> {
     }
 
     @Override
-    public void channelRead0(ChannelHandlerContext ctx, ByteBuf msg) {
+    public void channelRead(ChannelHandlerContext ctx, Object msg) {
+        byte[] data = (byte[]) msg;
         // 如果peer同意了我们的握手，说明该peer有该info_hash的文件在做种
-        if (isFirstHandshake) {
-            byte[] data = new byte[HandshakeUtils.BIT_TORRENT_PROTOCOL.length];
-            msg.getBytes(1, data, 0, HandshakeUtils.BIT_TORRENT_PROTOCOL.length);
+        if (isFirstWriteHandshake) {
             if (HandshakeUtils.isHandshake(data)) {
                 // 还可以在上面判断对该peer是否感兴趣
-                isFirstHandshake = false;
+                isFirstWriteHandshake = false;
                 // 发送对此peer感兴趣
                 ctx.writeAndFlush(Unpooled.copiedBuffer(
                         HandshakeUtils.buildMessage(HandshakeUtils.INTERESTED)));
                 System.out.println("buildInterested");
-                // 如果收到的数据长度大于68，则进行拆分数组
-                if (msg.readableBytes() > HandshakeUtils.HANDSHAKE_LENGTH) {
-                    splitData(ctx, msg, HandshakeUtils.HANDSHAKE_LENGTH);
-                }
             } else {
                 // 不是bt协议，关闭连接
                 closePeer(ctx);
             }
         } else {
-            splitData(ctx, msg, 0);
-        }
-    }
-
-    /**
-     * 循环从index处分割数组
-     *
-     * @param ctx   ctx
-     * @param msg   msg
-     * @param index index
-     */
-    private void splitData(ChannelHandlerContext ctx, ByteBuf msg, int index) {
-        int length = msg.readableBytes() - index;
-        byte[] data = new byte[length];
-        msg.getBytes(index, data, 0, length);
-        int start = 0;
-        while (true) {
-            // 取出data前4位转换为10进制
-            int size = ByteUtils.bytesToInt(data, start, start + 3) + 4;
-            doHandshakeHandler(ctx, data, start, size);
-            System.out.println("start: " + start + ", size: " + size
-                    + ", data: [" + data[start] + ", " + data[start + 1] + ", "
-                    + data[start + 2] + ", " + data[start + 3] + ", " + data[start + 4] + "]");
-            if (start + size >= data.length) {
-                return;
-            }
-            start = size;
+            doHandshakeHandler(ctx, data);
         }
     }
 
     /**
      * 根据peer返回的数据判断下一步操作
      *
-     * @param ctx    ctx
-     * @param data   字节数组
-     * @param start  字节数组开始位置
-     * @param length 字节数组开始位置之后的长度
+     * @param ctx  ctx
+     * @param data 字节数组
      */
-    private void doHandshakeHandler(ChannelHandlerContext ctx, byte[] data, int start, int length) {
-        switch (data[start + HandshakeUtils.PEER_WIRE_ID_INDEX]) {
+    private void doHandshakeHandler(ChannelHandlerContext ctx, byte[] data) {
+        switch (data[HandshakeUtils.PEER_WIRE_ID_INDEX]) {
             case HandshakeUtils.CHOKE:
                 closePeer(ctx);
                 break;
             case HandshakeUtils.UN_CHOKE:
-                unChokeHandler(ctx, data, start, length);
+                unChokeHandler(ctx, data);
                 break;
             case HandshakeUtils.BIT_FIELD:
-                bitFieldHandler(ctx, data, start, length);
+                bitFieldHandler(ctx, data);
                 break;
             case HandshakeUtils.PIECE:
                 // 这里就可以保存文件了
-//                try {
-//                    FileUtils.writeByteArrayToFile(
-//                            new File(savePath + torrent.getName()),
-//                            data, start + 13, length - 13, true);
-//                } catch (IOException e) {
-//                    e.printStackTrace();
-//                }
-                if (data.length - start - 13 >= torrent.getTorrentLength()) {
-                    System.out.printf("download %s complete!\n", torrent.getName());
-                    closePeer(ctx);
-                    return;
-                }
+                pieceHandler(ctx, data);
                 break;
             default:
                 // 其他情况
@@ -146,57 +101,78 @@ public class BTClientHandler extends SimpleChannelInboundHandler<ByteBuf> {
     }
 
     /**
+     * 保存区块内容
+     *
+     * @param ctx  ctx
+     * @param data data
+     */
+    private void pieceHandler(ChannelHandlerContext ctx, byte[] data) {
+        PeerWire peerWire = HandshakeUtils.parsePeerWire(data);
+        System.out.println(peerWire);
+        PeerWirePayload peerWirePayload = (PeerWirePayload) peerWire.getPayload();
+        byte[] block = peerWirePayload.getBlock();
+        try {
+            FileUtils.writeByteArrayToFile(
+                    new File(savePath + torrent.getName()),
+                    block, 0, block.length, true);
+            // 判断是否要继续下载区块
+            if (peerWirePayload.getBegin() + block.length >= torrent.getTorrentLength()) {
+                System.out.printf("download %s complete!\n", torrent.getName());
+                closePeer(ctx);
+            } else {
+                doDownload(ctx, peerWirePayload.getBegin() + block.length);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    /**
      * 生成区块下载队列
      *
-     * @param ctx    ctx
-     * @param data   字节数组
-     * @param start  字节数组开始位置
-     * @param length 字节数组开始位置之后的长度
+     * @param ctx  ctx
+     * @param data 字节数组
      */
-    private void bitFieldHandler(ChannelHandlerContext ctx, byte[] data, int start, int length) {
-        PeerWire peerWire = HandshakeUtils.parsePeerWire(data, start, length - 4);
-        // 先验证消息长度是否正确
-//        if (HandshakeUtils.isBitField(peerWire)) {
+    private void bitFieldHandler(ChannelHandlerContext ctx, byte[] data) {
+        PeerWire peerWire = HandshakeUtils.parsePeerWire(data);
         System.out.println(peerWire);
-        // 检查UN_CHOKE状态并生成要下载的区块
+        // 检查peer下载完的区块并且生成区块下载队列
         if (unChoke) {
-            // 这里还得检查peer有没有该区块
             // 之后就可以下载区块了
-            doDownload(ctx);
+//            doDownload(ctx);
         }
-//        } else {
-//            closePeer(ctx);
-//        }
     }
 
     /**
      * 设置unChoke和开始下载
      *
-     * @param ctx    ctx
-     * @param data   字节数组
-     * @param start  字节数组开始位置
-     * @param length 字节数组开始位置之后的长度
+     * @param ctx  ctx
+     * @param data 字节数组
      */
-    private void unChokeHandler(ChannelHandlerContext ctx, byte[] data, int start, int length) {
+    private void unChokeHandler(ChannelHandlerContext ctx, byte[] data) {
         unChoke = true;
         // 之后就可以请求下载区块了
-        doDownload(ctx);
+        doDownload(ctx, 0);
     }
 
     /**
-     * 下载第0个块
+     * 从第0个块的begin处开始下载
      *
-     * @param ctx ctx
+     * @param begin 下载的开始位置
+     * @param ctx   ctx
      */
-    private void doDownload(ChannelHandlerContext ctx) {
-        if (torrent.getTorrentLength() > HandshakeUtils.PIECE_MAX_LENGTH) {
-            System.out.println("request download piece: 0 begin: 0, length: " + HandshakeUtils.PIECE_MAX_LENGTH);
+    private void doDownload(ChannelHandlerContext ctx, int begin) {
+        if (torrent.getTorrentLength() - begin > HandshakeUtils.PIECE_MAX_LENGTH) {
+            System.out.printf("request download index: 0, begin: %d, length: %d\n",
+                    begin, HandshakeUtils.PIECE_MAX_LENGTH);
             ctx.writeAndFlush(Unpooled.copiedBuffer(
-                    HandshakeUtils.requestPieceHandler(0, 0, HandshakeUtils.PIECE_MAX_LENGTH)));
+                    HandshakeUtils.requestPieceHandler(0, begin, HandshakeUtils.PIECE_MAX_LENGTH)));
         } else {
-            System.out.println("request download piece: 0 begin: 0, length: " + torrent.getTorrentLength());
+            System.out.printf("request download index: 0, begin: %d, length: %d\n",
+                    begin, torrent.getTorrentLength());
             ctx.writeAndFlush(Unpooled.copiedBuffer(
-                    HandshakeUtils.requestPieceHandler(0, 0, torrent.getTorrentLength())));
+                    HandshakeUtils.requestPieceHandler(0, begin, torrent.getTorrentLength() - begin)));
         }
     }
 

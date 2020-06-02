@@ -9,27 +9,6 @@ package xyz.zzyitj.nbt.util;
  */
 public class ByteUtils {
     /**
-     * 把16进制的data[start,end]转换为十进制int
-     *
-     * @param data  字节数组
-     * @param start 开始的位置
-     * @param end   结束的位置
-     * @return 10进制
-     */
-    public static int bytesToInt(byte[] data, int start, int end) {
-        if (data.length < (end + 1)) {
-            return 0;
-        }
-        int num = 0;
-        for (int i = end; i >= start; i--) {
-            // 先把当前的data[i]求出，再求和
-            int temp = data[i] << (8 * (end - i));
-            num += temp;
-        }
-        return num;
-    }
-
-    /**
      * 大端存储：Big-endian
      * 10进制的int转16进制的字节数组
      * 将int转为低字节在前，高字节在后的byte数组

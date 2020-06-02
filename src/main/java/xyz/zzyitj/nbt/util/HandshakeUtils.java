@@ -1,5 +1,7 @@
 package xyz.zzyitj.nbt.util;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import xyz.zzyitj.nbt.bean.PeerWire;
 import xyz.zzyitj.nbt.bean.PeerWirePayload;
 
@@ -95,7 +97,7 @@ public class HandshakeUtils {
     public static final int PEER_WIRE_ID_INDEX = 4;
 
     /**
-     * BT协议1.0
+     * BT协议的版本：1.0
      */
     public static final byte BIT_TORRENT_PROTOCOL_VERSION_1_0 = 0x13;
 
@@ -105,11 +107,15 @@ public class HandshakeUtils {
      */
     public static final int PIECE_MAX_LENGTH = 2 << 13;
 
+    /**
+     * "BitTorrent protocol"共20个字节
+     */
+    public static final int BIT_TORRENT_PROTOCOL_LENGTH = 20;
 
     /**
      * peer第一次回复的Handshake长度，为68，即
      * {@link #BIT_TORRENT_PROTOCOL_VERSION_1_0} 1 byte
-     * {@link #BIT_TORRENT_PROTOCOL} 20 byte
+     * {@link #BIT_TORRENT_PROTOCOL_LENGTH} 20 byte
      * info_hash 20 byte
      * peer_id 20 byte
      */
@@ -136,22 +142,16 @@ public class HandshakeUtils {
     };
 
     /**
-     * bt协议头：BitTorrent Protocol的字节码
-     */
-    public static final byte[] BIT_TORRENT_PROTOCOL = {
-            0x42, 0x69, 0x74, 0x54, 0x6f, 0x72, 0x72, 0x65, 0x6e, 0x74, 0x20, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x63, 0x6f, 0x6c
-    };
-
-    /**
-     * 判断data字节数组是否是和{@link #BIT_TORRENT_PROTOCOL}一致
+     * 判断data字节数组是否是和{@link #HANDSHAKE_PACKAGE}的第1个到第20个字节一致
      * 判断是否为bt协议
      *
      * @param data 字节数组
      * @return true 是bt协议 false 不是bt协议
      */
     public static boolean isHandshake(byte[] data) {
-        for (int i = 0; i < BIT_TORRENT_PROTOCOL.length; i++) {
-            if (BIT_TORRENT_PROTOCOL[i] != data[i]) {
+        // 忽略掉第一个字节，第一个字节是bt协议的版本
+        for (int i = 1; i <= BIT_TORRENT_PROTOCOL_LENGTH; i++) {
+            if (HANDSHAKE_PACKAGE[i] != data[i]) {
                 return false;
             }
         }
@@ -225,7 +225,8 @@ public class HandshakeUtils {
      */
     public static PeerWire parsePeerWire(byte[] data) {
         // size 为data的0-3位
-        int size = ByteUtils.bytesToInt(data, 0, 3);
+        ByteBuf buf = Unpooled.copiedBuffer(data, 0, 4);
+        int size = (int) buf.getUnsignedInt(0);
         return parsePeerWire(data, 0, size);
     }
 
@@ -248,9 +249,10 @@ public class HandshakeUtils {
         peerWire.setSize(size);
         if (size > 1) {
             // 根据id判断payload类型
-            if (id >= 6 && id <= 8) {
-                int index = ByteUtils.bytesToInt(data, start + 5, start + 8);
-                int begin = ByteUtils.bytesToInt(data, start + 9, start + 12);
+            if (id >= HandshakeUtils.REQUEST && id <= HandshakeUtils.CANCEL) {
+                ByteBuf buf = Unpooled.copiedBuffer(data, start + 5, 8);
+                int index = (int) buf.getUnsignedInt(0);
+                int begin = (int) buf.getUnsignedInt(4);
                 byte[] block = new byte[size - 9];
                 System.arraycopy(data, start + 13, block, 0, size - 9);
                 peerWire.setPayload(new PeerWirePayload(index, begin, block));

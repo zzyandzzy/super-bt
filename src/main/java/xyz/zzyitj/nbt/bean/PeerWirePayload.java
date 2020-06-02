@@ -1,7 +1,5 @@
 package xyz.zzyitj.nbt.bean;
 
-import java.util.Arrays;
-
 /**
  * @author intent
  * @version 1.0
@@ -27,7 +25,7 @@ public class PeerWirePayload {
         return "PeerWirePayload{" +
                 "index=" + index +
                 ", begin=" + begin +
-                ", block=" + Arrays.toString(block) +
+                ", blockLength=" + block.length +
                 '}';
     }
 

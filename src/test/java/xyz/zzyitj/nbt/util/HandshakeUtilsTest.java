@@ -6,7 +6,6 @@ import xyz.zzyitj.nbt.bean.PeerWire;
 import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static xyz.zzyitj.nbt.util.HandshakeUtils.BIT_TORRENT_PROTOCOL;
 
 /**
  * @author intent
@@ -15,15 +14,6 @@ import static xyz.zzyitj.nbt.util.HandshakeUtils.BIT_TORRENT_PROTOCOL;
  * @email zzy.main@gmail.com
  */
 class HandshakeUtilsTest {
-
-    /**
-     * 测试下{@link HandshakeUtils#BIT_TORRENT_PROTOCOL}会输出啥
-     * 结果：BitTorrent Protocol
-     */
-    @Test
-    void testBTProtocol() {
-        System.out.println(new String(BIT_TORRENT_PROTOCOL));
-    }
 
     /**
      * {@link HandshakeUtils#isHandshake(byte[])}
