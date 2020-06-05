@@ -9,14 +9,16 @@ package xyz.zzyitj.nbt.util;
  */
 public class ByteUtils {
     /**
-     * 大端存储：Big-endian
+     * 小端存储：Big-endian
      * 10进制的int转16进制的字节数组
      * 将int转为低字节在前，高字节在后的byte数组
+     * 数据的高字节保存在内存的高地址中
+     * 数据的低字节保存在内存的低地址中
      *
      * @param val int
      * @return 字节数组
      */
-    public static byte[] intToBytesBigEndian(int val) {
+    public static byte[] intToBytesLittleEndian(int val) {
         byte[] data = new byte[4];
         data[0] = (byte) (val & 0xff);
         data[1] = (byte) ((val >> 8) & 0xff);
@@ -26,14 +28,15 @@ public class ByteUtils {
     }
 
     /**
-     * 小端存储：Little-endian
+     * 大端存储：Little-endian
      * 10进制的int转16进制的字节数组
-     * 将int转为高字节在前，低字节在后的byte数组
+     * 数据的高字节保存在内存的低地址中
+     * 数据的低字节保存在内存的高地址中
      *
      * @param val int
      * @return byte[]
      */
-    public static byte[] intToBytesLittleEndian(int val) {
+    public static byte[] intToBytesBigEndian(int val) {
         byte[] data = new byte[4];
         data[3] = (byte) (val & 0xff);
         data[2] = (byte) (val >> 8 & 0xff);

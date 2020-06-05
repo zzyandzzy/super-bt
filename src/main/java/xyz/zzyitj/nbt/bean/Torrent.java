@@ -13,6 +13,9 @@ public class Torrent implements Serializable {
 
     private static final long serialVersionUID = -3617303636715796178L;
     private String announce;
+    /**
+     * <a href="https://www.bittorrent.org/beps/bep_0012.html"></a>
+     */
     private List<String> announceList;
     private long creationDate;
     private String createdBy;
@@ -25,6 +28,7 @@ public class Torrent implements Serializable {
      * 是否是私有种子
      * 私有种子不在DHT网络获取peer
      * 只在tracker上获取peer
+     * <a href="https://www.bittorrent.org/beps/bep_0027.html"></a>
      */
     private boolean isPrivate;
     /**
