@@ -21,7 +21,7 @@ import java.io.IOException;
  * @date 2020/3/15 2:45 下午
  * @email zzy.main@gmail.com
  */
-public class BTClientHandler extends ChannelInboundHandlerAdapter {
+public class TCPClientHandler extends ChannelInboundHandlerAdapter {
     /**
      * 种子信息
      */
@@ -39,7 +39,7 @@ public class BTClientHandler extends ChannelInboundHandlerAdapter {
      */
     private boolean isFirstWriteHandshake = true;
 
-    public BTClientHandler(Torrent torrent, String savePath) {
+    public TCPClientHandler(Torrent torrent, String savePath) {
         this.torrent = torrent;
         this.savePath = savePath;
     }
