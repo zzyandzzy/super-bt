@@ -1,7 +1,20 @@
 package xyz.zzyitj.nbt.server;
 
+import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelPipeline;
+import io.netty.channel.EventLoopGroup;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.SocketChannel;
+import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.logging.LoggingHandler;
+import xyz.zzyitj.nbt.bean.Torrent;
+import xyz.zzyitj.nbt.codec.PeerWireProtocolDecoder;
+import xyz.zzyitj.nbt.handler.TCPServerHandler;
+import xyz.zzyitj.nbt.util.PeerWireConst;
 
+import java.net.InetSocketAddress;
 import java.util.List;
 
 /**
@@ -20,17 +33,55 @@ public class TCPServer implements Server {
     /**
      * 做种可能多个路径
      */
-    private List<String> savePath;
+    private List<Torrent> torrentList;
     private LoggingHandler loggingHandler;
+
+    private EventLoopGroup bossGroup;
+    private EventLoopGroup workerGroup;
 
     public TCPServer(TCPServerBuilder builder) {
         this.port = builder.port;
-        this.savePath = builder.savePath;
+        this.torrentList = builder.torrentList;
         this.loggingHandler = builder.loggingHandler;
     }
 
     @Override
+    public String toString() {
+        return "TCPServer{" +
+                "port=" + port +
+                ", torrentList=" + torrentList +
+                ", loggingHandler=" + loggingHandler +
+                '}';
+    }
+
+    @Override
     public void start() throws InterruptedException {
+        bossGroup = new NioEventLoopGroup(1);
+        workerGroup = new NioEventLoopGroup();
+        try {
+            ServerBootstrap b = new ServerBootstrap();
+            b.group(bossGroup, workerGroup)
+                    .channel(NioServerSocketChannel.class);
+            if (loggingHandler != null) {
+                b.handler(loggingHandler);
+            }
+            b.childHandler(new ChannelInitializer<SocketChannel>() {
+                @Override
+                public void initChannel(SocketChannel ch) {
+                    ChannelPipeline p = ch.pipeline();
+                    p.addLast(new PeerWireProtocolDecoder(PeerWireConst.PEER_WIRE_MAX_FRAME_LENGTH,
+                            0, 4, 0, 0, false));
+                    p.addLast(new TCPServerHandler.TCPServerHandlerBuilder()
+                            .torrentList(torrentList)
+                            .build());
+                }
+            });
+            ChannelFuture f = b.bind(new InetSocketAddress(this.port)).sync();
+            f.channel().closeFuture().sync();
+        } finally {
+            bossGroup.shutdownGracefully();
+            workerGroup.shutdownGracefully();
+        }
     }
 
     static class TCPServerBuilder {
@@ -38,8 +89,13 @@ public class TCPServer implements Server {
         /**
          * 做种可能多个路径
          */
-        private List<String> savePath;
+        private List<Torrent> torrentList;
         private LoggingHandler loggingHandler;
+
+        public TCPServerBuilder(int port, List<Torrent> torrentList) {
+            this.port = port;
+            this.torrentList = torrentList;
+        }
 
         public TCPServer builder() {
             return new TCPServer(this);
@@ -50,8 +106,8 @@ public class TCPServer implements Server {
             return this;
         }
 
-        public TCPServerBuilder savePath(List<String> savePath) {
-            this.savePath = savePath;
+        public TCPServerBuilder torrentList(List<Torrent> torrentList) {
+            this.torrentList = torrentList;
             return this;
         }
 

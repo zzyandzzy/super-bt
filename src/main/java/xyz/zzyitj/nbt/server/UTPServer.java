@@ -1,6 +1,7 @@
 package xyz.zzyitj.nbt.server;
 
 import io.netty.handler.logging.LoggingHandler;
+import xyz.zzyitj.nbt.bean.Torrent;
 
 import java.util.List;
 
@@ -20,12 +21,12 @@ public class UTPServer implements Server {
     /**
      * 做种可能多个路径
      */
-    private List<String> savePath;
+    private List<Torrent> torrentList;
     private LoggingHandler loggingHandler;
 
     public UTPServer(UTPServerBuilder builder) {
         this.port = builder.port;
-        this.savePath = builder.savePath;
+        this.torrentList = builder.torrentList;
         this.loggingHandler = builder.loggingHandler;
     }
 
@@ -38,8 +39,13 @@ public class UTPServer implements Server {
         /**
          * 做种可能多个路径
          */
-        private List<String> savePath;
+        private List<Torrent> torrentList;
         private LoggingHandler loggingHandler;
+
+        public UTPServerBuilder(int port, List<Torrent> torrentList) {
+            this.port = port;
+            this.torrentList = torrentList;
+        }
 
         public UTPServer builder() {
             return new UTPServer(this);
@@ -50,8 +56,8 @@ public class UTPServer implements Server {
             return this;
         }
 
-        public UTPServerBuilder savePath(List<String> savePath) {
-            this.savePath = savePath;
+        public UTPServerBuilder torrentList(List<Torrent> torrentList) {
+            this.torrentList = torrentList;
             return this;
         }
 

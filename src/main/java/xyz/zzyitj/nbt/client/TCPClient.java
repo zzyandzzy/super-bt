@@ -3,13 +3,17 @@ package xyz.zzyitj.nbt.client;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.logging.LoggingHandler;
 import xyz.zzyitj.nbt.bean.Torrent;
-import xyz.zzyitj.nbt.util.HandshakeUtils;
+import xyz.zzyitj.nbt.codec.PeerWireProtocolDecoder;
+import xyz.zzyitj.nbt.handler.TCPClientHandler;
+import xyz.zzyitj.nbt.handler.TCPHandler;
+import xyz.zzyitj.nbt.util.PeerWireConst;
 
 import java.net.InetSocketAddress;
 
@@ -31,14 +35,7 @@ public class TCPClient implements Client {
     private String savePath;
     private LoggingHandler loggingHandler;
 
-    private EventLoopGroup workGroup;
-
-    /**
-     * 这里帧最大长度加13是因为当帧id为7时
-     * 帧长度为HandshakeUtils.PIECE_MAX_LENGTH + 4个byte头部length + 1个byte的id + 4个byte的index + 4个byte的begin
-     * {@link HandshakeUtils#PIECE}
-     */
-    private final int MAX_FRAME_LENGTH = HandshakeUtils.PIECE_MAX_LENGTH + 13;
+    private EventLoopGroup workerGroup;
 
     public TCPClient(TCPClientBuilder builder) {
         this.ip = builder.ip;
@@ -61,27 +58,30 @@ public class TCPClient implements Client {
 
     @Override
     public void start() throws InterruptedException {
-        workGroup = new NioEventLoopGroup();
+        workerGroup = new NioEventLoopGroup();
         try {
             Bootstrap b = new Bootstrap();
-            b.group(workGroup)
+            b.group(workerGroup)
                     .channel(NioSocketChannel.class)
                     .handler(new ChannelInitializer<SocketChannel>() {
                         @Override
                         public void initChannel(SocketChannel ch) {
+                            ChannelPipeline p = ch.pipeline();
                             if (loggingHandler != null) {
-                                ch.pipeline().addLast("logging", loggingHandler);
+                                p.addLast("logging", loggingHandler);
                             }
-                            ch.pipeline().addLast(
-                                    new PeerWireProtocolDecoder(MAX_FRAME_LENGTH,
-                                            0, 4, 0, 0, false));
-                            ch.pipeline().addLast(new TCPClientHandler(torrent, savePath));
+                            p.addLast(new PeerWireProtocolDecoder(PeerWireConst.PEER_WIRE_MAX_FRAME_LENGTH,
+                                    0, 4, 0, 0, false));
+                            p.addLast(new TCPClientHandler.TCPClientHandlerBuilder()
+                                    .savePath(savePath)
+                                    .torrent(torrent)
+                                    .build());
                         }
                     });
             ChannelFuture f = b.connect(new InetSocketAddress(this.ip, this.port)).sync();
             f.channel().closeFuture().sync();
         } finally {
-            workGroup.shutdownGracefully();
+            workerGroup.shutdownGracefully();
         }
     }
 
@@ -92,9 +92,11 @@ public class TCPClient implements Client {
         private String savePath;
         private LoggingHandler loggingHandler;
 
-        public TCPClientBuilder(String ip, int port) {
+        public TCPClientBuilder(String ip, int port, Torrent torrent, String savePath) {
             this.ip = ip;
             this.port = port;
+            this.torrent = torrent;
+            this.savePath = savePath;
         }
 
         TCPClient builder() {

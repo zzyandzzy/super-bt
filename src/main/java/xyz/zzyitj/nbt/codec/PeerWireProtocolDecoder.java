@@ -1,4 +1,4 @@
-package xyz.zzyitj.nbt.client;
+package xyz.zzyitj.nbt.codec;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
@@ -9,6 +9,7 @@ import java.nio.ByteOrder;
 
 /**
  * xyz.zzyitj.nbt.client
+ * 解码PeerWire协议包
  *
  * @author intent zzy.main@gmail.com
  * @date 2020/6/2 9:09 上午
@@ -73,13 +74,13 @@ public class PeerWireProtocolDecoder extends LengthFieldBasedFrameDecoder {
             return null;
         }
         if (in.readableBytes() < HEADER_SIZE) {
-            throw new Exception("字节数不足");
+            throw new Exception("byte length: " + in.readableBytes() + " error.");
         }
         //读取body
         byte[] data = new byte[in.readableBytes()];
         in.readBytes(data);
 
-        System.out.println("length: " + data.length);
+//        System.out.println("length: " + data.length);
         return data;
     }
 }
