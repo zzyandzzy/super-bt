@@ -14,7 +14,7 @@ import java.net.InetSocketAddress;
 /**
  * xyz.zzyitj.nbt.client
  * BT协议的UTP实现客服端
- * 使用Builder模式
+ * 使用Builder设计模式
  * <p>
  * http://www.bittorrent.org/beps/bep_0029.html
  *
