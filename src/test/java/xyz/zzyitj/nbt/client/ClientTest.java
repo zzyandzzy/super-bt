@@ -6,7 +6,6 @@ import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import xyz.zzyitj.nbt.bean.Torrent;
-import xyz.zzyitj.nbt.util.Const;
 import xyz.zzyitj.nbt.util.TorrentUtils;
 
 import java.io.File;
@@ -19,6 +18,17 @@ import java.io.IOException;
  * @email zzy.main@gmail.com
  */
 class ClientTest {
+    // Remote Transmission host
+//    public static final String TEST_IP = "59.110.216.57";
+    // Local Transmission/qBitTorrent host
+    public static final String TEST_IP = "127.0.0.1";
+    // Remote Transmission port
+//    public static final int TEST_PORT = 19999;
+    // Local qBitTorrent port
+//    public static final int TEST_PORT = 18357;
+    // Local Transmission port
+    public static final int TEST_PORT = 51413;
+
     private static final String savePath = "./test/";
     private static Torrent torrent;
 
@@ -53,7 +63,7 @@ class ClientTest {
      */
     @Test
     void testTCPClient() throws InterruptedException {
-        Client client = new TCPClient.TCPClientBuilder(Const.TEST_HOST, Const.TEST_PORT)
+        Client client = new TCPClient.TCPClientBuilder(TEST_IP, TEST_PORT)
                 .torrent(torrent)
                 .savePath(savePath)
                 .loggingHandler(new LoggingHandler(LogLevel.INFO))
@@ -68,7 +78,7 @@ class ClientTest {
      */
     @Test
     void testUTPClient() throws InterruptedException {
-        Client client = new UTPClient.UTPClientBuilder(Const.TEST_HOST, Const.TEST_PORT)
+        Client client = new UTPClient.UTPClientBuilder(TEST_IP, TEST_PORT)
                 .torrent(torrent)
                 .savePath(savePath)
                 .builder();

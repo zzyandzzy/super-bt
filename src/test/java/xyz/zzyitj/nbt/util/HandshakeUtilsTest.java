@@ -25,7 +25,7 @@ class HandshakeUtilsTest {
      */
     @Test
     void buildHandshake() {
-        System.out.println(Arrays.toString(HandshakeUtils.buildHandshake(Const.TEST_INFO_HASH, Const.TEST_PEER_ID)));
+        System.out.println(Arrays.toString(HandshakeUtils.buildHandshake(Const.TEST_PEER_ID, Const.TEST_PEER_ID)));
     }
 
     /**
