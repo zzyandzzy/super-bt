@@ -10,16 +10,18 @@ import xyz.zzyitj.nbt.bean.PeerWirePayload;
 import xyz.zzyitj.nbt.bean.Torrent;
 import xyz.zzyitj.nbt.util.Const;
 import xyz.zzyitj.nbt.util.HandshakeUtils;
+import xyz.zzyitj.nbt.util.PeerWireConst;
 
 import java.io.File;
 import java.io.IOException;
 
 
 /**
- * @author intent
- * @version 1.0
+ * 处理TCP客户端情况
+ *
+ * @author intent zzy.main@gmail.com
  * @date 2020/3/15 2:45 下午
- * @email zzy.main@gmail.com
+ * @since 1.0
  */
 public class TCPClientHandler extends ChannelInboundHandlerAdapter {
     /**
@@ -62,7 +64,7 @@ public class TCPClientHandler extends ChannelInboundHandlerAdapter {
                 isFirstWriteHandshake = false;
                 // 发送对此peer感兴趣
                 ctx.writeAndFlush(Unpooled.copiedBuffer(
-                        HandshakeUtils.buildMessage(HandshakeUtils.INTERESTED)));
+                        HandshakeUtils.buildMessage(PeerWireConst.INTERESTED)));
                 System.out.println("buildInterested");
             } else {
                 // 不是bt协议，关闭连接
@@ -80,17 +82,17 @@ public class TCPClientHandler extends ChannelInboundHandlerAdapter {
      * @param data 字节数组
      */
     private void doHandshakeHandler(ChannelHandlerContext ctx, byte[] data) {
-        switch (data[HandshakeUtils.PEER_WIRE_ID_INDEX]) {
-            case HandshakeUtils.CHOKE:
+        switch (data[PeerWireConst.PEER_WIRE_ID_INDEX]) {
+            case PeerWireConst.CHOKE:
                 closePeer(ctx);
                 break;
-            case HandshakeUtils.UN_CHOKE:
+            case PeerWireConst.UN_CHOKE:
                 unChokeHandler(ctx, data);
                 break;
-            case HandshakeUtils.BIT_FIELD:
+            case PeerWireConst.BIT_FIELD:
                 bitFieldHandler(ctx, data);
                 break;
-            case HandshakeUtils.PIECE:
+            case PeerWireConst.PIECE:
                 // 这里就可以保存文件了
                 pieceHandler(ctx, data);
                 break;

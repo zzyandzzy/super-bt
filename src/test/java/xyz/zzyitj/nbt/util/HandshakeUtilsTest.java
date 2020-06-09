@@ -35,16 +35,16 @@ class HandshakeUtilsTest {
     @Test
     void buildMessage() {
         // no payload
-        System.out.println(Arrays.toString(HandshakeUtils.buildMessage(HandshakeUtils.KEEP_ALIVE)));
-        System.out.println(Arrays.toString(HandshakeUtils.buildMessage(HandshakeUtils.CHOKE)));
-        System.out.println(Arrays.toString(HandshakeUtils.buildMessage(HandshakeUtils.UN_CHOKE)));
-        System.out.println(Arrays.toString(HandshakeUtils.buildMessage(HandshakeUtils.INTERESTED)));
-        System.out.println(Arrays.toString(HandshakeUtils.buildMessage(HandshakeUtils.NOT_INTERESTED)));
+        System.out.println(Arrays.toString(HandshakeUtils.buildMessage(PeerWireConst.KEEP_ALIVE)));
+        System.out.println(Arrays.toString(HandshakeUtils.buildMessage(PeerWireConst.CHOKE)));
+        System.out.println(Arrays.toString(HandshakeUtils.buildMessage(PeerWireConst.UN_CHOKE)));
+        System.out.println(Arrays.toString(HandshakeUtils.buildMessage(PeerWireConst.INTERESTED)));
+        System.out.println(Arrays.toString(HandshakeUtils.buildMessage(PeerWireConst.NOT_INTERESTED)));
         // need payload
         byte[] havePayload = new byte[]{
                 0, 0, 0, -128
         };
-        System.out.println(Arrays.toString(HandshakeUtils.buildMessage(HandshakeUtils.HAVE, havePayload)));
+        System.out.println(Arrays.toString(HandshakeUtils.buildMessage(PeerWireConst.HAVE, havePayload)));
     }
 
     /**

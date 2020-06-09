@@ -1,4 +1,4 @@
-package xyz.zzyitj.nbt.client;
+package xyz.zzyitj.nbt.codec;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
@@ -9,6 +9,7 @@ import java.nio.ByteOrder;
 
 /**
  * xyz.zzyitj.nbt.client
+ * 解码PeerWire协议包
  *
  * @author intent zzy.main@gmail.com
  * @date 2020/6/2 9:09 上午

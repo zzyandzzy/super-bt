@@ -9,6 +9,7 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.logging.LoggingHandler;
 import xyz.zzyitj.nbt.bean.Torrent;
+import xyz.zzyitj.nbt.codec.PeerWireProtocolDecoder;
 import xyz.zzyitj.nbt.util.HandshakeUtils;
 
 import java.net.InetSocketAddress;
