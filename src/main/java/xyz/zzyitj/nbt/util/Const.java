@@ -8,6 +8,11 @@ package xyz.zzyitj.nbt.util;
  */
 public class Const {
     /**
+     * 服务端口
+     */
+    public static final int SERVER_PORT = 11280;
+
+    /**
      * Transmission 2.84的PeerID
      * 更多客服端查看<a href="http://bittorrent.org/beps/bep_0020.html"></a>
      */

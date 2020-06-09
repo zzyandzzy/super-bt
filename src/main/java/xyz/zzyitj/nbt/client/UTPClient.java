@@ -29,7 +29,7 @@ public class UTPClient implements Client {
     private String savePath;
     private LoggingHandler loggingHandler;
 
-    private EventLoopGroup workGroup;
+    private EventLoopGroup workerGroup;
 
     public UTPClient(UTPClientBuilder builder) {
         this.ip = builder.ip;
@@ -52,10 +52,10 @@ public class UTPClient implements Client {
 
     @Override
     public void start() throws InterruptedException {
-        workGroup = new NioEventLoopGroup();
+        workerGroup = new NioEventLoopGroup();
         try {
             Bootstrap b = new Bootstrap();
-            b.group(workGroup)
+            b.group(workerGroup)
                     // 通过NioDatagramChannel创建Channel，并设置Socket参数支持广播
                     .channel(NioDatagramChannel.class)
                     .option(ChannelOption.SO_BROADCAST, true);
@@ -65,7 +65,7 @@ public class UTPClient implements Client {
             ChannelFuture f = b.connect(new InetSocketAddress(this.ip, this.port)).sync();
             f.channel().closeFuture().sync();
         } finally {
-            workGroup.shutdownGracefully();
+            workerGroup.shutdownGracefully();
         }
     }
 
@@ -76,9 +76,11 @@ public class UTPClient implements Client {
         private String savePath;
         private LoggingHandler loggingHandler;
 
-        public UTPClientBuilder(String ip, int port) {
+        public UTPClientBuilder(String ip, int port, Torrent torrent, String savePath) {
             this.ip = ip;
             this.port = port;
+            this.torrent = torrent;
+            this.savePath = savePath;
         }
 
         UTPClient builder() {

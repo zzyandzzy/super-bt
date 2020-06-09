@@ -110,4 +110,11 @@ public class PeerWireConst {
      */
     public static final int PEER_WIRE_ID_INDEX = 4;
 
+    /**
+     * 这里帧最大长度加13是因为当帧id为7时
+     * 帧长度为HandshakeUtils.PIECE_MAX_LENGTH + 4个byte头部length + 1个byte的id + 4个byte的index + 4个byte的begin
+     * {@link xyz.zzyitj.nbt.util.PeerWireConst#PIECE}
+     */
+    public static final int PEER_WIRE_MAX_FRAME_LENGTH = HandshakeUtils.PIECE_MAX_LENGTH + 13;
+
 }
