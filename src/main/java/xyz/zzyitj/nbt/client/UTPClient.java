@@ -2,29 +2,27 @@ package xyz.zzyitj.nbt.client;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.socket.SocketChannel;
-import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.channel.socket.nio.NioDatagramChannel;
 import io.netty.handler.logging.LoggingHandler;
 import xyz.zzyitj.nbt.bean.Torrent;
-import xyz.zzyitj.nbt.util.HandshakeUtils;
 
 import java.net.InetSocketAddress;
 
 /**
  * xyz.zzyitj.nbt.client
- * BT协议的TCP实现客户端类
+ * BT协议的UTP实现客服端
  * 使用Builder模式
  * <p>
- * http://www.bittorrent.org/beps/bep_0003.html
+ * http://www.bittorrent.org/beps/bep_0029.html
  *
  * @author intent zzy.main@gmail.com
- * @date 2020/6/9 8:23 上午
+ * @date 2020/6/9 8:45 上午
  * @since 1.0
  */
-public class TCPClient implements Client {
+public class UTPClient implements Client {
     private String ip;
     private int port;
     private Torrent torrent;
@@ -33,14 +31,7 @@ public class TCPClient implements Client {
 
     private EventLoopGroup workGroup;
 
-    /**
-     * 这里帧最大长度加13是因为当帧id为7时
-     * 帧长度为HandshakeUtils.PIECE_MAX_LENGTH + 4个byte头部length + 1个byte的id + 4个byte的index + 4个byte的begin
-     * {@link HandshakeUtils#PIECE}
-     */
-    private final int MAX_FRAME_LENGTH = HandshakeUtils.PIECE_MAX_LENGTH + 13;
-
-    public TCPClient(TCPClientBuilder builder) {
+    public UTPClient(UTPClientBuilder builder) {
         this.ip = builder.ip;
         this.port = builder.port;
         this.torrent = builder.torrent;
@@ -50,7 +41,7 @@ public class TCPClient implements Client {
 
     @Override
     public String toString() {
-        return "TCPClient{" +
+        return "UTPClient{" +
                 "ip='" + ip + '\'' +
                 ", port=" + port +
                 ", torrent=" + torrent +
@@ -65,19 +56,12 @@ public class TCPClient implements Client {
         try {
             Bootstrap b = new Bootstrap();
             b.group(workGroup)
-                    .channel(NioSocketChannel.class)
-                    .handler(new ChannelInitializer<SocketChannel>() {
-                        @Override
-                        public void initChannel(SocketChannel ch) {
-                            if (loggingHandler != null) {
-                                ch.pipeline().addLast("logging", loggingHandler);
-                            }
-                            ch.pipeline().addLast(
-                                    new PeerWireProtocolDecoder(MAX_FRAME_LENGTH,
-                                            0, 4, 0, 0, false));
-                            ch.pipeline().addLast(new TCPClientHandler(torrent, savePath));
-                        }
-                    });
+                    // 通过NioDatagramChannel创建Channel，并设置Socket参数支持广播
+                    .channel(NioDatagramChannel.class)
+                    .option(ChannelOption.SO_BROADCAST, true);
+            // UDP相对于TCP不需要在客户端和服务端建立实际的连接
+            // 因此不需要为连接（ChannelPipeline）设置handler
+//                    .handler();
             ChannelFuture f = b.connect(new InetSocketAddress(this.ip, this.port)).sync();
             f.channel().closeFuture().sync();
         } finally {
@@ -85,43 +69,43 @@ public class TCPClient implements Client {
         }
     }
 
-    static class TCPClientBuilder {
+    static class UTPClientBuilder {
         private String ip;
         private int port;
         private Torrent torrent;
         private String savePath;
         private LoggingHandler loggingHandler;
 
-        public TCPClientBuilder(String ip, int port) {
+        public UTPClientBuilder(String ip, int port) {
             this.ip = ip;
             this.port = port;
         }
 
-        TCPClient builder() {
-            return new TCPClient(this);
+        UTPClient builder() {
+            return new UTPClient(this);
         }
 
-        public TCPClientBuilder ip(String ip) {
+        public UTPClientBuilder ip(String ip) {
             this.ip = ip;
             return this;
         }
 
-        public TCPClientBuilder port(int port) {
+        public UTPClientBuilder port(int port) {
             this.port = port;
             return this;
         }
 
-        public TCPClientBuilder torrent(Torrent torrent) {
+        public UTPClientBuilder torrent(Torrent torrent) {
             this.torrent = torrent;
             return this;
         }
 
-        public TCPClientBuilder savePath(String savePath) {
+        public UTPClientBuilder savePath(String savePath) {
             this.savePath = savePath;
             return this;
         }
 
-        public TCPClientBuilder loggingHandler(LoggingHandler loggingHandler) {
+        public UTPClientBuilder loggingHandler(LoggingHandler loggingHandler) {
             this.loggingHandler = loggingHandler;
             return this;
         }
