@@ -47,7 +47,7 @@ public class TCPClientHandler extends TCPHandler {
      */
     private void doDownload(ChannelHandlerContext ctx) {
         if (requestPieceQueue != null) {
-            RequestPiece requestPiece = requestPieceQueue.peek();
+            RequestPiece requestPiece = requestPieceQueue.poll();
             if (requestPiece != null) {
                 ctx.writeAndFlush(Unpooled.copiedBuffer(
                         HandshakeUtils.requestPieceHandler(
@@ -111,17 +111,27 @@ public class TCPClientHandler extends TCPHandler {
         int byteSum = 0;
         // 区块数
         int pieceSum = torrent.getPieces().length / 20;
+        int pieceRequestSumIncrement = capacity % pieceSum == 0 ? 0 : 1;
+        // 一个区块需要请求的次数
+        int pieceRequestSum = capacity / pieceSum + pieceRequestSumIncrement;
+        // 当前的位置
+        int currentIndex = 0;
         for (int i = 0; i < pieceSum; i++) {
-            for (int j = 0; j < capacity / pieceSum; j++) {
+            for (int j = 0; j < pieceRequestSum; j++) {
                 int begin = j * HandshakeUtils.PIECE_MAX_LENGTH;
                 int length = HandshakeUtils.PIECE_MAX_LENGTH;
                 // 判断是否是最后一个下载请求
                 // 因为最后一个下载请求的大小很大可能不是16Kb
-                if (i == pieceSum - 1 && j == (capacity / pieceSum) - 1) {
+                if (currentIndex < capacity - 1) {
+                    byteSum += length;
+                    requestPieceQueue.offer(new RequestPiece(i, begin, length));
+                } else {
                     length = torrent.getTorrentLength() - byteSum;
+                    byteSum += length;
+                    requestPieceQueue.offer(new RequestPiece(i, begin, length));
+                    break;
                 }
-                byteSum += length;
-                requestPieceQueue.offer(new RequestPiece(i, begin, length));
+                currentIndex++;
             }
         }
     }
@@ -142,13 +152,13 @@ public class TCPClientHandler extends TCPHandler {
         PeerWire peerWire = HandshakeUtils.parsePeerWire(data);
         PeerWirePayload peerWirePayload = (PeerWirePayload) peerWire.getPayload();
         byte[] block = peerWirePayload.getBlock();
+        System.out.printf("Client: response piece, index: %d, begin: %d, length: %d\n",
+                peerWirePayload.getIndex(), peerWirePayload.getBegin(), peerWirePayload.getBlock().length);
         try {
             FileUtils.writeByteArrayToFile(
                     new File(savePath + torrent.getName()),
                     block, 0, block.length, true);
             if (requestPieceQueue != null) {
-                // 移除下载队列头
-                requestPieceQueue.poll();
                 // 判断是否要继续下载区块
                 if (requestPieceQueue.size() == 0) {
                     System.out.printf("Client: download %s complete!\n", torrent.getName());
