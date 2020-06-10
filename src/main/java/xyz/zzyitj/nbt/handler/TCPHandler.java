@@ -4,6 +4,7 @@ import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
+import xyz.zzyitj.nbt.bean.RequestPiece;
 import xyz.zzyitj.nbt.bean.Torrent;
 import xyz.zzyitj.nbt.util.Const;
 import xyz.zzyitj.nbt.util.HandshakeUtils;
@@ -11,6 +12,7 @@ import xyz.zzyitj.nbt.util.PeerWireConst;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Queue;
 
 
 /**
@@ -154,6 +156,19 @@ public abstract class TCPHandler extends ChannelInboundHandlerAdapter {
      * 是否是第一次收到握手消息
      */
     private boolean isFirstReadHandshake = true;
+    /**
+     * 区块下载队列
+     */
+    protected Queue<RequestPiece> requestPieceQueue;
+    /**
+     * 需要下载的次数，即下载队列的大小
+     */
+    protected int pieceRequestSum = 0;
+    /**
+     * 一个区块需要请求的次数
+     */
+    protected int onePieceRequestSum = 0;
+
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) {
@@ -183,7 +198,10 @@ public abstract class TCPHandler extends ChannelInboundHandlerAdapter {
                 // 不是bt协议，关闭连接
                 closePeer(ctx);
             }
-        } else if (isFirstReadHandshake && torrentList != null) {
+        }
+        // 作为服务器
+        // 如果客户端发送了握手给服务器，服务器检查了参数以后就构造握手返回
+        else if (isFirstReadHandshake && torrentList != null) {
             if (HandshakeUtils.isHandshake(data)) {
                 // 还可以在上面判断对该peer_id是否感兴趣，即是否禁用改客户端
                 isFirstReadHandshake = false;
@@ -238,7 +256,7 @@ public abstract class TCPHandler extends ChannelInboundHandlerAdapter {
                 break;
             default:
                 // 其他情况
-                System.err.println(Arrays.toString(data));
+                System.err.println("error: " + Arrays.toString(data));
         }
     }
 

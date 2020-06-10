@@ -4,6 +4,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import xyz.zzyitj.nbt.bean.PeerWire;
 import xyz.zzyitj.nbt.bean.PeerWirePayload;
+import xyz.zzyitj.nbt.bean.RequestPiece;
 
 /**
  * @author intent
@@ -46,7 +47,7 @@ public class HandshakeUtils {
      * 第20-27个字节为0，保留位，共8个字节
      * 第28到47个字节为info_hash，即种子info块的hash{@link TorrentUtils#hash(byte[])}，共20个字节
      * 第48到67个字节为peerId，即客服端类型和版本号，比如：Transmission 2.84，共20个字节
-     * 更多peerId查看<a href="http://bittorrent.org/beps/bep_0x0,20.html"></a>
+     * 更多peerId查看<a href="http://bittorrent.org/beps/bep_0020.html"></a>
      * 0-67总共68个字节
      */
     private static final byte[] HANDSHAKE_PACKAGE = {
@@ -99,38 +100,40 @@ public class HandshakeUtils {
      *
      * <a href="https://github.com/transmission/transmission/wiki/Peer-Status-Text"></a>
      *
-     * @param type    消息类型
+     * @param id      消息类型
      * @param payload 消息负载
      * @return 消息体
      */
-    public static byte[] buildMessage(byte type, byte[] payload) {
-        byte[] ret;
-        if (type == PeerWireConst.KEEP_ALIVE) {
+    public static byte[] buildMessage(byte id, byte[] payload) {
+        byte[] ret = new byte[0];
+        if (id == PeerWireConst.KEEP_ALIVE) {
             ret = new byte[]{
                     0, 0, 0, 0
             };
-        } else if (type >= PeerWireConst.CHOKE && type <= PeerWireConst.NOT_INTERESTED) {
+        } else if (id >= PeerWireConst.CHOKE && id <= PeerWireConst.NOT_INTERESTED) {
+            // 因为id为0到id为3的消息长度都是一样的
             ret = new byte[]{
-                    0, 0, 0, 1, type
+                    0, 0, 0, 1, id
             };
-        } else {
+        } else if (payload != null) {
+            // 4 + 1是因为记录消息的长度的字节占4位，id本身占1位
             ret = new byte[4 + 1 + payload.length];
-            byte[] lengthData = ByteUtils.intToBytesBigEndian(payload.length + 1);
-            System.arraycopy(lengthData, 0, ret, 0, 4);
-            ret[4] = type;
+            byte[] lengthBytes = ByteUtils.intToBytesBigEndian(payload.length + 1);
+            System.arraycopy(lengthBytes, 0, ret, 0, 4);
+            ret[PeerWireConst.PEER_WIRE_ID_INDEX] = id;
             System.arraycopy(payload, 0, ret, 5, payload.length);
         }
         return ret;
     }
 
     /**
-     * 默认生成id为1的消息体
+     * 默认生成没有payload的消息
      *
-     * @param type 类型
+     * @param id 类型
      * @return 消息体
      */
-    public static byte[] buildMessage(byte type) {
-        return buildMessage(type, null);
+    public static byte[] buildMessage(byte id) {
+        return buildMessage(id, null);
     }
 
     /**
@@ -194,24 +197,22 @@ public class HandshakeUtils {
     /**
      * 构造请求下载指定块参数
      *
-     * @param index  指定从零开始的piece索引。
-     * @param begin  指定piece中从零开始的字节偏移。
-     * @param length 指定请求的长度。
+     * @param requestPiece 请求的区块下载信息
      * @return 字节数组
      */
-    public static byte[] requestPieceHandler(int index, int begin, int length) {
+    public static byte[] requestPieceHandler(RequestPiece requestPiece) {
         byte[] data = new byte[]{
                 0x0, 0x0, 0x0, 0xd, PeerWireConst.REQUEST,
                 0x0, 0x0, 0x0, 0x0,
                 0x0, 0x0, 0x0, 0x0,
                 0x0, 0x0, 0x0, 0x0
         };
-        byte[] indexData = ByteUtils.intToBytesBigEndian(index);
-        System.arraycopy(indexData, 0, data, data.length - 12, 4);
-        byte[] beginData = ByteUtils.intToBytesBigEndian(begin);
-        System.arraycopy(beginData, 0, data, data.length - 8, 4);
-        byte[] lengthData = ByteUtils.intToBytesBigEndian(length);
-        System.arraycopy(lengthData, 0, data, data.length - 4, 4);
+        byte[] indexBytes = ByteUtils.intToBytesBigEndian(requestPiece.getIndex());
+        System.arraycopy(indexBytes, 0, data, data.length - 12, 4);
+        byte[] beginBytes = ByteUtils.intToBytesBigEndian(requestPiece.getBegin());
+        System.arraycopy(beginBytes, 0, data, data.length - 8, 4);
+        byte[] lengthBytes = ByteUtils.intToBytesBigEndian(requestPiece.getLength());
+        System.arraycopy(lengthBytes, 0, data, data.length - 4, 4);
         return data;
     }
 }
