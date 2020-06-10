@@ -183,7 +183,10 @@ public abstract class TCPHandler extends ChannelInboundHandlerAdapter {
                 // 不是bt协议，关闭连接
                 closePeer(ctx);
             }
-        } else if (isFirstReadHandshake && torrentList != null) {
+        }
+        // 作为服务器
+        // 如果客户端发送了握手给服务器，服务器检查了参数以后就构造握手返回
+        else if (isFirstReadHandshake && torrentList != null) {
             if (HandshakeUtils.isHandshake(data)) {
                 // 还可以在上面判断对该peer_id是否感兴趣，即是否禁用改客户端
                 isFirstReadHandshake = false;
