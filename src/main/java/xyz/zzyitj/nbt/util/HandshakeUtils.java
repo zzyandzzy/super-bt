@@ -4,6 +4,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import xyz.zzyitj.nbt.bean.PeerWire;
 import xyz.zzyitj.nbt.bean.PeerWirePayload;
+import xyz.zzyitj.nbt.bean.RequestPiece;
 
 /**
  * @author intent
@@ -196,23 +197,21 @@ public class HandshakeUtils {
     /**
      * 构造请求下载指定块参数
      *
-     * @param index  指定从零开始的piece索引。
-     * @param begin  指定piece中从零开始的字节偏移。
-     * @param length 指定请求的长度。
+     * @param requestPiece 请求的区块下载信息
      * @return 字节数组
      */
-    public static byte[] requestPieceHandler(int index, int begin, int length) {
+    public static byte[] requestPieceHandler(RequestPiece requestPiece) {
         byte[] data = new byte[]{
                 0x0, 0x0, 0x0, 0xd, PeerWireConst.REQUEST,
                 0x0, 0x0, 0x0, 0x0,
                 0x0, 0x0, 0x0, 0x0,
                 0x0, 0x0, 0x0, 0x0
         };
-        byte[] indexBytes = ByteUtils.intToBytesBigEndian(index);
+        byte[] indexBytes = ByteUtils.intToBytesBigEndian(requestPiece.getIndex());
         System.arraycopy(indexBytes, 0, data, data.length - 12, 4);
-        byte[] beginBytes = ByteUtils.intToBytesBigEndian(begin);
+        byte[] beginBytes = ByteUtils.intToBytesBigEndian(requestPiece.getBegin());
         System.arraycopy(beginBytes, 0, data, data.length - 8, 4);
-        byte[] lengthBytes = ByteUtils.intToBytesBigEndian(length);
+        byte[] lengthBytes = ByteUtils.intToBytesBigEndian(requestPiece.getLength());
         System.arraycopy(lengthBytes, 0, data, data.length - 4, 4);
         return data;
     }

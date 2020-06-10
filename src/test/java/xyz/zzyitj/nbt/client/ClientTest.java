@@ -64,7 +64,7 @@ class ClientTest {
     @Test
     void testTCPClient() throws InterruptedException {
         Client client = new TCPClient.TCPClientBuilder(TEST_IP, TEST_PORT, torrent, savePath)
-                .loggingHandler(new LoggingHandler(LogLevel.INFO))
+//                .loggingHandler(new LoggingHandler(LogLevel.INFO))
                 .builder();
         client.start();
     }

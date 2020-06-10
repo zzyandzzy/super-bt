@@ -4,6 +4,7 @@ import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
+import xyz.zzyitj.nbt.bean.RequestPiece;
 import xyz.zzyitj.nbt.bean.Torrent;
 import xyz.zzyitj.nbt.util.Const;
 import xyz.zzyitj.nbt.util.HandshakeUtils;
@@ -11,6 +12,7 @@ import xyz.zzyitj.nbt.util.PeerWireConst;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Queue;
 
 
 /**
@@ -154,6 +156,10 @@ public abstract class TCPHandler extends ChannelInboundHandlerAdapter {
      * 是否是第一次收到握手消息
      */
     private boolean isFirstReadHandshake = true;
+    /**
+     * 区块下载队列
+     */
+    protected Queue<RequestPiece> requestPieceQueue;
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) {
