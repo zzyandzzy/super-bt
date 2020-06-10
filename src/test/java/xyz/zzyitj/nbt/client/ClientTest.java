@@ -18,12 +18,8 @@ import java.io.IOException;
  * @email zzy.main@gmail.com
  */
 class ClientTest {
-    // Remote Transmission host
-//    public static final String TEST_IP = "59.110.216.57";
     // Local Transmission/qBitTorrent host
     public static final String TEST_IP = "127.0.0.1";
-    // Remote Transmission port
-//    public static final int TEST_PORT = 19999;
     // Local qBitTorrent port
     public static final int TEST_PORT = 18357;
     // Local Transmission port
@@ -35,8 +31,8 @@ class ClientTest {
     @BeforeAll
     static void init() throws IOException {
 //        String torrentPath = "/Users/intent/Desktop/sbt/一个文件一个区块.torrent";
-//        String torrentPath = "/Users/intent/Desktop/sbt/一个文件多个区块.torrent";
-        String torrentPath = "/Users/intent/Desktop/sbt/多个文件多个区块.torrent";
+        String torrentPath = "/Users/intent/Desktop/sbt/一个文件多个区块.torrent";
+//        String torrentPath = "/Users/intent/Desktop/sbt/多个文件多个区块.torrent";
         File torrentFile = new File(torrentPath);
         torrent = TorrentUtils.getTorrent(torrentFile);
         // 创建文件夹

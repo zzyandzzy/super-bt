@@ -160,6 +160,15 @@ public abstract class TCPHandler extends ChannelInboundHandlerAdapter {
      * 区块下载队列
      */
     protected Queue<RequestPiece> requestPieceQueue;
+    /**
+     * 需要下载的次数，即下载队列的大小
+     */
+    protected int pieceRequestSum = 0;
+    /**
+     * 一个区块需要请求的次数
+     */
+    protected int onePieceRequestSum = 0;
+
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) {

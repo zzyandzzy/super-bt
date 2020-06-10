@@ -13,13 +13,11 @@
 - [TCPClientHandler](./src/main/java/xyz/zzyitj/nbt/handler/TCPClientHandler.java)
 - [TCPServerHandler](./src/main/java/xyz/zzyitj/nbt/handler/TCPServerHandler.java)
 
+# 功能
+
+- 单Peer单文件单区块下载
+- 单Peer单文件多区块下载
+
 # Future
 
-```java
-/**
- * 1.多线程下载管理器
- * 2.{@linkplain xyz.zzyitj.nbt.handler.TCPClientHandler#generateRequestPieceQueue(byte[])} 多区块的生成}
- */
-public class Future{
-}
-```
+- 多线程多Peer下载
