@@ -241,7 +241,7 @@ public abstract class TCPHandler extends ChannelInboundHandlerAdapter {
                 break;
             default:
                 // 其他情况
-                System.err.println(Arrays.toString(data));
+                System.err.println("error: " + Arrays.toString(data));
         }
     }
 
