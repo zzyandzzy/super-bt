@@ -9,7 +9,7 @@ package xyz.zzyitj.nbt.util;
  */
 public class ByteUtils {
     /**
-     * 小端存储：Big-endian
+     * 小端存储：Little-endian
      * 10进制的int转16进制的字节数组
      * 将int转为低字节在前，高字节在后的byte数组
      * 数据的高字节保存在内存的高地址中
@@ -28,7 +28,7 @@ public class ByteUtils {
     }
 
     /**
-     * 大端存储：Little-endian
+     * 大端存储：Big-endian
      * 10进制的int转16进制的字节数组
      * 数据的高字节保存在内存的低地址中
      * 数据的低字节保存在内存的高地址中

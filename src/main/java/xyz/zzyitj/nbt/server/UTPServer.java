@@ -1,8 +1,14 @@
 package xyz.zzyitj.nbt.server;
 
+import io.netty.bootstrap.Bootstrap;
+import io.netty.channel.*;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.SocketChannel;
+import io.netty.channel.socket.nio.NioDatagramChannel;
 import io.netty.handler.logging.LoggingHandler;
 import xyz.zzyitj.nbt.bean.Torrent;
 
+import java.net.InetSocketAddress;
 import java.util.List;
 
 /**
@@ -17,12 +23,12 @@ import java.util.List;
  * @since 1.0
  */
 public class UTPServer implements Server {
-    private int port;
+    private final int port;
     /**
-     * 做种可能多个路径
+     * 做种的种子list
      */
-    private List<Torrent> torrentList;
-    private LoggingHandler loggingHandler;
+    private final List<Torrent> torrentList;
+    private final LoggingHandler loggingHandler;
 
     public UTPServer(UTPServerBuilder builder) {
         this.port = builder.port;
@@ -32,12 +38,34 @@ public class UTPServer implements Server {
 
     @Override
     public void start() throws InterruptedException {
+        EventLoopGroup bossGroup = new NioEventLoopGroup(1);
+        EventLoopGroup workerGroup = new NioEventLoopGroup();
+        try {
+            Bootstrap b = new Bootstrap();
+            b.group(bossGroup)
+                    .channel(NioDatagramChannel.class)
+                    .option(ChannelOption.SO_BROADCAST, true);
+            b.handler(new ChannelInitializer<SocketChannel>() {
+                @Override
+                public void initChannel(SocketChannel ch) {
+                    ChannelPipeline p = ch.pipeline();
+                    if (loggingHandler != null) {
+                        p.addLast("logger", loggingHandler);
+                    }
+                }
+            });
+            ChannelFuture f = b.bind(new InetSocketAddress(this.port)).sync();
+            f.channel().closeFuture().sync();
+        } finally {
+            bossGroup.shutdownGracefully();
+            workerGroup.shutdownGracefully();
+        }
     }
 
     static class UTPServerBuilder {
         private int port;
         /**
-         * 做种可能多个路径
+         * 做种的种子list
          */
         private List<Torrent> torrentList;
         private LoggingHandler loggingHandler;

@@ -2,6 +2,7 @@ package xyz.zzyitj.nbt.util;
 
 import org.junit.jupiter.api.Test;
 import xyz.zzyitj.nbt.bean.PeerWire;
+import xyz.zzyitj.nbt.bean.RequestPiece;
 
 import java.util.Arrays;
 
@@ -79,13 +80,17 @@ class HandshakeUtilsTest {
 
     /**
      * 测试函数
-     * {@link HandshakeUtils#requestPieceHandler(int, int, int)}
+     * {@link HandshakeUtils#requestPieceHandler(RequestPiece)}
      */
     @Test
     void requestPieceHandler() {
-        System.out.println(Arrays.toString(HandshakeUtils.requestPieceHandler(0, 0, 237651)));
-        System.out.println(Arrays.toString(HandshakeUtils.requestPieceHandler(0, 237651, 237651)));
-        System.out.println(Arrays.toString(HandshakeUtils.requestPieceHandler(1, 237651, 237651)));
-        System.out.println(Arrays.toString(HandshakeUtils.requestPieceHandler(237651, 237651, 237651)));
+        System.out.println(Arrays.toString(HandshakeUtils.requestPieceHandler(
+                new RequestPiece(0, 0, 237651))));
+        System.out.println(Arrays.toString(HandshakeUtils.requestPieceHandler(
+                new RequestPiece(0, 237651, 237651))));
+        System.out.println(Arrays.toString(HandshakeUtils.requestPieceHandler(
+                new RequestPiece(1, 237651, 237651))));
+        System.out.println(Arrays.toString(HandshakeUtils.requestPieceHandler(
+                new RequestPiece(237651, 237651, 237651))));
     }
 }

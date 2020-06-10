@@ -23,13 +23,11 @@ import java.net.InetSocketAddress;
  * @since 1.0
  */
 public class UTPClient implements Client {
-    private String ip;
-    private int port;
-    private Torrent torrent;
-    private String savePath;
-    private LoggingHandler loggingHandler;
-
-    private EventLoopGroup workerGroup;
+    private final String ip;
+    private final int port;
+    private final Torrent torrent;
+    private final String savePath;
+    private final LoggingHandler loggingHandler;
 
     public UTPClient(UTPClientBuilder builder) {
         this.ip = builder.ip;
@@ -52,7 +50,7 @@ public class UTPClient implements Client {
 
     @Override
     public void start() throws InterruptedException {
-        workerGroup = new NioEventLoopGroup();
+        EventLoopGroup workerGroup = new NioEventLoopGroup();
         try {
             Bootstrap b = new Bootstrap();
             b.group(workerGroup)
