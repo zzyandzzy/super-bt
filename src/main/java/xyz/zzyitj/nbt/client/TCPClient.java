@@ -12,7 +12,6 @@ import io.netty.handler.logging.LoggingHandler;
 import xyz.zzyitj.nbt.bean.Torrent;
 import xyz.zzyitj.nbt.codec.PeerWireProtocolDecoder;
 import xyz.zzyitj.nbt.handler.TCPClientHandler;
-import xyz.zzyitj.nbt.handler.TCPHandler;
 import xyz.zzyitj.nbt.util.PeerWireConst;
 
 import java.net.InetSocketAddress;
@@ -29,13 +28,11 @@ import java.net.InetSocketAddress;
  * @since 1.0
  */
 public class TCPClient implements Client {
-    private String ip;
-    private int port;
-    private Torrent torrent;
-    private String savePath;
-    private LoggingHandler loggingHandler;
-
-    private EventLoopGroup workerGroup;
+    private final String ip;
+    private final int port;
+    private final Torrent torrent;
+    private final String savePath;
+    private final LoggingHandler loggingHandler;
 
     public TCPClient(TCPClientBuilder builder) {
         this.ip = builder.ip;
@@ -58,7 +55,7 @@ public class TCPClient implements Client {
 
     @Override
     public void start() throws InterruptedException {
-        workerGroup = new NioEventLoopGroup();
+        EventLoopGroup workerGroup = new NioEventLoopGroup();
         try {
             Bootstrap b = new Bootstrap();
             b.group(workerGroup)

@@ -29,15 +29,12 @@ import java.util.List;
  * @since 1.0
  */
 public class TCPServer implements Server {
-    private int port;
+    private final int port;
     /**
-     * 做种可能多个路径
+     * 做种的种子list
      */
-    private List<Torrent> torrentList;
-    private LoggingHandler loggingHandler;
-
-    private EventLoopGroup bossGroup;
-    private EventLoopGroup workerGroup;
+    private final List<Torrent> torrentList;
+    private final LoggingHandler loggingHandler;
 
     public TCPServer(TCPServerBuilder builder) {
         this.port = builder.port;
@@ -56,19 +53,19 @@ public class TCPServer implements Server {
 
     @Override
     public void start() throws InterruptedException {
-        bossGroup = new NioEventLoopGroup(1);
-        workerGroup = new NioEventLoopGroup();
+        EventLoopGroup bossGroup = new NioEventLoopGroup(1);
+        EventLoopGroup workerGroup = new NioEventLoopGroup();
         try {
             ServerBootstrap b = new ServerBootstrap();
             b.group(bossGroup, workerGroup)
                     .channel(NioServerSocketChannel.class);
-            if (loggingHandler != null) {
-                b.handler(loggingHandler);
-            }
             b.childHandler(new ChannelInitializer<SocketChannel>() {
                 @Override
                 public void initChannel(SocketChannel ch) {
                     ChannelPipeline p = ch.pipeline();
+                    if (loggingHandler != null) {
+                        p.addLast("logger", loggingHandler);
+                    }
                     p.addLast(new PeerWireProtocolDecoder(PeerWireConst.PEER_WIRE_MAX_FRAME_LENGTH,
                             0, 4, 0, 0, false));
                     p.addLast(new TCPServerHandler.TCPServerHandlerBuilder()
@@ -87,7 +84,7 @@ public class TCPServer implements Server {
     static class TCPServerBuilder {
         private int port;
         /**
-         * 做种可能多个路径
+         * 做种的种子list
          */
         private List<Torrent> torrentList;
         private LoggingHandler loggingHandler;

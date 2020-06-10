@@ -25,16 +25,18 @@ class ClientTest {
     // Remote Transmission port
 //    public static final int TEST_PORT = 19999;
     // Local qBitTorrent port
-//    public static final int TEST_PORT = 18357;
+    public static final int TEST_PORT = 18357;
     // Local Transmission port
-    public static final int TEST_PORT = 51413;
+//    public static final int TEST_PORT = 51413;
 
     private static final String savePath = "./test/";
     private static Torrent torrent;
 
     @BeforeAll
     static void init() throws IOException {
-        String torrentPath = "/Users/intent/Desktop/sbt/test.torrent";
+//        String torrentPath = "/Users/intent/Desktop/sbt/一个文件一个区块.torrent";
+//        String torrentPath = "/Users/intent/Desktop/sbt/一个文件多个区块.torrent";
+        String torrentPath = "/Users/intent/Desktop/sbt/多个文件多个区块.torrent";
         File torrentFile = new File(torrentPath);
         torrent = TorrentUtils.getTorrent(torrentFile);
         // 创建文件夹
@@ -64,7 +66,7 @@ class ClientTest {
     @Test
     void testTCPClient() throws InterruptedException {
         Client client = new TCPClient.TCPClientBuilder(TEST_IP, TEST_PORT, torrent, savePath)
-                .loggingHandler(new LoggingHandler(LogLevel.INFO))
+//                .loggingHandler(new LoggingHandler(LogLevel.INFO))
                 .builder();
         client.start();
     }
