@@ -2,10 +2,7 @@ package xyz.zzyitj.nbt.handler;
 
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
-import xyz.zzyitj.nbt.bean.PeerWire;
-import xyz.zzyitj.nbt.bean.PeerWirePayload;
-import xyz.zzyitj.nbt.bean.RequestPiece;
-import xyz.zzyitj.nbt.bean.Torrent;
+import xyz.zzyitj.nbt.bean.*;
 import xyz.zzyitj.nbt.util.HandshakeUtils;
 
 import java.io.*;
@@ -145,7 +142,57 @@ public class TCPClientHandler extends TCPHandler {
     void doPiece(ChannelHandlerContext ctx, byte[] data) {
         PeerWire peerWire = HandshakeUtils.parsePeerWire(data);
         PeerWirePayload peerWirePayload = (PeerWirePayload) peerWire.getPayload();
+        saveFile(ctx, peerWirePayload);
+    }
+
+    private void saveFile(ChannelHandlerContext ctx, PeerWirePayload peerWirePayload) {
+        if (torrent.getTorrentFileItemList() == null) {
+            saveSingleFile(ctx, peerWirePayload);
+        } else {
+            saveMultipleFile(ctx, peerWirePayload);
+        }
+    }
+
+    private void saveMultipleFile(ChannelHandlerContext ctx, PeerWirePayload peerWirePayload) {
         byte[] block = peerWirePayload.getBlock();
+        // 1.判断该区块的位置是属于哪个文件
+        int skipBytes = peerWirePayload.getIndex() * this.onePieceRequestSum * HandshakeUtils.PIECE_MAX_LENGTH
+                + peerWirePayload.getBegin();
+        int fileIndex = getFileIndex(skipBytes);
+        TorrentFileItem torrentFileItem = torrent.getTorrentFileItemList().get(fileIndex);
+        // 待处理的字节的大小
+        int length = 7;
+        // 保存文件
+        if (block.length > torrentFileItem.getLength()) {
+            int subBegin = block.length - length;
+            byte[] subBlock = new byte[subBegin];
+            System.arraycopy(block, length, subBlock, 0, subBegin);
+            saveMultipleFile(ctx, new PeerWirePayload(
+                    peerWirePayload.getIndex(), peerWirePayload.getBegin() + subBegin, subBlock));
+        }
+    }
+
+    /**
+     * 获取该区块的位置是属于哪个文件
+     *
+     * @param skipBytes 跳过的字节
+     * @return 该区块的位置是属于哪个文件的下标
+     */
+    private int getFileIndex(int skipBytes) {
+        int fileIndex = 0;
+        int fileLengthSum = 0;
+        for (int i = 0; i < torrent.getTorrentFileItemList().size(); i++) {
+            if (fileLengthSum >= skipBytes) {
+                fileIndex = i;
+                break;
+            } else {
+                fileLengthSum += torrent.getTorrentFileItemList().get(i).getLength();
+            }
+        }
+        return fileIndex;
+    }
+
+    private void saveSingleFile(ChannelHandlerContext ctx, PeerWirePayload peerWirePayload) {
         try {
             File file = new File(savePath + torrent.getName());
             RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw");
@@ -154,7 +201,7 @@ public class TCPClientHandler extends TCPHandler {
             int skipBytes = peerWirePayload.getIndex() * this.onePieceRequestSum * HandshakeUtils.PIECE_MAX_LENGTH
                     + peerWirePayload.getBegin();
             randomAccessFile.skipBytes(skipBytes);
-            randomAccessFile.write(block);
+            randomAccessFile.write(peerWirePayload.getBlock());
             randomAccessFile.close();
             requestPieceQueue.poll();
             System.out.printf("Client: response piece, index: %d, begin: %d, length: %d, skipBytes: %d, fileLength: %d, torrentLength: %d\n",
