@@ -3,6 +3,7 @@ package xyz.zzyitj.nbt.bean;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author intent
@@ -44,6 +45,35 @@ public class Torrent implements Serializable {
      * 多文件文件路径以及大小
      */
     private List<TorrentFileItem> torrentFileItemList;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Torrent torrent = (Torrent) o;
+        return creationDate == torrent.creationDate &&
+                pieceLength == torrent.pieceLength &&
+                isPrivate == torrent.isPrivate &&
+                torrentLength == torrent.torrentLength &&
+                Objects.equals(announce, torrent.announce) &&
+                Objects.equals(announceList, torrent.announceList) &&
+                Objects.equals(createdBy, torrent.createdBy) &&
+                Objects.equals(comment, torrent.comment) &&
+                Objects.equals(encoding, torrent.encoding) &&
+                Arrays.equals(infoHash, torrent.infoHash) &&
+                Arrays.equals(pieces, torrent.pieces) &&
+                Objects.equals(name, torrent.name) &&
+                Objects.equals(torrentFileItemList, torrent.torrentFileItemList);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Objects.hash(announce, announceList, creationDate, createdBy, comment,
+                encoding, pieceLength, isPrivate, name, torrentLength, torrentFileItemList);
+        result = 31 * result + Arrays.hashCode(infoHash);
+        result = 31 * result + Arrays.hashCode(pieces);
+        return result;
+    }
 
     @Override
     public String toString() {

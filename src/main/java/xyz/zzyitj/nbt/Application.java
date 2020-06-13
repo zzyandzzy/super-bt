@@ -1,5 +1,11 @@
 package xyz.zzyitj.nbt;
 
+import xyz.zzyitj.nbt.bean.DownloadConfig;
+import xyz.zzyitj.nbt.bean.Torrent;
+
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 /**
  * @author intent
  * @version 1.0
@@ -7,7 +13,8 @@ package xyz.zzyitj.nbt;
  * @email zzy.main@gmail.com
  */
 public class Application {
-    public static void main(String[] args) {
-
-    }
+    /**
+     * 下载配置Map
+     */
+    public static Map<Torrent, DownloadConfig> downloadConfigMap = new ConcurrentHashMap<>();
 }

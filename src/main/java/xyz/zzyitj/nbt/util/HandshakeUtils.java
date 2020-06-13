@@ -2,9 +2,10 @@ package xyz.zzyitj.nbt.util;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import xyz.zzyitj.nbt.bean.PeerWire;
-import xyz.zzyitj.nbt.bean.PeerWirePayload;
-import xyz.zzyitj.nbt.bean.RequestPiece;
+import xyz.zzyitj.nbt.bean.*;
+
+import java.util.Queue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * @author intent
@@ -214,5 +215,57 @@ public class HandshakeUtils {
         byte[] lengthBytes = ByteUtils.intToBytesBigEndian(requestPiece.getLength());
         System.arraycopy(lengthBytes, 0, data, data.length - 4, 4);
         return data;
+    }
+
+    /**
+     * 根据peer返回的区块完成信息生成区块下载队列
+     *
+     * @param peerWire peerWire
+     * @param torrent  种子信息
+     * @return 一个区块需要请求的次数
+     */
+    public static int generateRequestPieceQueue(PeerWire peerWire, Torrent torrent, DownloadConfig downloadConfig) {
+        // 这里直接生成全部下载，后面再修改
+        // increment判断是否刚好下载完
+        int increment = torrent.getTorrentLength() % HandshakeUtils.PIECE_MAX_LENGTH == 0 ? 0 : 1;
+        // 需要下载的次数，即下载队列的大小
+        int capacity = torrent.getTorrentLength() / HandshakeUtils.PIECE_MAX_LENGTH + increment;
+        // 下载队列
+        Queue<RequestPiece> queue = downloadConfig.getQueue();
+        if (queue == null) {
+            // 确定下载队列大小
+            // 为啥是16Kb呢？因为这是bt协议限制的，单次只能下载16Kb
+            // 种子内容大小 / 16Kb = 要下载几次
+            queue = new LinkedBlockingQueue<>(capacity);
+            downloadConfig.setQueue(queue);
+        }
+        // 当前字节数
+        int byteSum = 0;
+        // 区块数
+        int pieceSum = torrent.getPieces().length / 20;
+        int pieceRequestSumIncrement = capacity % pieceSum == 0 ? 0 : 1;
+        // 一个区块需要请求的次数
+        int onePieceRequestSum = capacity / pieceSum + pieceRequestSumIncrement;
+        // 当前的位置
+        int currentIndex = 0;
+        for (int i = 0; i < pieceSum; i++) {
+            for (int j = 0; j < onePieceRequestSum; j++) {
+                int begin = j * HandshakeUtils.PIECE_MAX_LENGTH;
+                int length = HandshakeUtils.PIECE_MAX_LENGTH;
+                // 判断是否是最后一个下载请求
+                // 因为最后一个下载请求的大小很大可能不是16Kb
+                if (currentIndex < capacity - 1) {
+                    byteSum += length;
+                    queue.offer(new RequestPiece(i, begin, length));
+                } else {
+                    length = torrent.getTorrentLength() - byteSum;
+                    byteSum += length;
+                    queue.offer(new RequestPiece(i, begin, length));
+                    break;
+                }
+                currentIndex++;
+            }
+        }
+        return onePieceRequestSum;
     }
 }
