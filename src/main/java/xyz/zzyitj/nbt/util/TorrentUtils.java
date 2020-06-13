@@ -166,11 +166,11 @@ public class TorrentUtils {
         List<Map<String, Object>> fileList = (List<Map<String, Object>>) infoMap.get(FILES_NAME);
         // 多文件
         if (fileList != null) {
-            int torrentLength = 0;
+            long torrentLength = 0;
             List<TorrentFileItem> torrentFileItemList = new ArrayList<>();
             for (Map<String, Object> fileListItemMap : fileList) {
                 Long length = (Long) fileListItemMap.get(LENGTH_NAME);
-                torrentLength += length.intValue();
+                torrentLength += length;
                 List<ByteBuffer> pathList = (List<ByteBuffer>) fileListItemMap.get(PATH_NAME);
                 StringBuilder path = new StringBuilder();
                 if (pathList.size() > 1) {
@@ -183,13 +183,13 @@ public class TorrentUtils {
                 } else {
                     path.append(new String(pathList.get(0).array()));
                 }
-                torrentFileItemList.add(new TorrentFileItem(path.toString(), length.intValue()));
+                torrentFileItemList.add(new TorrentFileItem(path.toString(), length));
             }
             torrent.setTorrentFileItemList(torrentFileItemList);
             torrent.setTorrentLength(torrentLength);
         } else {
             Long length = (Long) infoMap.get(LENGTH_NAME);
-            torrent.setTorrentLength(length.intValue());
+            torrent.setTorrentLength(length);
         }
         return torrent;
     }

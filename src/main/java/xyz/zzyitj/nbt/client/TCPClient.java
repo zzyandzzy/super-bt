@@ -9,8 +9,11 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.logging.LoggingHandler;
+import xyz.zzyitj.nbt.Application;
+import xyz.zzyitj.nbt.bean.DownloadConfig;
 import xyz.zzyitj.nbt.bean.Torrent;
 import xyz.zzyitj.nbt.codec.PeerWireProtocolDecoder;
+import xyz.zzyitj.nbt.handler.DownloadManager;
 import xyz.zzyitj.nbt.handler.TCPClientHandler;
 import xyz.zzyitj.nbt.util.PeerWireConst;
 
@@ -32,6 +35,7 @@ public class TCPClient implements Client {
     private final int port;
     private final Torrent torrent;
     private final String savePath;
+    private final DownloadManager downloadManager;
     private final LoggingHandler loggingHandler;
 
     public TCPClient(TCPClientBuilder builder) {
@@ -39,6 +43,7 @@ public class TCPClient implements Client {
         this.port = builder.port;
         this.torrent = builder.torrent;
         this.savePath = builder.savePath;
+        this.downloadManager = builder.downloadManager;
         this.loggingHandler = builder.loggingHandler;
     }
 
@@ -49,6 +54,7 @@ public class TCPClient implements Client {
                 ", port=" + port +
                 ", torrent=" + torrent +
                 ", savePath='" + savePath + '\'' +
+                ", downloadManager='" + downloadManager + '\'' +
                 ", loggingHandler=" + loggingHandler +
                 '}';
     }
@@ -69,9 +75,10 @@ public class TCPClient implements Client {
                             }
                             p.addLast(new PeerWireProtocolDecoder(PeerWireConst.PEER_WIRE_MAX_FRAME_LENGTH,
                                     0, 4, 0, 0, false));
-                            p.addLast(new TCPClientHandler.TCPClientHandlerBuilder()
-                                    .savePath(savePath)
-                                    .torrent(torrent)
+                            if (Application.downloadConfigMap.get(torrent) == null) {
+                                Application.downloadConfigMap.put(torrent, new DownloadConfig(savePath, 0, null));
+                            }
+                            p.addLast(new TCPClientHandler.TCPClientHandlerBuilder(torrent, downloadManager)
                                     .build());
                         }
                     });
@@ -87,13 +94,15 @@ public class TCPClient implements Client {
         private int port;
         private Torrent torrent;
         private String savePath;
+        private DownloadManager downloadManager;
         private LoggingHandler loggingHandler;
 
-        public TCPClientBuilder(String ip, int port, Torrent torrent, String savePath) {
+        public TCPClientBuilder(String ip, int port, Torrent torrent, String savePath, DownloadManager downloadManager) {
             this.ip = ip;
             this.port = port;
             this.torrent = torrent;
             this.savePath = savePath;
+            this.downloadManager = downloadManager;
         }
 
         TCPClient builder() {
@@ -122,6 +131,11 @@ public class TCPClient implements Client {
 
         public TCPClientBuilder loggingHandler(LoggingHandler loggingHandler) {
             this.loggingHandler = loggingHandler;
+            return this;
+        }
+
+        public TCPClientBuilder downloadManager(DownloadManager downloadManager) {
+            this.downloadManager = downloadManager;
             return this;
         }
     }

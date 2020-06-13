@@ -6,6 +6,8 @@ import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import xyz.zzyitj.nbt.bean.Torrent;
+import xyz.zzyitj.nbt.handler.DownloadManager;
+import xyz.zzyitj.nbt.handler.TCPDownloadManager;
 import xyz.zzyitj.nbt.util.TorrentUtils;
 
 import java.io.File;
@@ -27,13 +29,14 @@ class ClientTest {
 
     private static final String savePath = "./test/";
     private static Torrent torrent;
+    private static DownloadManager downloadManager;
 
     @BeforeAll
     static void init() throws IOException {
 //        String torrentPath = "/Users/intent/Desktop/sbt/一个文件一个区块.torrent";
-        String torrentPath = "/Users/intent/Desktop/sbt/一个文件多个区块.torrent";
+//        String torrentPath = "/Users/intent/Desktop/sbt/一个文件多个区块.torrent";
 //        String torrentPath = "/Users/intent/Desktop/sbt/多个文件一个区块.torrent";
-//        String torrentPath = "/Users/intent/Desktop/sbt/多个文件多个区块.torrent";
+        String torrentPath = "/Users/intent/Desktop/sbt/多个文件多个区块.torrent";
         File torrentFile = new File(torrentPath);
         torrent = TorrentUtils.getTorrent(torrentFile);
         // 创建文件夹
@@ -53,6 +56,7 @@ class ClientTest {
                 }
             });
         }
+        downloadManager = new TCPDownloadManager();
     }
 
     /**
@@ -62,7 +66,7 @@ class ClientTest {
      */
     @Test
     void testTCPClient() throws InterruptedException {
-        Client client = new TCPClient.TCPClientBuilder(TEST_IP, TEST_PORT, torrent, savePath)
+        Client client = new TCPClient.TCPClientBuilder(TEST_IP, TEST_PORT, torrent, savePath, downloadManager)
 //                .loggingHandler(new LoggingHandler(LogLevel.INFO))
                 .builder();
         client.start();

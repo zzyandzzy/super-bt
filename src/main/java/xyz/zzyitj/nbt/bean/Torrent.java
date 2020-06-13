@@ -39,11 +39,24 @@ public class Torrent implements Serializable {
     /**
      * 种子总大小
      */
-    private int torrentLength;
+    private long torrentLength;
     /**
      * 多文件文件路径以及大小
      */
     private List<TorrentFileItem> torrentFileItemList;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Torrent torrent = (Torrent) o;
+        return Arrays.equals(infoHash, torrent.infoHash);
+    }
+
+    @Override
+    public int hashCode() {
+        return Arrays.hashCode(infoHash);
+    }
 
     @Override
     public String toString() {
@@ -72,11 +85,11 @@ public class Torrent implements Serializable {
         this.infoHash = infoHash;
     }
 
-    public int getTorrentLength() {
+    public long getTorrentLength() {
         return torrentLength;
     }
 
-    public void setTorrentLength(int torrentLength) {
+    public void setTorrentLength(long torrentLength) {
         this.torrentLength = torrentLength;
     }
 
