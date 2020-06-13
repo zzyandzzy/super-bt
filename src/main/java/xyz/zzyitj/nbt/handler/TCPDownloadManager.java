@@ -1,10 +1,7 @@
 package xyz.zzyitj.nbt.handler;
 
 import xyz.zzyitj.nbt.Application;
-import xyz.zzyitj.nbt.bean.DownloadConfig;
-import xyz.zzyitj.nbt.bean.PeerWirePayload;
-import xyz.zzyitj.nbt.bean.RequestPiece;
-import xyz.zzyitj.nbt.bean.Torrent;
+import xyz.zzyitj.nbt.bean.*;
 import xyz.zzyitj.nbt.util.DownloadManagerUtils;
 import xyz.zzyitj.nbt.util.HandshakeUtils;
 
@@ -29,6 +26,10 @@ public class TCPDownloadManager implements DownloadManager {
      */
     private final Map<Integer, RandomAccessFile> randomAccessFileMap = new ConcurrentHashMap<>();
     /**
+     * 记录了种子文件写入的字节数，判断是否结束
+     */
+    private final Map<Torrent, Long> writeLengthMap = new ConcurrentHashMap<>();
+    /**
      * 记录失败次数
      */
     private final Map<Integer, Integer> failDownloadMap = new ConcurrentHashMap<>();
@@ -48,10 +49,101 @@ public class TCPDownloadManager implements DownloadManager {
         if (downloadConfig != null) {
             Queue<RequestPiece> queue = downloadConfig.getQueue();
             if (queue != null) {
-                saveSingleFile(payload, downloadConfig, queue);
+                if (torrent.getTorrentFileItemList() == null) {
+                    return saveSingleFile(payload, downloadConfig, queue);
+                } else {
+                    return saveMultipleFile(payload, downloadConfig, queue);
+                }
             }
         }
         return false;
+    }
+
+    /**
+     * 下载多个文件
+     *
+     * @param peerWirePayload 数据域
+     * @param downloadConfig  下载配置信息
+     * @param queue           下载队列
+     * @return
+     */
+    private boolean saveMultipleFile(PeerWirePayload peerWirePayload, DownloadConfig downloadConfig, Queue<RequestPiece> queue) {
+        byte[] block = peerWirePayload.getBlock();
+        int skipBytes = peerWirePayload.getIndex() * downloadConfig.getOnePieceRequestSum() * HandshakeUtils.PIECE_MAX_LENGTH
+                + peerWirePayload.getBegin();
+        // 1.判断该区块的位置是属于哪个文件
+        int fileIndex = DownloadManagerUtils.getFileIndex(skipBytes, torrent);
+        RandomAccessFile randomAccessFile = randomAccessFileMap.get(fileIndex);
+        TorrentFileItem torrentFileItem = torrent.getTorrentFileItemList().get(fileIndex);
+        try {
+            if (randomAccessFile == null) {
+                File file = new File(downloadConfig.getSavePath() + torrent.getName() +
+                        File.separator + torrentFileItem.getPath());
+                randomAccessFile = new RandomAccessFile(file, "rw");
+            }
+            // 2.判断peer发送过来的字节是否超出该文件
+            // 大于0，说明发送过来的字节超出了文件
+            // 小于零，说明当前文件的字节可能还没传输完
+            long newLength = (block.length + randomAccessFile.length()) - torrentFileItem.getLength();
+            System.out.printf("Client: response piece, index: %d, begin: %d, length: %d, " +
+                            "skipBytes: %d, file: %s, fileLength: %d, torrentLength: %d, newLength: %d, need: %d\n",
+                    peerWirePayload.getIndex(), peerWirePayload.getBegin(), peerWirePayload.getBlock().length,
+                    skipBytes, torrentFileItem.getPath(), randomAccessFile.length(), torrent.getTorrentLength(), newLength, queue.size());
+            if (newLength >= 0) {
+                // 当前写入的长度
+                int blockLength = (int) (block.length - newLength);
+                // 先写入文件
+                randomAccessFile.skipBytes(skipBytes);
+                randomAccessFile.write(block, 0, blockLength);
+                randomAccessFile.close();
+                System.out.printf("Client: download %s complete!\n", torrentFileItem.getPath());
+                if (checkComplete(queue, torrentFileItem, newLength)) {
+                    return true;
+                }
+                PeerWirePayload payload = new PeerWirePayload();
+                payload.setIndex(peerWirePayload.getIndex());
+                payload.setBegin(peerWirePayload.getBegin() + blockLength);
+                byte[] newBlock = new byte[(int) newLength];
+                System.arraycopy(block, blockLength, newBlock, 0, (int) newLength);
+                payload.setBlock(newBlock);
+                // 再分割数组
+                return saveMultipleFile(payload, downloadConfig, queue);
+            } else {
+                // 写入文件
+                randomAccessFile.skipBytes(skipBytes);
+                randomAccessFile.write(block);
+                if (checkComplete(queue, torrentFileItem, newLength)) {
+                    randomAccessFile.close();
+                    return true;
+                }
+                return false;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    /**
+     * 检查是否完成
+     *
+     * @param queue           下载队列
+     * @param torrentFileItem 文件
+     * @return true下载完成，false下载未完成
+     */
+    private boolean checkComplete(Queue<RequestPiece> queue, TorrentFileItem torrentFileItem, long newLength) {
+        if (newLength == 0 && queue.size() == 0) {
+            return true;
+        }
+        Long writeLength = writeLengthMap.get(torrent);
+        if (writeLength == null) {
+            writeLength = torrentFileItem.getLength();
+        } else {
+            writeLength += torrentFileItem.getLength();
+        }
+        writeLengthMap.put(torrent, writeLength);
+        // 判断是否下载完
+        return queue.size() == 0 && writeLength == torrent.getTorrentLength();
     }
 
     /**
@@ -103,25 +195,4 @@ public class TCPDownloadManager implements DownloadManager {
         }
         return false;
     }
-
-//    private boolean saveMultipleFile(ChannelHandlerContext ctx, PeerWirePayload peerWirePayload) {
-//        byte[] block = peerWirePayload.getBlock();
-//        // 1.判断该区块的位置是属于哪个文件
-//        int skipBytes = peerWirePayload.getIndex() * this.onePieceRequestSum * HandshakeUtils.PIECE_MAX_LENGTH
-//                + peerWirePayload.getBegin();
-//        int fileIndex = DownloadManagerUtils.getFileIndex(skipBytes, torrent);
-//        TorrentFileItem torrentFileItem = torrent.getTorrentFileItemList().get(fileIndex);
-//        // 待处理的字节的大小
-//        int length = 7;
-//        // 保存文件
-//        if (block.length > torrentFileItem.getLength()) {
-//            int subBegin = block.length - length;
-//            byte[] subBlock = new byte[subBegin];
-//            System.arraycopy(block, length, subBlock, 0, subBegin);
-//            saveMultipleFile(ctx, new PeerWirePayload(
-//                    peerWirePayload.getIndex(), peerWirePayload.getBegin() + subBegin, subBlock));
-//        }
-//    }
-
-
 }

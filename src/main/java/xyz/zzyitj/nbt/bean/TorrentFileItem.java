@@ -1,5 +1,7 @@
 package xyz.zzyitj.nbt.bean;
 
+import java.util.Comparator;
+
 /**
  * xyz.zzyitj.nbt.bean
  *
@@ -7,14 +9,14 @@ package xyz.zzyitj.nbt.bean;
  * @date 2020/6/1 12:49 下午
  * @since 1.0
  */
-public class TorrentFileItem {
+public class TorrentFileItem implements Comparator<String> {
     private String path;
-    private int length;
+    private long length;
 
     public TorrentFileItem() {
     }
 
-    public TorrentFileItem(String path, int length) {
+    public TorrentFileItem(String path, long length) {
         this.path = path;
         this.length = length;
     }
@@ -35,11 +37,16 @@ public class TorrentFileItem {
         this.path = path;
     }
 
-    public int getLength() {
+    public long getLength() {
         return length;
     }
 
-    public void setLength(int length) {
+    public void setLength(long length) {
         this.length = length;
+    }
+
+    @Override
+    public int compare(String o1, String o2) {
+        return o1.compareTo(o2);
     }
 }

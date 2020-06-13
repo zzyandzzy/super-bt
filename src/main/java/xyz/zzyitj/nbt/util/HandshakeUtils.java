@@ -229,7 +229,7 @@ public class HandshakeUtils {
         // increment判断是否刚好下载完
         int increment = torrent.getTorrentLength() % HandshakeUtils.PIECE_MAX_LENGTH == 0 ? 0 : 1;
         // 需要下载的次数，即下载队列的大小
-        int capacity = torrent.getTorrentLength() / HandshakeUtils.PIECE_MAX_LENGTH + increment;
+        int capacity = (int) (torrent.getTorrentLength() / HandshakeUtils.PIECE_MAX_LENGTH + increment);
         // 下载队列
         Queue<RequestPiece> queue = downloadConfig.getQueue();
         if (queue == null) {
@@ -258,7 +258,7 @@ public class HandshakeUtils {
                     byteSum += length;
                     queue.offer(new RequestPiece(i, begin, length));
                 } else {
-                    length = torrent.getTorrentLength() - byteSum;
+                    length = (int) (torrent.getTorrentLength() - byteSum);
                     byteSum += length;
                     queue.offer(new RequestPiece(i, begin, length));
                     break;

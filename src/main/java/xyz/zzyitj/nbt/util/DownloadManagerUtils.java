@@ -21,13 +21,12 @@ public class DownloadManagerUtils {
             return 0;
         }
         int fileIndex = 0;
-        int fileLengthSum = 0;
+        long fileLengthSum = 0;
         for (int i = 0; i < torrent.getTorrentFileItemList().size(); i++) {
-            if (fileLengthSum >= skipBytes) {
+            fileLengthSum += torrent.getTorrentFileItemList().get(i).getLength();
+            if (fileLengthSum > skipBytes) {
                 fileIndex = i;
                 break;
-            } else {
-                fileLengthSum += torrent.getTorrentFileItemList().get(i).getLength();
             }
         }
         return fileIndex;

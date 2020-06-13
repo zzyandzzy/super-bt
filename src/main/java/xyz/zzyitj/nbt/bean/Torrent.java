@@ -3,7 +3,6 @@ package xyz.zzyitj.nbt.bean;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * @author intent
@@ -40,7 +39,7 @@ public class Torrent implements Serializable {
     /**
      * 种子总大小
      */
-    private int torrentLength;
+    private long torrentLength;
     /**
      * 多文件文件路径以及大小
      */
@@ -51,28 +50,12 @@ public class Torrent implements Serializable {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Torrent torrent = (Torrent) o;
-        return creationDate == torrent.creationDate &&
-                pieceLength == torrent.pieceLength &&
-                isPrivate == torrent.isPrivate &&
-                torrentLength == torrent.torrentLength &&
-                Objects.equals(announce, torrent.announce) &&
-                Objects.equals(announceList, torrent.announceList) &&
-                Objects.equals(createdBy, torrent.createdBy) &&
-                Objects.equals(comment, torrent.comment) &&
-                Objects.equals(encoding, torrent.encoding) &&
-                Arrays.equals(infoHash, torrent.infoHash) &&
-                Arrays.equals(pieces, torrent.pieces) &&
-                Objects.equals(name, torrent.name) &&
-                Objects.equals(torrentFileItemList, torrent.torrentFileItemList);
+        return Arrays.equals(infoHash, torrent.infoHash);
     }
 
     @Override
     public int hashCode() {
-        int result = Objects.hash(announce, announceList, creationDate, createdBy, comment,
-                encoding, pieceLength, isPrivate, name, torrentLength, torrentFileItemList);
-        result = 31 * result + Arrays.hashCode(infoHash);
-        result = 31 * result + Arrays.hashCode(pieces);
-        return result;
+        return Arrays.hashCode(infoHash);
     }
 
     @Override
@@ -102,11 +85,11 @@ public class Torrent implements Serializable {
         this.infoHash = infoHash;
     }
 
-    public int getTorrentLength() {
+    public long getTorrentLength() {
         return torrentLength;
     }
 
-    public void setTorrentLength(int torrentLength) {
+    public void setTorrentLength(long torrentLength) {
         this.torrentLength = torrentLength;
     }
 
