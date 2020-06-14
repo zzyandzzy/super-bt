@@ -172,8 +172,7 @@ public abstract class AbstractTCPHandler extends ChannelInboundHandlerAdapter {
             // 打开socket就发送握手
             ctx.writeAndFlush(Unpooled.copiedBuffer(
                     HandshakeUtils.buildHandshake(torrent.getInfoHash(), Const.TEST_PEER_ID)));
-            System.out.printf("Client(%s): %s send handshake.\n",
-                    Thread.currentThread().getName(), ctx.channel().remoteAddress());
+            System.out.printf("Client: %s send handshake.\n", ctx.channel().remoteAddress());
         }
     }
 

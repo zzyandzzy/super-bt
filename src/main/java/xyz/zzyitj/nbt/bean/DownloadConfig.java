@@ -1,6 +1,5 @@
 package xyz.zzyitj.nbt.bean;
 
-import java.util.List;
 import java.util.Queue;
 
 /**
@@ -18,19 +17,21 @@ public class DownloadConfig {
     /**
      * 一个区块需要请求的次数
      */
-    private int onePieceRequestSum;
+    private int onePieceRequestSize;
     /**
      * 区块下载队列
      */
     private Queue<RequestPiece> pieceQueue;
+    /**
+     * 区块请求下载个数，也就是区块下载队列的大小
+     */
+    private int requestPieceSize;
 
     public DownloadConfig() {
     }
 
-    public DownloadConfig(String savePath, int onePieceRequestSum, Queue<RequestPiece> pieceQueue) {
+    public DownloadConfig(String savePath) {
         this.savePath = savePath;
-        this.onePieceRequestSum = onePieceRequestSum;
-        this.pieceQueue = pieceQueue;
     }
 
     public String getSavePath() {
@@ -41,19 +42,27 @@ public class DownloadConfig {
         this.savePath = savePath;
     }
 
-    public int getOnePieceRequestSum() {
-        return onePieceRequestSum;
-    }
-
-    public void setOnePieceRequestSum(int onePieceRequestSum) {
-        this.onePieceRequestSum = onePieceRequestSum;
-    }
-
     public Queue<RequestPiece> getPieceQueue() {
         return pieceQueue;
     }
 
     public void setPieceQueue(Queue<RequestPiece> pieceQueue) {
         this.pieceQueue = pieceQueue;
+    }
+
+    public int getRequestPieceSize() {
+        return requestPieceSize;
+    }
+
+    public void setRequestPieceSize(int requestPieceSize) {
+        this.requestPieceSize = requestPieceSize;
+    }
+
+    public int getOnePieceRequestSize() {
+        return onePieceRequestSize;
+    }
+
+    public void setOnePieceRequestSize(int onePieceRequestSize) {
+        this.onePieceRequestSize = onePieceRequestSize;
     }
 }

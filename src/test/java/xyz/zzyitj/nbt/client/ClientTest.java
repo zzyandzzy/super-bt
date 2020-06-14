@@ -39,7 +39,8 @@ class ClientTest {
 //        String torrentPath = "/Users/intent/Desktop/sbt/一个文件一个区块.torrent";
 //        String torrentPath = "/Users/intent/Desktop/sbt/一个文件多个区块.torrent";
 //        String torrentPath = "/Users/intent/Desktop/sbt/多个文件一个区块.torrent";
-        String torrentPath = "/Users/intent/Desktop/sbt/多个文件多个区块.torrent";
+//        String torrentPath = "/Users/intent/Desktop/sbt/多个文件多个区块.torrent";
+        String torrentPath = "/Users/intent/Desktop/sbt/test.torrent";
         File torrentFile = new File(torrentPath);
         torrent = TorrentUtils.getTorrent(torrentFile);
         // 创建文件夹

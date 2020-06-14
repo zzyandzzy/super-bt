@@ -63,12 +63,13 @@ public class TCPDownloadManager implements DownloadManager {
     private boolean saveMultipleFile(PeerWirePayload peerWirePayload, DownloadConfig downloadConfig,
                                      Queue<RequestPiece> pieceQueue) {
         byte[] block = peerWirePayload.getBlock();
-        int skipBytes = peerWirePayload.getIndex() * downloadConfig.getOnePieceRequestSum() * HandshakeUtils.PIECE_MAX_LENGTH
+        int skipBytes = peerWirePayload.getIndex() * downloadConfig.getOnePieceRequestSize() * HandshakeUtils.PIECE_MAX_LENGTH
                 + peerWirePayload.getBegin();
         // 1.判断该区块的位置是属于哪个文件
         int fileIndex = DownloadManagerUtils.getFileIndex(skipBytes, torrent);
         RandomAccessFile randomAccessFile = randomAccessFileMap.get(fileIndex);
         TorrentFileItem torrentFileItem = torrent.getTorrentFileItemList().get(fileIndex);
+        long newLength = 0;
         try {
             if (randomAccessFile == null) {
                 File file = new File(downloadConfig.getSavePath() + torrent.getName() +
@@ -78,35 +79,37 @@ public class TCPDownloadManager implements DownloadManager {
             // 2.判断peer发送过来的字节是否超出该文件
             // 大于0，说明发送过来的字节超出了文件
             // 小于零，说明当前文件的字节可能还没传输完
-            long newLength = (block.length + randomAccessFile.length()) - torrentFileItem.getLength();
-            System.out.printf("Client: response piece, index: %d, begin: %d, blockLength: %d, " +
-                            "skipBytes: %d, fileName: %s, fileLength: %d, " +
-                            "randomAccessFileLength: %d, torrentLength: %d, newLength: %d, pieceQueueSize: %d\n",
-                    peerWirePayload.getIndex(), peerWirePayload.getBegin(), block.length,
-                    skipBytes, torrentFileItem.getPath(), torrentFileItem.getLength(),
-                    randomAccessFile.length(), torrent.getTorrentLength(), newLength, pieceQueue.size());
+            newLength = (block.length + randomAccessFile.length()) - torrentFileItem.getLength();
+            float currentProgress = downloadConfig.getRequestPieceSize() - pieceQueue.size() - 1;
+            System.out.printf("downloading progress: %d / %d, %f%%\n",
+                    (int) currentProgress, downloadConfig.getRequestPieceSize(),
+                    currentProgress / downloadConfig.getRequestPieceSize() * 100);
             if (newLength >= 0) {
-                // 说明是最后一个文件
-                int blockLength = (int) (block.length - newLength);
-                if (randomAccessFile.length() == torrentFileItem.getLength()) {
-                    blockLength = (int) newLength;
+                // 当前写入的字节长度
+                int currentBlockLength = (int) (Math.abs(block.length - newLength));
+                // 正好是最后一个区块
+                if (randomAccessFile.length() >= torrentFileItem.getLength()) {
+                    currentBlockLength = (int) Math.min(newLength, HandshakeUtils.PIECE_MAX_LENGTH);
+                    System.out.printf("blockLength: %d, currentBlockLength: %d, randomAccessFileLength: %d, " +
+                                    "torrentFileItemLength: %d, newLength: %d, torrentLength: %d, downloadSum: %d\n",
+                            block.length, currentBlockLength, randomAccessFile.length(),
+                            torrentFileItem.getLength(), newLength, torrent.getTorrentLength(), downloadSum.get());
                 }
-                // 当前写入的长度
                 // 先写入文件
                 randomAccessFile.seek(DownloadManagerUtils.getStartPosition(skipBytes, torrent));
-                randomAccessFile.write(block, 0, blockLength);
-                downloadSum.addAndGet(blockLength);
+                randomAccessFile.write(block, 0, currentBlockLength);
+                downloadSum.addAndGet(currentBlockLength);
                 // 因为大于等于0说明发送过来的字节超出了文件，所以当前的文件一定是下载完毕了的，自己关闭IO流
                 randomAccessFile.close();
                 // 检查是否下载完毕全部文件
-                if (newLength == 0 || checkComplete(pieceQueue, torrent)) {
+                if (newLength == 0 || newLength == block.length && checkComplete(pieceQueue, torrent)) {
                     return true;
                 }
                 PeerWirePayload payload = new PeerWirePayload();
                 payload.setIndex(peerWirePayload.getIndex());
-                payload.setBegin(peerWirePayload.getBegin() + blockLength);
+                payload.setBegin(peerWirePayload.getBegin() + currentBlockLength);
                 byte[] newBlock = new byte[(int) newLength];
-                System.arraycopy(block, blockLength, newBlock, 0, (int) newLength);
+                System.arraycopy(block, currentBlockLength, newBlock, 0, (int) newLength);
                 payload.setBlock(newBlock);
                 // 再分割数组
                 return saveMultipleFile(payload, downloadConfig, pieceQueue);
@@ -123,6 +126,14 @@ public class TCPDownloadManager implements DownloadManager {
                 return false;
             }
         } catch (Exception e) {
+            System.err.printf("Client: response piece, index: %d, begin: %d, blockLength: %d, " +
+                            "skipBytes: %d, fileName: %s, fileLength: %d, " +
+                            " torrentLength: %d, newLength: %d, pieceQueueSize: %d\n",
+                    peerWirePayload.getIndex(), peerWirePayload.getBegin(), block.length,
+                    skipBytes, torrentFileItem.getPath(), torrentFileItem.getLength(),
+                    torrent.getTorrentLength(), newLength, pieceQueue.size());
+            pieceQueue.offer(new RequestPiece(
+                    peerWirePayload.getIndex(), peerWirePayload.getBegin(), peerWirePayload.getBlock().length));
             e.printStackTrace();
         }
         return false;
@@ -150,7 +161,7 @@ public class TCPDownloadManager implements DownloadManager {
                                    Queue<RequestPiece> pieceQueue) {
         // 跳过多少字节
         // index * onePieceRequestSum * 16Kb + begin
-        int skipBytes = peerWirePayload.getIndex() * downloadConfig.getOnePieceRequestSum() * HandshakeUtils.PIECE_MAX_LENGTH
+        int skipBytes = peerWirePayload.getIndex() * downloadConfig.getOnePieceRequestSize() * HandshakeUtils.PIECE_MAX_LENGTH
                 + peerWirePayload.getBegin();
         int fileIndex = DownloadManagerUtils.getFileIndex(skipBytes, torrent);
         try {
@@ -177,6 +188,8 @@ public class TCPDownloadManager implements DownloadManager {
             }
         } catch (IOException e) {
             e.printStackTrace();
+            pieceQueue.offer(new RequestPiece(
+                    peerWirePayload.getIndex(), peerWirePayload.getBegin(), peerWirePayload.getBlock().length));
         }
         return false;
     }

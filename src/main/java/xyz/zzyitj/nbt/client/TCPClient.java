@@ -52,7 +52,7 @@ public class TCPClient implements Client {
     @Override
     public void start() {
         if (Application.downloadConfigMap.get(torrent) == null) {
-            Application.downloadConfigMap.put(torrent, new DownloadConfig(savePath, 0, null));
+            Application.downloadConfigMap.put(torrent, new DownloadConfig(savePath));
         }
         for (Peer peer : peerList) {
             es.execute(new TCPClientTask(peer));
@@ -73,9 +73,6 @@ public class TCPClient implements Client {
             try {
                 Bootstrap bootstrap = new Bootstrap();
                 bootstrap.group(workerGroup)
-                        .option(ChannelOption.TCP_NODELAY, true)
-                        .option(ChannelOption.SO_REUSEADDR, true)
-                        .option(ChannelOption.SO_KEEPALIVE, true)
                         .channel(NioSocketChannel.class);
                 bootstrap.handler(new ChannelInitializer<SocketChannel>() {
                     @Override

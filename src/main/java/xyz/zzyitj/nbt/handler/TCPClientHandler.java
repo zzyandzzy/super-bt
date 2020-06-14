@@ -50,10 +50,10 @@ public class TCPClientHandler extends AbstractTCPHandler {
                     ctx.writeAndFlush(Unpooled.copiedBuffer(
                             HandshakeUtils.requestPieceHandler(
                                     new RequestPiece(requestPiece.getIndex(), requestPiece.getBegin(), requestPiece.getLength()))));
-                    System.out.printf("Client: request %s, index: %s, begin: %d, length: %d, pieceQueueSize: %d\n",
-                            ctx.channel().remoteAddress(),
-                            requestPiece.getIndex(), requestPiece.getBegin(), requestPiece.getLength(),
-                            pieceQueue.size());
+//                    System.out.printf("Client: request %s, index: %s, begin: %d, length: %d, pieceQueueSize: %d\n",
+//                            ctx.channel().remoteAddress(),
+//                            requestPiece.getIndex(), requestPiece.getBegin(), requestPiece.getLength(),
+//                            pieceQueue.size());
                 }
             }
         }
@@ -83,7 +83,7 @@ public class TCPClientHandler extends AbstractTCPHandler {
         // 根据peer返回的区块完成信息生成区块下载队列
         DownloadConfig downloadConfig = Application.downloadConfigMap.get(torrent);
         if (downloadConfig != null && downloadConfig.getPieceQueue() == null) {
-            downloadConfig.setOnePieceRequestSum(
+            downloadConfig.setOnePieceRequestSize(
                     HandshakeUtils.generateRequestPieceQueue(peerWire, torrent, downloadConfig));
         }
         if (unChoke) {

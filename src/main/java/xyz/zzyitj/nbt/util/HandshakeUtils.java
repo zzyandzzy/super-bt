@@ -266,6 +266,7 @@ public class HandshakeUtils {
                     currentIndex++;
                 }
             }
+            downloadConfig.setRequestPieceSize(pieceQueue.size());
             return onePieceRequestSum;
         }
         return 0;
