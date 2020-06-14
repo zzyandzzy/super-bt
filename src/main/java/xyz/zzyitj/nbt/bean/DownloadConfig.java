@@ -1,5 +1,6 @@
 package xyz.zzyitj.nbt.bean;
 
+import java.util.List;
 import java.util.Queue;
 
 /**
@@ -21,15 +22,15 @@ public class DownloadConfig {
     /**
      * 区块下载队列
      */
-    private Queue<RequestPiece> queue;
+    private Queue<RequestPiece> pieceQueue;
 
     public DownloadConfig() {
     }
 
-    public DownloadConfig(String savePath, int onePieceRequestSum, Queue<RequestPiece> queue) {
+    public DownloadConfig(String savePath, int onePieceRequestSum, Queue<RequestPiece> pieceQueue) {
         this.savePath = savePath;
         this.onePieceRequestSum = onePieceRequestSum;
-        this.queue = queue;
+        this.pieceQueue = pieceQueue;
     }
 
     public String getSavePath() {
@@ -48,11 +49,11 @@ public class DownloadConfig {
         this.onePieceRequestSum = onePieceRequestSum;
     }
 
-    public Queue<RequestPiece> getQueue() {
-        return queue;
+    public Queue<RequestPiece> getPieceQueue() {
+        return pieceQueue;
     }
 
-    public void setQueue(Queue<RequestPiece> queue) {
-        this.queue = queue;
+    public void setPieceQueue(Queue<RequestPiece> pieceQueue) {
+        this.pieceQueue = pieceQueue;
     }
 }

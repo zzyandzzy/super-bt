@@ -12,7 +12,7 @@ import java.util.List;
  * @date 2020/6/9 7:04 下午
  * @since 1.0
  */
-public class TCPServerHandler extends TCPHandler {
+public class TCPServerHandler extends AbstractTCPHandler {
 
     public TCPServerHandler(TCPServerHandlerBuilder builder) {
         super();
@@ -77,7 +77,7 @@ public class TCPServerHandler extends TCPHandler {
     public static class TCPServerHandlerBuilder {
         private List<Torrent> torrentList;
 
-        public TCPHandler build() {
+        public AbstractTCPHandler build() {
             return new TCPServerHandler(this);
         }
 

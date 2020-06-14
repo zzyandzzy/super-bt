@@ -1,10 +1,7 @@
 package xyz.zzyitj.nbt.handler;
 
 import io.netty.buffer.Unpooled;
-import io.netty.channel.ChannelFutureListener;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
-import xyz.zzyitj.nbt.bean.RequestPiece;
+import io.netty.channel.*;
 import xyz.zzyitj.nbt.bean.Torrent;
 import xyz.zzyitj.nbt.util.Const;
 import xyz.zzyitj.nbt.util.HandshakeUtils;
@@ -12,7 +9,6 @@ import xyz.zzyitj.nbt.util.PeerWireConst;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Queue;
 
 
 /**
@@ -22,7 +18,19 @@ import java.util.Queue;
  * @date 2020/3/15 2:45 下午
  * @since 1.0
  */
-public abstract class TCPHandler extends ChannelInboundHandlerAdapter {
+public abstract class AbstractTCPHandler extends ChannelInboundHandlerAdapter {
+    /**
+     * keep_alive消息的长度固定，为4字节，它没有消息编号和负载。
+     * 如果一段时间内客户端与peer没有交换任何消息，则与这个peer的连接将被关闭。
+     * keep_alive消息用于维持这个连接，通常如果2分钟内没有向peer发送任何消息，
+     * 则发送一个keep_alive消息。
+     *
+     * @param ctx
+     */
+    private void doKeepAlive(ChannelHandlerContext ctx) {
+        ctx.writeAndFlush(HandshakeUtils.buildMessage(PeerWireConst.KEEP_ALIVE));
+    }
+
     /**
      * choke消息的长度固定，为5字节，消息长度占4个字节，消息编号占1个字节，没有负载。
      * 该消息的功能是，发出该消息的peer将接收该消息的peer阻塞，暂时不允许其下载自己的数据。
@@ -164,12 +172,13 @@ public abstract class TCPHandler extends ChannelInboundHandlerAdapter {
             // 打开socket就发送握手
             ctx.writeAndFlush(Unpooled.copiedBuffer(
                     HandshakeUtils.buildHandshake(torrent.getInfoHash(), Const.TEST_PEER_ID)));
-            System.out.println("Client: send handshake.");
+            System.out.printf("Client(%s): %s send handshake.\n",
+                    Thread.currentThread().getName(), ctx.channel().remoteAddress());
         }
     }
 
     @Override
-    public void channelRead(ChannelHandlerContext ctx, Object msg) {
+    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         byte[] data = (byte[]) msg;
         // 作为客户端
         // 如果peer同意了我们的握手，说明该peer有该info_hash的文件在做种
@@ -180,7 +189,7 @@ public abstract class TCPHandler extends ChannelInboundHandlerAdapter {
                 // 发送对此peer感兴趣
                 ctx.writeAndFlush(Unpooled.copiedBuffer(
                         HandshakeUtils.buildMessage(PeerWireConst.INTERESTED)));
-                System.out.println("Client: send interested.");
+                System.out.printf("Client: %s send interested.\n", ctx.channel().remoteAddress());
             } else {
                 // 不是bt协议，关闭连接
                 closePeer(ctx);
@@ -193,7 +202,7 @@ public abstract class TCPHandler extends ChannelInboundHandlerAdapter {
                 // 还可以在上面判断对该peer_id是否感兴趣，即是否禁用改客户端
                 isFirstReadHandshake = false;
                 // 构造并发送自己的信息
-                System.out.println("Server: send handshake.");
+                System.out.printf("Server: %s send handshake.", ctx.channel().remoteAddress());
             }
         } else {
             doHandshakeHandler(ctx, data);
@@ -207,6 +216,10 @@ public abstract class TCPHandler extends ChannelInboundHandlerAdapter {
      * @param data 字节数组
      */
     private void doHandshakeHandler(ChannelHandlerContext ctx, byte[] data) {
+        if (data.length == PeerWireConst.PEER_WIRE_MIN_FRAME_LENGTH) {
+            doKeepAlive(ctx);
+            return;
+        }
         switch (data[PeerWireConst.PEER_WIRE_ID_INDEX]) {
             case PeerWireConst.CHOKE:
                 doChock(ctx);
@@ -243,7 +256,7 @@ public abstract class TCPHandler extends ChannelInboundHandlerAdapter {
                 break;
             default:
                 // 其他情况
-                System.err.println("error: " + Arrays.toString(data));
+                System.err.printf("error: %s %s", ctx.channel().remoteAddress(), Arrays.toString(data));
         }
     }
 

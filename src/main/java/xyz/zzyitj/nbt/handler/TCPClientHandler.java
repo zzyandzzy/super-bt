@@ -15,7 +15,7 @@ import java.util.Queue;
  * @date 2020/6/9 6:58 下午
  * @since 1.0
  */
-public class TCPClientHandler extends TCPHandler {
+public class TCPClientHandler extends AbstractTCPHandler {
 
     public TCPClientHandler(TCPClientHandlerBuilder builder) {
         super();
@@ -43,16 +43,17 @@ public class TCPClientHandler extends TCPHandler {
     private void doDownload(ChannelHandlerContext ctx) {
         DownloadConfig downloadConfig = Application.downloadConfigMap.get(torrent);
         if (downloadConfig != null) {
-            Queue<RequestPiece> queue = downloadConfig.getQueue();
-            if (queue != null) {
-                RequestPiece requestPiece = queue.poll();
+            Queue<RequestPiece> pieceQueue = downloadConfig.getPieceQueue();
+            if (pieceQueue != null) {
+                RequestPiece requestPiece = pieceQueue.poll();
                 if (requestPiece != null) {
                     ctx.writeAndFlush(Unpooled.copiedBuffer(
                             HandshakeUtils.requestPieceHandler(
                                     new RequestPiece(requestPiece.getIndex(), requestPiece.getBegin(), requestPiece.getLength()))));
-//                    System.out.printf("Client: request piece, index: %s, begin: %d, length: %d, need: %d\n",
-//                            requestPiece.getIndex(), requestPiece.getBegin(), requestPiece.getLength(),
-//                            queue.size());
+                    System.out.printf("Client: request %s, index: %s, begin: %d, length: %d, pieceQueueSize: %d\n",
+                            ctx.channel().remoteAddress(),
+                            requestPiece.getIndex(), requestPiece.getBegin(), requestPiece.getLength(),
+                            pieceQueue.size());
                 }
             }
         }
@@ -81,7 +82,7 @@ public class TCPClientHandler extends TCPHandler {
         PeerWire peerWire = HandshakeUtils.parsePeerWire(data);
         // 根据peer返回的区块完成信息生成区块下载队列
         DownloadConfig downloadConfig = Application.downloadConfigMap.get(torrent);
-        if (downloadConfig != null) {
+        if (downloadConfig != null && downloadConfig.getPieceQueue() == null) {
             downloadConfig.setOnePieceRequestSum(
                     HandshakeUtils.generateRequestPieceQueue(peerWire, torrent, downloadConfig));
         }
@@ -144,7 +145,7 @@ public class TCPClientHandler extends TCPHandler {
             this.downloadManager.setTorrent(torrent);
         }
 
-        public TCPHandler build() {
+        public AbstractTCPHandler build() {
             return new TCPClientHandler(this);
         }
 

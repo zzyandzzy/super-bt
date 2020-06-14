@@ -5,6 +5,7 @@ import io.netty.handler.logging.LoggingHandler;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import xyz.zzyitj.nbt.bean.Peer;
 import xyz.zzyitj.nbt.bean.Torrent;
 import xyz.zzyitj.nbt.handler.DownloadManager;
 import xyz.zzyitj.nbt.handler.TCPDownloadManager;
@@ -12,6 +13,8 @@ import xyz.zzyitj.nbt.util.TorrentUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author intent
@@ -27,7 +30,7 @@ class ClientTest {
     // Local Transmission port
 //    public static final int TEST_PORT = 51413;
 
-    private static final String savePath = "./test/";
+    private static final String savePath = "./download/";
     private static Torrent torrent;
     private static DownloadManager downloadManager;
 
@@ -66,10 +69,18 @@ class ClientTest {
      */
     @Test
     void testTCPClient() throws InterruptedException {
-        Client client = new TCPClient.TCPClientBuilder(TEST_IP, TEST_PORT, torrent, savePath, downloadManager)
+        List<Peer> peerList = new ArrayList<>();
+        peerList.add(new Peer(TEST_IP, 51413));
+        peerList.add(new Peer(TEST_IP, 18357));
+        Client client = new TCPClient.TCPClientBuilder(peerList, torrent, savePath, downloadManager)
 //                .loggingHandler(new LoggingHandler(LogLevel.INFO))
                 .builder();
         client.start();
+        try {
+            System.in.read();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     /**

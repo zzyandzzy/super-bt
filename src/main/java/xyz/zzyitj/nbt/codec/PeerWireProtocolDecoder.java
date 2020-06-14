@@ -4,6 +4,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import xyz.zzyitj.nbt.util.HandshakeUtils;
+import xyz.zzyitj.nbt.util.PeerWireConst;
 
 import java.nio.ByteOrder;
 
@@ -16,13 +17,6 @@ import java.nio.ByteOrder;
  * @since 1.0
  */
 public class PeerWireProtocolDecoder extends LengthFieldBasedFrameDecoder {
-    /**
-     * 是否第一次收到握手消息
-     * 第一次收到握手消息是68个字节定长
-     */
-    private static boolean isFirstReadHandshake = true;
-    private static final int HEADER_SIZE = 4;
-
     /**
      * @param maxFrameLength      帧的最大长度
      * @param lengthFieldOffset   length字段偏移的地址
@@ -47,8 +41,14 @@ public class PeerWireProtocolDecoder extends LengthFieldBasedFrameDecoder {
      */
     @Override
     protected long getUnadjustedFrameLength(ByteBuf buf, int offset, int length, ByteOrder order) {
-        if (isFirstReadHandshake) {
-            isFirstReadHandshake = false;
+        // 这里读取第一个字节来判断是否是第一次收到包
+        // 第一次收到包的头是没有字节长度是（因为固定了为68个字节）
+        // 而且第一个字节肯定是0x13，即BT协议1.0版本的标志位
+        // 而如果不是第一次收到包，第一位也不可能是0x13
+        // 因为BT协议规定了一个包的长度最大为16KB，即长度为16348
+        // 16348的16进制是0x00003FDC，可以看到第一位为0，所以不可能是0x13
+        byte checkByte = buf.getByte(offset);
+        if (checkByte == HandshakeUtils.BIT_TORRENT_PROTOCOL_VERSION_1_0) {
             // 这里因为构造参数设置了前length长度为帧长度，而第一个握手包里面没有包含长度信息（定长68个字节）
             // 所以这里要减去length
             return HandshakeUtils.HANDSHAKE_LENGTH - length;
@@ -67,20 +67,20 @@ public class PeerWireProtocolDecoder extends LengthFieldBasedFrameDecoder {
      */
     @Override
     protected Object decode(ChannelHandlerContext ctx, ByteBuf in) throws Exception {
+//        System.out.printf("Client: %s length: %d\n", ctx.channel().remoteAddress(), in.readableBytes());
         // 在这里调用父类的方法,实现指得到想要的部分
         in = (ByteBuf) super.decode(ctx, in);
 
         if (in == null) {
+//            System.out.printf("Client: %s discard package.\n", ctx.channel().remoteAddress());
             return null;
         }
-        if (in.readableBytes() < HEADER_SIZE) {
-            throw new Exception("byte length: " + in.readableBytes() + " error.");
+        if (in.readableBytes() < PeerWireConst.PEER_WIRE_MIN_FRAME_LENGTH) {
+            throw new Exception("Client: " + ctx.channel().remoteAddress() + " byte length: " + in.readableBytes() + " error.");
         }
         //读取body
         byte[] data = new byte[in.readableBytes()];
         in.readBytes(data);
-
-//        System.out.println("length: " + data.length);
         return data;
     }
 }
