@@ -31,4 +31,24 @@ public class DownloadManagerUtils {
         }
         return fileIndex;
     }
+
+    /**
+     * skipBytes在该文件是第几个字节开始
+     *
+     * @param skipBytes 跳过的字节
+     * @param torrent   种子文件
+     * @return 字节开始的位置
+     */
+    public static long getStartPosition(int skipBytes, Torrent torrent) {
+        if (torrent.getTorrentFileItemList() == null || skipBytes == 0) {
+            return 0;
+        }
+        for (int i = 0; i < torrent.getTorrentFileItemList().size(); i++) {
+            if (skipBytes - torrent.getTorrentFileItemList().get(i).getLength() < 0) {
+                return skipBytes;
+            }
+            skipBytes -= torrent.getTorrentFileItemList().get(i).getLength();
+        }
+        return skipBytes;
+    }
 }

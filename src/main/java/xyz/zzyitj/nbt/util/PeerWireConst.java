@@ -102,14 +102,15 @@ public class PeerWireConst {
      * <a href="https://www.bittorrent.org/beps/bep_0010.html"></a>
      */
     public static final byte EXTENDED = 0x14;
-
-
     /**
      * Peer返回的PeerWire消息中
      * PeerWire的 id 为data字节数组的第4位
      */
     public static final int PEER_WIRE_ID_INDEX = 4;
-
+    /**
+     * 最小包大小
+     */
+    public static final int PEER_WIRE_MIN_FRAME_LENGTH = 4;
     /**
      * 这里帧最大长度加13是因为当帧id为7时
      * 帧长度为HandshakeUtils.PIECE_MAX_LENGTH + 4个byte头部length + 1个byte的id + 4个byte的index + 4个byte的begin

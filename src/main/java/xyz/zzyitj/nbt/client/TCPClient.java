@@ -1,16 +1,14 @@
 package xyz.zzyitj.nbt.client;
 
 import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelPipeline;
-import io.netty.channel.EventLoopGroup;
+import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.logging.LoggingHandler;
 import xyz.zzyitj.nbt.Application;
 import xyz.zzyitj.nbt.bean.DownloadConfig;
+import xyz.zzyitj.nbt.bean.Peer;
 import xyz.zzyitj.nbt.bean.Torrent;
 import xyz.zzyitj.nbt.codec.PeerWireProtocolDecoder;
 import xyz.zzyitj.nbt.handler.DownloadManager;
@@ -18,6 +16,9 @@ import xyz.zzyitj.nbt.handler.TCPClientHandler;
 import xyz.zzyitj.nbt.util.PeerWireConst;
 
 import java.net.InetSocketAddress;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * xyz.zzyitj.nbt.client
@@ -31,16 +32,17 @@ import java.net.InetSocketAddress;
  * @since 1.0
  */
 public class TCPClient implements Client {
-    private final String ip;
-    private final int port;
+    private final List<Peer> peerList;
     private final Torrent torrent;
     private final String savePath;
     private final DownloadManager downloadManager;
     private final LoggingHandler loggingHandler;
 
+    private final ExecutorService es;
+
     public TCPClient(TCPClientBuilder builder) {
-        this.ip = builder.ip;
-        this.port = builder.port;
+        this.peerList = builder.peerList;
+        es = Executors.newFixedThreadPool(peerList.size());
         this.torrent = builder.torrent;
         this.savePath = builder.savePath;
         this.downloadManager = builder.downloadManager;
@@ -48,58 +50,68 @@ public class TCPClient implements Client {
     }
 
     @Override
-    public String toString() {
-        return "TCPClient{" +
-                "ip='" + ip + '\'' +
-                ", port=" + port +
-                ", torrent=" + torrent +
-                ", savePath='" + savePath + '\'' +
-                ", downloadManager='" + downloadManager + '\'' +
-                ", loggingHandler=" + loggingHandler +
-                '}';
+    public void start() {
+        if (Application.downloadConfigMap.get(torrent) == null) {
+            Application.downloadConfigMap.put(torrent, new DownloadConfig(savePath));
+        }
+        for (Peer peer : peerList) {
+            es.execute(new TCPClientTask(peer));
+        }
+        es.shutdown();
     }
 
-    @Override
-    public void start() throws InterruptedException {
-        EventLoopGroup workerGroup = new NioEventLoopGroup();
-        try {
-            Bootstrap b = new Bootstrap();
-            b.group(workerGroup)
-                    .channel(NioSocketChannel.class)
-                    .handler(new ChannelInitializer<SocketChannel>() {
-                        @Override
-                        public void initChannel(SocketChannel ch) {
-                            ChannelPipeline p = ch.pipeline();
-                            if (loggingHandler != null) {
-                                p.addLast("logging", loggingHandler);
-                            }
-                            p.addLast(new PeerWireProtocolDecoder(PeerWireConst.PEER_WIRE_MAX_FRAME_LENGTH,
-                                    0, 4, 0, 0, false));
-                            if (Application.downloadConfigMap.get(torrent) == null) {
-                                Application.downloadConfigMap.put(torrent, new DownloadConfig(savePath, 0, null));
-                            }
-                            p.addLast(new TCPClientHandler.TCPClientHandlerBuilder(torrent, downloadManager)
-                                    .build());
+    class TCPClientTask implements Runnable {
+        private Peer peer;
+
+        public TCPClientTask(Peer peer) {
+            this.peer = peer;
+        }
+
+        @Override
+        public void run() {
+            EventLoopGroup workerGroup = new NioEventLoopGroup();
+            try {
+                Bootstrap bootstrap = new Bootstrap();
+                bootstrap.group(workerGroup)
+                        .channel(NioSocketChannel.class);
+                bootstrap.handler(new ChannelInitializer<SocketChannel>() {
+                    @Override
+                    public void initChannel(SocketChannel ch) {
+                        ChannelPipeline p = ch.pipeline();
+                        if (loggingHandler != null) {
+                            p.addLast("logging", loggingHandler);
                         }
-                    });
-            ChannelFuture f = b.connect(new InetSocketAddress(this.ip, this.port)).sync();
-            f.channel().closeFuture().sync();
-        } finally {
-            workerGroup.shutdownGracefully();
+                        PeerWireProtocolDecoder decoder = new PeerWireProtocolDecoder(PeerWireConst.PEER_WIRE_MAX_FRAME_LENGTH,
+                                0, 4, 0, 0, false);
+                        p.addLast("decoder", decoder);
+                        p.addLast("handler", new TCPClientHandler.TCPClientHandlerBuilder(torrent, downloadManager)
+                                .build());
+                    }
+                });
+                ChannelFuture f = bootstrap.connect(new InetSocketAddress(peer.getIp(), peer.getPort())).sync();
+                f.channel().closeFuture().sync();
+                f.addListener(future -> {
+                    if (!future.isSuccess()) {
+                        System.err.printf("%s:%d connect fail!", peer.getIp(), peer.getPort());
+                    }
+                });
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } finally {
+                workerGroup.shutdownGracefully();
+            }
         }
     }
 
     static class TCPClientBuilder {
-        private String ip;
-        private int port;
+        private final List<Peer> peerList;
         private Torrent torrent;
         private String savePath;
         private DownloadManager downloadManager;
         private LoggingHandler loggingHandler;
 
-        public TCPClientBuilder(String ip, int port, Torrent torrent, String savePath, DownloadManager downloadManager) {
-            this.ip = ip;
-            this.port = port;
+        public TCPClientBuilder(List<Peer> peerList, Torrent torrent, String savePath, DownloadManager downloadManager) {
+            this.peerList = peerList;
             this.torrent = torrent;
             this.savePath = savePath;
             this.downloadManager = downloadManager;
@@ -107,16 +119,6 @@ public class TCPClient implements Client {
 
         TCPClient builder() {
             return new TCPClient(this);
-        }
-
-        public TCPClientBuilder ip(String ip) {
-            this.ip = ip;
-            return this;
-        }
-
-        public TCPClientBuilder port(int port) {
-            this.port = port;
-            return this;
         }
 
         public TCPClientBuilder torrent(Torrent torrent) {

@@ -17,19 +17,21 @@ public class DownloadConfig {
     /**
      * 一个区块需要请求的次数
      */
-    private int onePieceRequestSum;
+    private int onePieceRequestSize;
     /**
      * 区块下载队列
      */
-    private Queue<RequestPiece> queue;
+    private Queue<RequestPiece> pieceQueue;
+    /**
+     * 区块请求下载个数，也就是区块下载队列的大小
+     */
+    private int requestPieceSize;
 
     public DownloadConfig() {
     }
 
-    public DownloadConfig(String savePath, int onePieceRequestSum, Queue<RequestPiece> queue) {
+    public DownloadConfig(String savePath) {
         this.savePath = savePath;
-        this.onePieceRequestSum = onePieceRequestSum;
-        this.queue = queue;
     }
 
     public String getSavePath() {
@@ -40,19 +42,27 @@ public class DownloadConfig {
         this.savePath = savePath;
     }
 
-    public int getOnePieceRequestSum() {
-        return onePieceRequestSum;
+    public Queue<RequestPiece> getPieceQueue() {
+        return pieceQueue;
     }
 
-    public void setOnePieceRequestSum(int onePieceRequestSum) {
-        this.onePieceRequestSum = onePieceRequestSum;
+    public void setPieceQueue(Queue<RequestPiece> pieceQueue) {
+        this.pieceQueue = pieceQueue;
     }
 
-    public Queue<RequestPiece> getQueue() {
-        return queue;
+    public int getRequestPieceSize() {
+        return requestPieceSize;
     }
 
-    public void setQueue(Queue<RequestPiece> queue) {
-        this.queue = queue;
+    public void setRequestPieceSize(int requestPieceSize) {
+        this.requestPieceSize = requestPieceSize;
+    }
+
+    public int getOnePieceRequestSize() {
+        return onePieceRequestSize;
+    }
+
+    public void setOnePieceRequestSize(int onePieceRequestSize) {
+        this.onePieceRequestSize = onePieceRequestSize;
     }
 }
