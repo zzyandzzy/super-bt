@@ -80,10 +80,7 @@ public class TCPDownloadManager implements DownloadManager {
             // 大于0，说明发送过来的字节超出了文件
             // 小于零，说明当前文件的字节可能还没传输完
             newLength = (block.length + randomAccessFile.length()) - torrentFileItem.getLength();
-            float currentProgress = downloadConfig.getRequestPieceSize() - pieceQueue.size() - 1;
-            System.out.printf("downloading progress: %d / %d, %f%%\n",
-                    (int) currentProgress, downloadConfig.getRequestPieceSize(),
-                    currentProgress / downloadConfig.getRequestPieceSize() * 100);
+            float currentDownload = 0;
             if (newLength >= 0) {
                 // 当前写入的字节长度
                 int currentBlockLength = (int) (Math.abs(block.length - newLength));
@@ -98,7 +95,9 @@ public class TCPDownloadManager implements DownloadManager {
                 // 先写入文件
                 randomAccessFile.seek(DownloadManagerUtils.getStartPosition(skipBytes, torrent));
                 randomAccessFile.write(block, 0, currentBlockLength);
-                downloadSum.addAndGet(currentBlockLength);
+                currentDownload = downloadSum.addAndGet(currentBlockLength);
+                System.out.printf("downloading progress: %f%%\n",
+                        (currentDownload / torrent.getTorrentLength()) * 100);
                 // 因为大于等于0说明发送过来的字节超出了文件，所以当前的文件一定是下载完毕了的，自己关闭IO流
                 randomAccessFile.close();
                 // 检查是否下载完毕全部文件
@@ -117,7 +116,9 @@ public class TCPDownloadManager implements DownloadManager {
                 // 写入文件
                 randomAccessFile.seek(DownloadManagerUtils.getStartPosition(skipBytes, torrent));
                 randomAccessFile.write(block);
-                downloadSum.addAndGet(block.length);
+                currentDownload = downloadSum.addAndGet(block.length);
+                System.out.printf("downloading progress: %f%%\n",
+                        (currentDownload / torrent.getTorrentLength()) * 100);
                 // 可能恰好下载完
                 if (checkComplete(pieceQueue, torrent)) {
                     randomAccessFile.close();
@@ -174,13 +175,15 @@ public class TCPDownloadManager implements DownloadManager {
             }
             randomAccessFile.seek(skipBytes);
             randomAccessFile.write(block);
-            downloadSum.addAndGet(block.length);
-            System.out.printf("Client: response piece, index: %d, begin: %d, blockLength: %d, " +
-                            "skipBytes: %d, fileName: %s, randomAccessFileLength: %d, torrentLength: %d, " +
-                            "pieceQueueSize: %d\n",
-                    peerWirePayload.getIndex(), peerWirePayload.getBegin(), block.length,
-                    skipBytes, torrent.getName(), randomAccessFile.length(), torrent.getTorrentLength(),
-                    pieceQueue.size());
+            float currentDownload = downloadSum.addAndGet(block.length);
+//            System.out.printf("Client: response piece, index: %d, begin: %d, blockLength: %d, " +
+//                            "skipBytes: %d, fileName: %s, randomAccessFileLength: %d, torrentLength: %d, " +
+//                            "pieceQueueSize: %d\n",
+//                    peerWirePayload.getIndex(), peerWirePayload.getBegin(), block.length,
+//                    skipBytes, torrent.getName(), randomAccessFile.length(), torrent.getTorrentLength(),
+//                    pieceQueue.size());
+            System.out.printf("downloading progress: %f%%\n",
+                    (currentDownload / torrent.getTorrentLength()) * 100);
             // 判断是否要继续下载区块
             if (checkComplete(pieceQueue, torrent)) {
                 randomAccessFile.close();

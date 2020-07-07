@@ -17,10 +17,10 @@ import java.util.Queue;
  */
 public class TCPClientHandler extends AbstractTCPHandler {
 
-    public TCPClientHandler(TCPClientHandlerBuilder builder) {
+    public TCPClientHandler(Torrent torrent, DownloadManager downloadManager) {
         super();
-        this.torrent = builder.torrent;
-        this.downloadManager = builder.downloadManager;
+        this.torrent = torrent;
+        this.downloadManager = downloadManager;
     }
 
     @Override
@@ -127,36 +127,5 @@ public class TCPClientHandler extends AbstractTCPHandler {
     @Override
     void doExtended() {
 
-    }
-
-    public static class TCPClientHandlerBuilder {
-        /**
-         * 种子信息
-         */
-        private Torrent torrent;
-        /**
-         * 下载管理器
-         */
-        private DownloadManager downloadManager;
-
-        public TCPClientHandlerBuilder(Torrent torrent, DownloadManager downloadManager) {
-            this.torrent = torrent;
-            this.downloadManager = downloadManager;
-            this.downloadManager.setTorrent(torrent);
-        }
-
-        public AbstractTCPHandler build() {
-            return new TCPClientHandler(this);
-        }
-
-        public TCPClientHandlerBuilder torrent(Torrent torrent) {
-            this.torrent = torrent;
-            return this;
-        }
-
-        public TCPClientHandlerBuilder downloadManager(DownloadManager downloadManager) {
-            this.downloadManager = downloadManager;
-            return this;
-        }
     }
 }

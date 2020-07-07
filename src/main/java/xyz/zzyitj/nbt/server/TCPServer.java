@@ -68,9 +68,7 @@ public class TCPServer implements Server {
                     }
                     p.addLast(new PeerWireProtocolDecoder(PeerWireConst.PEER_WIRE_MAX_FRAME_LENGTH,
                             0, 4, 0, 0, false));
-                    p.addLast(new TCPServerHandler.TCPServerHandlerBuilder()
-                            .torrentList(torrentList)
-                            .build());
+                    p.addLast(new TCPServerHandler(torrentList));
                 }
             });
             ChannelFuture f = b.bind(new InetSocketAddress(this.port)).sync();

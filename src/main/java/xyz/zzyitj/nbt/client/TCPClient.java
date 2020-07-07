@@ -84,8 +84,7 @@ public class TCPClient implements Client {
                         PeerWireProtocolDecoder decoder = new PeerWireProtocolDecoder(PeerWireConst.PEER_WIRE_MAX_FRAME_LENGTH,
                                 0, 4, 0, 0, false);
                         p.addLast("decoder", decoder);
-                        p.addLast("handler", new TCPClientHandler.TCPClientHandlerBuilder(torrent, downloadManager)
-                                .build());
+                        p.addLast("handler", new TCPClientHandler(torrent, downloadManager));
                     }
                 });
                 ChannelFuture f = bootstrap.connect(new InetSocketAddress(peer.getIp(), peer.getPort())).sync();

@@ -14,9 +14,9 @@ import java.util.List;
  */
 public class TCPServerHandler extends AbstractTCPHandler {
 
-    public TCPServerHandler(TCPServerHandlerBuilder builder) {
+    public TCPServerHandler(List<Torrent> torrentList) {
         super();
-        this.torrentList = builder.torrentList;
+        this.torrentList = torrentList;
     }
 
     @Override
@@ -72,18 +72,5 @@ public class TCPServerHandler extends AbstractTCPHandler {
     @Override
     void doExtended() {
 
-    }
-
-    public static class TCPServerHandlerBuilder {
-        private List<Torrent> torrentList;
-
-        public AbstractTCPHandler build() {
-            return new TCPServerHandler(this);
-        }
-
-        public TCPServerHandlerBuilder torrentList(List<Torrent> torrentList) {
-            this.torrentList = torrentList;
-            return this;
-        }
     }
 }
