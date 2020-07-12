@@ -16,7 +16,7 @@ public class DownloadManagerUtils {
      * @param skipBytes 跳过的字节
      * @return 该区块的位置是属于哪个文件的下标
      */
-    public static int getFileIndex(int skipBytes, Torrent torrent) {
+    public static int getFileIndex(long skipBytes, Torrent torrent) {
         if (torrent.getTorrentFileItemList() == null) {
             return 0;
         }
@@ -39,7 +39,7 @@ public class DownloadManagerUtils {
      * @param torrent   种子文件
      * @return 字节开始的位置
      */
-    public static long getStartPosition(int skipBytes, Torrent torrent) {
+    public static long getStartPosition(long skipBytes, Torrent torrent) {
         if (torrent.getTorrentFileItemList() == null || skipBytes == 0) {
             return 0;
         }

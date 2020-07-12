@@ -2,6 +2,7 @@ package xyz.zzyitj.nbt.client;
 
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
+import io.netty.util.internal.PlatformDependent;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -15,6 +16,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author intent
@@ -35,11 +39,11 @@ class ClientTest {
 
     @BeforeAll
     static void init() throws IOException {
-        String torrentPath = "/Users/intent/Desktop/sbt/一个文件一个区块.torrent";
+//        String torrentPath = "/Users/intent/Desktop/sbt/一个文件一个区块.torrent";
 //        String torrentPath = "/Users/intent/Desktop/sbt/一个文件多个区块.torrent";
 //        String torrentPath = "/Users/intent/Desktop/sbt/多个文件一个区块.torrent";
 //        String torrentPath = "/Users/intent/Desktop/sbt/多个文件多个区块.torrent";
-//        String torrentPath = "/Users/intent/Desktop/sbt/test.torrent";
+        String torrentPath = "/Users/intent/Desktop/sbt/test.torrent";
         File torrentFile = new File(torrentPath);
         torrent = TorrentUtils.getTorrent(torrentFile);
         // 创建文件夹
@@ -69,9 +73,10 @@ class ClientTest {
      */
     @Test
     void testTCPClient() throws InterruptedException {
+        startReport();
         List<Peer> peerList = new ArrayList<>();
 //        peerList.add(new Peer(TEST_IP, 51413));
-        peerList.add(new Peer(TEST_IP, 18357));
+//        peerList.add(new Peer(TEST_IP, 18357));
         Client client = new TCPClient.TCPClientBuilder(peerList, torrent, savePath, downloadManager)
                 .showDownloadLog(false)
                 .showDownloadProcess(true)
@@ -83,6 +88,24 @@ class ClientTest {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * 监控堆外内存
+     */
+    private void startReport() {
+        Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
+            @Override
+            public Thread newThread(Runnable r) {
+                Thread thread = new Thread(r, "netty_direct_memory_monitor");
+                thread.setDaemon(true);
+                return thread;
+            }
+        }).scheduleAtFixedRate(this::doReport, 0, 1, TimeUnit.SECONDS);
+    }
+
+    private void doReport() {
+        System.out.println("当前 netty direct memory: " + PlatformDependent.usedDirectMemory());
     }
 
     /**

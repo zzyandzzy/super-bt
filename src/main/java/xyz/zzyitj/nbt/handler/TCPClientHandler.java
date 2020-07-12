@@ -52,8 +52,7 @@ public class TCPClientHandler extends AbstractTCPHandler {
                 RequestPiece requestPiece = pieceQueue.poll();
                 if (requestPiece != null) {
                     ctx.writeAndFlush(Unpooled.copiedBuffer(
-                            HandshakeUtils.requestPieceHandler(
-                                    new RequestPiece(requestPiece.getIndex(), requestPiece.getBegin(), requestPiece.getLength()))));
+                            HandshakeUtils.requestPieceHandler(requestPiece)));
                     if (downloadConfig.isShowDownloadLog()) {
                         logger.info("Client: request {}, torrent name: {}, index: {}, begin: {}, length: {}, piece queue size: {}",
                                 ctx.channel().remoteAddress(), torrent.getName(),

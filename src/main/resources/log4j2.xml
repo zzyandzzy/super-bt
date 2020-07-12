@@ -5,7 +5,7 @@
         <property name="FILE_NAME">superbt</property>
         <property name="DOWNLOAD_FILE_NAME">download</property>
         <property name="TCP_CLIENT_FILE_NAME">tcpclient</property>
-        <property name="LOG_FORMAT">%-d{yyyy-MM-dd HH:mm:ss} - [ %c %M  %L] - [ %p ] - %m%n</property>
+        <property name="LOG_FORMAT">%-d{yyyy-MM-dd HH:mm:ss} - [ %c %M %L] - [ %p ] - %m%n</property>
         <property name="TIMER_LOG_FORMAT">%-d{yyyy-MM-dd HH:mm:ss} - [ %p ] - %m%n</property>
     </properties>
 
@@ -36,7 +36,8 @@
         </RollingRandomAccessFile>
 
         <!--TCP Client日志-->
-        <RollingRandomAccessFile name="tcpclient" fileName="${LOG_HOME}/${TCP_CLIENT_FILE_NAME}/${TCP_CLIENT_FILE_NAME}.log"
+        <RollingRandomAccessFile name="tcpclient"
+                                 fileName="${LOG_HOME}/${TCP_CLIENT_FILE_NAME}/${TCP_CLIENT_FILE_NAME}.log"
                                  filePattern="${LOG_HOME}/${TCP_CLIENT_FILE_NAME}/$${date:yyyy-MM}/${TCP_CLIENT_FILE_NAME}-%d{yyyy-MM-dd}.log">
             <PatternLayout pattern="${TIMER_LOG_FORMAT}"/>
             <Policies>

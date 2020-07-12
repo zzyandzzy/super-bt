@@ -8,6 +8,12 @@ package xyz.zzyitj.nbt.util;
  * @since 1.0
  */
 public class ByteUtils {
+    public static final long BYTE_KB = 1000L;
+    public static final long BYTE_MB = BYTE_KB * BYTE_KB;
+    public static final long BYTE_GB = BYTE_KB * BYTE_MB;
+    public static final long BYTE_TB = BYTE_KB * BYTE_GB;
+    public static final long BYTE_PB = BYTE_KB * BYTE_TB;
+
     /**
      * 小端存储：Little-endian
      * 10进制的int转16进制的字节数组

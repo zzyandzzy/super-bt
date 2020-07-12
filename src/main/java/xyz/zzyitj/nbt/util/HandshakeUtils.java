@@ -4,7 +4,7 @@ import io.netty.buffer.ByteBuf;
 import xyz.zzyitj.nbt.bean.*;
 
 import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * @author intent
@@ -232,7 +232,7 @@ public class HandshakeUtils {
             // 确定下载队列大小
             // 为啥是16Kb呢？因为这是bt协议限制的，单次只能下载16Kb
             // 种子内容大小 / 16Kb = 要下载几次
-            pieceQueue = new ConcurrentLinkedQueue<>();
+            pieceQueue = new LinkedBlockingQueue<>();
             downloadConfig.setPieceQueue(pieceQueue);
 
             // 当前字节数
