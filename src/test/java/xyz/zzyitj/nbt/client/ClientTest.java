@@ -20,7 +20,6 @@ import java.util.List;
  * @author intent
  * @version 1.0
  * @date 2020/3/17 7:15 下午
- * @email zzy.main@gmail.com
  */
 class ClientTest {
     // Local Transmission/qBitTorrent host
@@ -36,11 +35,11 @@ class ClientTest {
 
     @BeforeAll
     static void init() throws IOException {
-//        String torrentPath = "/Users/intent/Desktop/sbt/一个文件一个区块.torrent";
+        String torrentPath = "/Users/intent/Desktop/sbt/一个文件一个区块.torrent";
 //        String torrentPath = "/Users/intent/Desktop/sbt/一个文件多个区块.torrent";
 //        String torrentPath = "/Users/intent/Desktop/sbt/多个文件一个区块.torrent";
 //        String torrentPath = "/Users/intent/Desktop/sbt/多个文件多个区块.torrent";
-        String torrentPath = "/Users/intent/Desktop/sbt/test.torrent";
+//        String torrentPath = "/Users/intent/Desktop/sbt/test.torrent";
         File torrentFile = new File(torrentPath);
         torrent = TorrentUtils.getTorrent(torrentFile);
         // 创建文件夹
@@ -71,9 +70,11 @@ class ClientTest {
     @Test
     void testTCPClient() throws InterruptedException {
         List<Peer> peerList = new ArrayList<>();
-        peerList.add(new Peer(TEST_IP, 51413));
+//        peerList.add(new Peer(TEST_IP, 51413));
         peerList.add(new Peer(TEST_IP, 18357));
         Client client = new TCPClient.TCPClientBuilder(peerList, torrent, savePath, downloadManager)
+                .showDownloadLog(false)
+                .showDownloadProcess(true)
 //                .loggingHandler(new LoggingHandler(LogLevel.INFO))
                 .builder();
         client.start();

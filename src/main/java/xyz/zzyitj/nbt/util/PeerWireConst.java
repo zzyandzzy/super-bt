@@ -108,6 +108,10 @@ public class PeerWireConst {
      */
     public static final int PEER_WIRE_ID_INDEX = 4;
     /**
+     * 包长度字节大小
+     */
+    public static final int PEER_WIRE_SIZE_LENGTH = 4;
+    /**
      * 最小包大小
      */
     public static final int PEER_WIRE_MIN_FRAME_LENGTH = 4;

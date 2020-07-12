@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+    <properties>
+        <property name="LOG_HOME">./logs</property>
+        <property name="FILE_NAME">superbt</property>
+        <property name="DOWNLOAD_FILE_NAME">download</property>
+        <property name="TCP_CLIENT_FILE_NAME">tcpclient</property>
+        <property name="LOG_FORMAT">%-d{yyyy-MM-dd HH:mm:ss} - [ %c %M  %L] - [ %p ] - %m%n</property>
+        <property name="TIMER_LOG_FORMAT">%-d{yyyy-MM-dd HH:mm:ss} - [ %p ] - %m%n</property>
+    </properties>
+
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="${LOG_FORMAT}"/>
+        </Console>
+        <!--总日志-->
+        <RollingRandomAccessFile name="superbt" fileName="${LOG_HOME}/${FILE_NAME}.log"
+                                 filePattern="${LOG_HOME}/$${date:yyyy-MM}/${FILE_NAME}-%d{yyyy-MM-dd}.log">
+            <PatternLayout pattern="${LOG_FORMAT}"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1"/>
+                <SizeBasedTriggeringPolicy size="5 MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="10"/>
+        </RollingRandomAccessFile>
+
+        <!--下载日志-->
+        <RollingRandomAccessFile name="download" fileName="${LOG_HOME}/${DOWNLOAD_FILE_NAME}/${DOWNLOAD_FILE_NAME}.log"
+                                 filePattern="${LOG_HOME}/${DOWNLOAD_FILE_NAME}/$${date:yyyy-MM}/${DOWNLOAD_FILE_NAME}-%d{yyyy-MM-dd}.log">
+            <PatternLayout pattern="${TIMER_LOG_FORMAT}"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1"/>
+                <SizeBasedTriggeringPolicy size="1 MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="10"/>
+        </RollingRandomAccessFile>
+
+        <!--TCP Client日志-->
+        <RollingRandomAccessFile name="tcpclient" fileName="${LOG_HOME}/${TCP_CLIENT_FILE_NAME}/${TCP_CLIENT_FILE_NAME}.log"
+                                 filePattern="${LOG_HOME}/${TCP_CLIENT_FILE_NAME}/$${date:yyyy-MM}/${TCP_CLIENT_FILE_NAME}-%d{yyyy-MM-dd}.log">
+            <PatternLayout pattern="${TIMER_LOG_FORMAT}"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1"/>
+                <SizeBasedTriggeringPolicy size="1 MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="10"/>
+        </RollingRandomAccessFile>
+    </Appenders>
+
+    <Loggers>
+        <Root level="info">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="superbt"/>
+        </Root>
+
+        <Logger name="xyz.zzyitj.nbt.handler.TCPDownloadManager" level="info">
+            <AppenderRef ref="download"/>
+        </Logger>
+
+        <Logger name="xyz.zzyitj.nbt.handler.TCPClientHandler" level="info">
+            <AppenderRef ref="tcpclient"/>
+        </Logger>
+    </Loggers>
+</Configuration>

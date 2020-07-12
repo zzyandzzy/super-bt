@@ -1,5 +1,7 @@
 package xyz.zzyitj.nbt.bean;
 
+import io.netty.buffer.ByteBuf;
+
 /**
  * @author intent
  * @version 1.0
@@ -9,12 +11,12 @@ package xyz.zzyitj.nbt.bean;
 public class PeerWirePayload {
     private int index;
     private int begin;
-    private byte[] block;
+    private ByteBuf block;
 
     public PeerWirePayload() {
     }
 
-    public PeerWirePayload(int index, int begin, byte[] block) {
+    public PeerWirePayload(int index, int begin, ByteBuf block) {
         this.index = index;
         this.begin = begin;
         this.block = block;
@@ -25,7 +27,7 @@ public class PeerWirePayload {
         return "PeerWirePayload{" +
                 "index=" + index +
                 ", begin=" + begin +
-                ", blockLength=" + block.length +
+                ", blockLength=" + block.readableBytes() +
                 '}';
     }
 
@@ -45,11 +47,11 @@ public class PeerWirePayload {
         this.begin = begin;
     }
 
-    public byte[] getBlock() {
+    public ByteBuf getBlock() {
         return block;
     }
 
-    public void setBlock(byte[] block) {
+    public void setBlock(ByteBuf block) {
         this.block = block;
     }
 }

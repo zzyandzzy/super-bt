@@ -47,8 +47,12 @@ public class Torrent implements Serializable {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         Torrent torrent = (Torrent) o;
         return Arrays.equals(infoHash, torrent.infoHash);
     }

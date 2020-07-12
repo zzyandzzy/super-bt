@@ -1,13 +1,15 @@
 package xyz.zzyitj.nbt.handler;
 
+import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import xyz.zzyitj.nbt.bean.Torrent;
 import xyz.zzyitj.nbt.util.Const;
 import xyz.zzyitj.nbt.util.HandshakeUtils;
 import xyz.zzyitj.nbt.util.PeerWireConst;
 
-import java.util.Arrays;
 import java.util.List;
 
 
@@ -19,13 +21,15 @@ import java.util.List;
  * @since 1.0
  */
 public abstract class AbstractTCPHandler extends ChannelInboundHandlerAdapter {
+    private static final Logger logger = LoggerFactory.getLogger(AbstractTCPHandler.class);
+
     /**
      * keep_alive消息的长度固定，为4字节，它没有消息编号和负载。
      * 如果一段时间内客户端与peer没有交换任何消息，则与这个peer的连接将被关闭。
      * keep_alive消息用于维持这个连接，通常如果2分钟内没有向peer发送任何消息，
      * 则发送一个keep_alive消息。
      *
-     * @param ctx
+     * @param ctx ctx
      */
     private void doKeepAlive(ChannelHandlerContext ctx) {
         ctx.writeAndFlush(HandshakeUtils.buildMessage(PeerWireConst.KEEP_ALIVE));
@@ -49,7 +53,7 @@ public abstract class AbstractTCPHandler extends ChannelInboundHandlerAdapter {
      * @param ctx  ctx
      * @param data data
      */
-    abstract void doUnChock(ChannelHandlerContext ctx, byte[] data);
+    abstract void doUnChock(ChannelHandlerContext ctx, ByteBuf data);
 
     /**
      * interested消息的长度固定，为5字节，消息长度占4个字节，消息编号占1个字节，没有负载。
@@ -84,7 +88,7 @@ public abstract class AbstractTCPHandler extends ChannelInboundHandlerAdapter {
      * @param ctx  ctx
      * @param data data
      */
-    abstract void doBitField(ChannelHandlerContext ctx, byte[] data);
+    abstract void doBitField(ChannelHandlerContext ctx, ByteBuf data);
 
     /**
      * request消息的长度固定，为17个字节，
@@ -107,7 +111,7 @@ public abstract class AbstractTCPHandler extends ChannelInboundHandlerAdapter {
      * @param ctx  ctx
      * @param data data
      */
-    abstract void doPiece(ChannelHandlerContext ctx, byte[] data);
+    abstract void doPiece(ChannelHandlerContext ctx, ByteBuf data);
 
     /**
      * cancel消息的长度固定，为17个字节，len、index、begin、length都占4字节。
@@ -172,23 +176,24 @@ public abstract class AbstractTCPHandler extends ChannelInboundHandlerAdapter {
             // 打开socket就发送握手
             ctx.writeAndFlush(Unpooled.copiedBuffer(
                     HandshakeUtils.buildHandshake(torrent.getInfoHash(), Const.TEST_PEER_ID)));
-            System.out.printf("Client: %s send handshake.\n", ctx.channel().remoteAddress());
+            logger.info("Client: {} send handshake.", ctx.channel().remoteAddress());
         }
     }
 
     @Override
-    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        byte[] data = (byte[]) msg;
+    public void channelRead(ChannelHandlerContext ctx, Object msg) {
+//        byte[] data = (byte[]) msg;
+        ByteBuf buf = (ByteBuf) msg;
         // 作为客户端
         // 如果peer同意了我们的握手，说明该peer有该info_hash的文件在做种
         if (isFirstWriteHandshake && torrent != null) {
-            if (HandshakeUtils.isHandshake(data)) {
+            if (HandshakeUtils.isHandshake(buf)) {
                 // 还可以在上面判断对该peer_id是否感兴趣，即是否禁用改客户端
                 isFirstWriteHandshake = false;
                 // 发送对此peer感兴趣
                 ctx.writeAndFlush(Unpooled.copiedBuffer(
                         HandshakeUtils.buildMessage(PeerWireConst.INTERESTED)));
-                System.out.printf("Client: %s send interested.\n", ctx.channel().remoteAddress());
+                logger.info("Client: {} send interested.", ctx.channel().remoteAddress());
             } else {
                 // 不是bt协议，关闭连接
                 closePeer(ctx);
@@ -197,34 +202,34 @@ public abstract class AbstractTCPHandler extends ChannelInboundHandlerAdapter {
         // 作为服务器
         // 如果客户端发送了握手给服务器，服务器检查了参数以后就构造握手返回
         else if (isFirstReadHandshake && torrentList != null) {
-            if (HandshakeUtils.isHandshake(data)) {
+            if (HandshakeUtils.isHandshake(buf)) {
                 // 还可以在上面判断对该peer_id是否感兴趣，即是否禁用改客户端
                 isFirstReadHandshake = false;
                 // 构造并发送自己的信息
-                System.out.printf("Server: %s send handshake.", ctx.channel().remoteAddress());
+                logger.info("Server: {} send interested.", ctx.channel().remoteAddress());
             }
         } else {
-            doHandshakeHandler(ctx, data);
+            doHandshakeHandler(ctx, buf);
         }
     }
 
     /**
      * 根据peer返回的数据判断下一步操作
      *
-     * @param ctx  ctx
-     * @param data 字节数组
+     * @param ctx ctx
+     * @param buf 数据
      */
-    private void doHandshakeHandler(ChannelHandlerContext ctx, byte[] data) {
-        if (data.length == PeerWireConst.PEER_WIRE_MIN_FRAME_LENGTH) {
+    private void doHandshakeHandler(ChannelHandlerContext ctx, ByteBuf buf) {
+        if (buf.readableBytes() == PeerWireConst.PEER_WIRE_MIN_FRAME_LENGTH) {
             doKeepAlive(ctx);
             return;
         }
-        switch (data[PeerWireConst.PEER_WIRE_ID_INDEX]) {
+        switch (buf.getByte(PeerWireConst.PEER_WIRE_ID_INDEX)) {
             case PeerWireConst.CHOKE:
                 doChock(ctx);
                 break;
             case PeerWireConst.UN_CHOKE:
-                doUnChock(ctx, data);
+                doUnChock(ctx, buf);
                 break;
             case PeerWireConst.INTERESTED:
                 doInterested();
@@ -236,13 +241,13 @@ public abstract class AbstractTCPHandler extends ChannelInboundHandlerAdapter {
                 doHave();
                 break;
             case PeerWireConst.BIT_FIELD:
-                doBitField(ctx, data);
+                doBitField(ctx, buf);
                 break;
             case PeerWireConst.REQUEST:
                 doRequest();
                 break;
             case PeerWireConst.PIECE:
-                doPiece(ctx, data);
+                doPiece(ctx, buf);
                 break;
             case PeerWireConst.CANCEL:
                 doCancel();
@@ -255,7 +260,9 @@ public abstract class AbstractTCPHandler extends ChannelInboundHandlerAdapter {
                 break;
             default:
                 // 其他情况
-                System.err.printf("error: %s %s", ctx.channel().remoteAddress(), Arrays.toString(data));
+                logger.error("{} error, buf len: {}, buf id: {}",
+                        ctx.channel().remoteAddress(), buf.readableBytes(),
+                        buf.getByte(PeerWireConst.PEER_WIRE_ID_INDEX));
         }
     }
 
@@ -282,7 +289,7 @@ public abstract class AbstractTCPHandler extends ChannelInboundHandlerAdapter {
      */
     @Override
     public void handlerRemoved(ChannelHandlerContext ctx) {
-        System.out.println(ctx.channel().remoteAddress() + " close.");
+        logger.info("{} close.", ctx.channel().remoteAddress());
     }
 
     @Override

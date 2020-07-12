@@ -1,12 +1,11 @@
 package xyz.zzyitj.nbt.bean;
 
-import java.util.Arrays;
+import io.netty.buffer.ByteBuf;
 
 /**
  * @author intent
  * @version 1.0
  * @date 2020/3/18 10:01 上午
- * @email zzy.main@gmail.com
  */
 public class PeerWire {
     private byte id;
@@ -24,11 +23,11 @@ public class PeerWire {
 
     @Override
     public String toString() {
-        if (payload instanceof byte[]) {
+        if (payload instanceof ByteBuf) {
             return "PeerWire{" +
                     "id=" + id +
                     ", size=" + size +
-                    ", payload=" + Arrays.toString((byte[]) payload) +
+                    ", payload=" + ((ByteBuf) payload).readableBytes() +
                     '}';
         }
         return "PeerWire{" +

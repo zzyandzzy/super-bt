@@ -26,6 +26,8 @@ public class DownloadConfig {
      * 区块请求下载个数，也就是区块下载队列的大小
      */
     private int requestPieceSize;
+    private boolean showDownloadLog;
+    private boolean showDownloadProcess;
 
     public DownloadConfig() {
     }
@@ -64,5 +66,21 @@ public class DownloadConfig {
 
     public void setOnePieceRequestSize(int onePieceRequestSize) {
         this.onePieceRequestSize = onePieceRequestSize;
+    }
+
+    public boolean isShowDownloadLog() {
+        return showDownloadLog;
+    }
+
+    public void setShowDownloadLog(boolean showDownloadLog) {
+        this.showDownloadLog = showDownloadLog;
+    }
+
+    public boolean isShowDownloadProcess() {
+        return showDownloadProcess;
+    }
+
+    public void setShowDownloadProcess(boolean showDownloadProcess) {
+        this.showDownloadProcess = showDownloadProcess;
     }
 }

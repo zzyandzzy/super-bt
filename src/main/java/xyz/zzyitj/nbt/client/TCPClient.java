@@ -37,6 +37,8 @@ public class TCPClient implements Client {
     private final String savePath;
     private final DownloadManager downloadManager;
     private final LoggingHandler loggingHandler;
+    private final boolean showDownloadLog;
+    private final boolean showDownloadProcess;
 
     private final ExecutorService es;
 
@@ -47,12 +49,17 @@ public class TCPClient implements Client {
         this.savePath = builder.savePath;
         this.downloadManager = builder.downloadManager;
         this.loggingHandler = builder.loggingHandler;
+        this.showDownloadLog = builder.showDownloadLog;
+        this.showDownloadProcess = builder.showDownloadProcess;
     }
 
     @Override
     public void start() {
         if (Application.downloadConfigMap.get(torrent) == null) {
-            Application.downloadConfigMap.put(torrent, new DownloadConfig(savePath));
+            DownloadConfig downloadConfig = new DownloadConfig(savePath);
+            downloadConfig.setShowDownloadLog(this.showDownloadLog);
+            downloadConfig.setShowDownloadProcess(this.showDownloadProcess);
+            Application.downloadConfigMap.put(torrent, downloadConfig);
         }
         for (Peer peer : peerList) {
             es.execute(new TCPClientTask(peer));
@@ -108,12 +115,15 @@ public class TCPClient implements Client {
         private String savePath;
         private DownloadManager downloadManager;
         private LoggingHandler loggingHandler;
+        private boolean showDownloadLog;
+        private boolean showDownloadProcess;
 
         public TCPClientBuilder(List<Peer> peerList, Torrent torrent, String savePath, DownloadManager downloadManager) {
             this.peerList = peerList;
             this.torrent = torrent;
             this.savePath = savePath;
             this.downloadManager = downloadManager;
+            this.downloadManager.setTorrent(torrent);
         }
 
         TCPClient builder() {
@@ -137,6 +147,16 @@ public class TCPClient implements Client {
 
         public TCPClientBuilder downloadManager(DownloadManager downloadManager) {
             this.downloadManager = downloadManager;
+            return this;
+        }
+
+        public TCPClientBuilder showDownloadLog(boolean showDownloadLog) {
+            this.showDownloadLog = showDownloadLog;
+            return this;
+        }
+
+        public TCPClientBuilder showDownloadProcess(boolean showDownloadProcess) {
+            this.showDownloadProcess = showDownloadProcess;
             return this;
         }
     }

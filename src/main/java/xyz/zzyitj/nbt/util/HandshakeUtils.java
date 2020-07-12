@@ -1,7 +1,6 @@
 package xyz.zzyitj.nbt.util;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import xyz.zzyitj.nbt.bean.*;
 
 import java.util.Queue;
@@ -70,6 +69,22 @@ public class HandshakeUtils {
         // 忽略掉第一个字节，第一个字节是bt协议的版本
         for (int i = 1; i <= BIT_TORRENT_PROTOCOL_LENGTH; i++) {
             if (HANDSHAKE_PACKAGE[i] != data[i]) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * 判断ByteBuf是否是和{@link #HANDSHAKE_PACKAGE}的第1个到第20个字节一致
+     * 判断是否为bt协议
+     *
+     * @param buf ByteBuf
+     * @return true 是bt协议 false 不是bt协议
+     */
+    public static boolean isHandshake(ByteBuf buf) {
+        for (int i = 1; i <= BIT_TORRENT_PROTOCOL_LENGTH; i++) {
+            if (HANDSHAKE_PACKAGE[i] != buf.getByte(i)) {
                 return false;
             }
         }
@@ -150,46 +165,27 @@ public class HandshakeUtils {
     /**
      * 把data转换为PeerWire
      *
-     * @param data 字节数组
+     * @param data 数据
      * @return PeerWire
      */
-    public static PeerWire parsePeerWire(byte[] data) {
-        // size 为data的0-3位
-        ByteBuf buf = Unpooled.copiedBuffer(data, 0, 4);
-        int size = (int) buf.getUnsignedInt(0);
-        return parsePeerWire(data, 0, size);
-    }
-
-    /**
-     * 把data转换为PeerWire
-     *
-     * @param data  字节数组
-     * @param start 开始的位置
-     * @param size  payload的大小
-     * @return PeerWire
-     */
-    public static PeerWire parsePeerWire(byte[] data, int start, int size) {
-        if (data == null || data.length < (start + PeerWireConst.PEER_WIRE_ID_INDEX)) {
+    public static PeerWire parsePeerWire(ByteBuf data) {
+        if (data == null || data.readableBytes() < PeerWireConst.PEER_WIRE_ID_INDEX) {
             return null;
         }
+        int size = (int) data.readBytes(PeerWireConst.PEER_WIRE_SIZE_LENGTH).getUnsignedInt(0);
         // id 为data的第4位
-        byte id = data.length > (start + PeerWireConst.PEER_WIRE_ID_INDEX) ? data[start + PeerWireConst.PEER_WIRE_ID_INDEX] : 0;
+        byte id = data.readableBytes() > PeerWireConst.PEER_WIRE_ID_INDEX - PeerWireConst.PEER_WIRE_SIZE_LENGTH ? data.readByte() : 0;
         PeerWire peerWire = new PeerWire();
         peerWire.setId(id);
         peerWire.setSize(size);
         if (size > 1) {
-            // 根据id判断payload类型
             if (id >= PeerWireConst.REQUEST && id <= PeerWireConst.CANCEL) {
-                ByteBuf buf = Unpooled.copiedBuffer(data, start + 5, 8);
+                ByteBuf buf = data.readBytes(8);
                 int index = (int) buf.getUnsignedInt(0);
                 int begin = (int) buf.getUnsignedInt(4);
-                byte[] block = new byte[size - 9];
-                System.arraycopy(data, start + 13, block, 0, size - 9);
-                peerWire.setPayload(new PeerWirePayload(index, begin, block));
+                peerWire.setPayload(new PeerWirePayload(index, begin, data));
             } else {
-                byte[] payload = new byte[size - 1];
-                System.arraycopy(data, start + 5, payload, 0, size - 1);
-                peerWire.setPayload(payload);
+                peerWire.setPayload(data);
             }
         }
         return peerWire;
