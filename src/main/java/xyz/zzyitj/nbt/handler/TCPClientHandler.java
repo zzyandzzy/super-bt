@@ -93,8 +93,7 @@ public class TCPClientHandler extends AbstractTCPHandler {
         // 根据peer返回的区块完成信息生成区块下载队列
         DownloadConfig downloadConfig = Application.downloadConfigMap.get(torrent);
         if (downloadConfig != null && downloadConfig.getPieceQueue() == null) {
-            downloadConfig.setOnePieceRequestSize(
-                    HandshakeUtils.generateRequestPieceQueue(peerWire, torrent, downloadConfig));
+            HandshakeUtils.generateRequestPieceQueue(peerWire, torrent, downloadConfig);
         }
         if (unChoke) {
             // 之后就可以下载区块了

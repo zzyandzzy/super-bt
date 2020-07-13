@@ -225,9 +225,8 @@ public class HandshakeUtils {
      *
      * @param peerWire peerWire
      * @param torrent  种子信息
-     * @return 一个区块需要请求的次数
      */
-    public static int generateRequestPieceQueue(PeerWire peerWire, Torrent torrent, DownloadConfig downloadConfig) {
+    public static void generateRequestPieceQueue(PeerWire peerWire, Torrent torrent, DownloadConfig downloadConfig) {
         // 这里直接生成全部下载，后面再修改
         // increment判断是否刚好下载完
         int increment = torrent.getTorrentLength() % HandshakeUtils.PIECE_MAX_LENGTH == 0 ? 0 : 1;
@@ -241,7 +240,7 @@ public class HandshakeUtils {
             // 种子内容大小 / 16Kb = 要下载几次
             pieceQueue = new ArrayBlockingQueue<>(capacity);
             downloadConfig.setPieceQueue(pieceQueue);
-            downloadConfig.setPieceProcess(new boolean[pieceQueue.size()]);
+            downloadConfig.setPieceRequestProcess(new boolean[capacity]);
             downloadConfig.setPieceQueueSize(capacity);
             downloadConfig.setDownloadSum(new AtomicLong(0));
 
@@ -272,8 +271,7 @@ public class HandshakeUtils {
                     currentIndex++;
                 }
             }
-            return onePieceRequestSum;
+            downloadConfig.setOnePieceRequestSize(onePieceRequestSum);
         }
-        return 0;
     }
 }

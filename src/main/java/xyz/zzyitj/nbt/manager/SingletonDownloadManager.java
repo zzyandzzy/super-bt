@@ -47,7 +47,7 @@ public class SingletonDownloadManager {
      * @return true下载完成，false下载未完成
      */
     public boolean saveMultipleFile(Torrent torrent, PeerWirePayload payload, DownloadConfig downloadConfig,
-                                                         Queue<RequestPiece> pieceQueue) {
+                                    Queue<RequestPiece> pieceQueue) {
         // 跳过的字节数
         long skipBytes = payload.getIndex() * downloadConfig.getOnePieceRequestSize() * HandshakeUtils.PIECE_MAX_LENGTH
                 + payload.getBegin();
@@ -57,19 +57,17 @@ public class SingletonDownloadManager {
         TorrentFileItem torrentFileItem = torrent.getTorrentFileItemList().get(fileIndex);
         byte[] block = payload.getBlock();
         byte[] writeBlock = null;
-        long bytesExceeded = 0;
+        long bytesExceeded = block.length;
         RandomAccessFile randomAccessFile = null;
-        File file = new File(downloadConfig.getSavePath() + torrent.getName() +
-                File.separator + torrentFileItem.getPath());
         AtomicLong atomicDownloadSum = downloadConfig.getDownloadSum();
         long downloadSum = atomicDownloadSum.get();
         try {
-            randomAccessFile = new RandomAccessFile(file, "rw");
+            long startPosition = DownloadManagerUtils.getStartPosition(skipBytes, torrent);
             // 大于0表示当前文件加上现在的字节还有超出
             // 小于0表示当前文件加上现在的字节还没下载完
             // 等于0恰好把当前文件加上现在的字节刚好下载完
             // 超出的字节数
-            bytesExceeded = (randomAccessFile.length() + block.length) - torrentFileItem.getLength();
+            bytesExceeded = startPosition + block.length - torrentFileItem.getLength();
             if (bytesExceeded > 0) {
                 writeBlock = new byte[block.length - (int) (bytesExceeded)];
                 System.arraycopy(block, 0, writeBlock, 0, writeBlock.length);
@@ -79,13 +77,16 @@ public class SingletonDownloadManager {
             if (downloadConfig.isShowDownloadLog()) {
                 logger.info("Client: response piece, torrent name: {}, torrent length: {}, item file name: {}, item file length: {}, " +
                                 "index: {}, begin: {}, block length: {}, write block length: {}, " +
-                                "skip bytes: {}, random access file length: {}, download sum: {}, bytes exceeded: {}, piece map size: {}",
+                                "skip bytes: {}, download sum: {}, bytes exceeded: {}, piece map size: {}",
                         torrent.getName(), torrent.getTorrentLength(), torrentFileItem.getPath(), torrentFileItem.getLength(),
                         payload.getIndex(), payload.getBegin(), block.length, writeBlock.length,
-                        skipBytes, randomAccessFile.length(), downloadSum, bytesExceeded, pieceQueue.size());
+                        skipBytes, downloadSum, bytesExceeded, pieceQueue.size());
             }
+            File file = new File(downloadConfig.getSavePath() + torrent.getName() +
+                    File.separator + torrentFileItem.getPath());
+            randomAccessFile = new RandomAccessFile(file, "rw");
             // 跳过多少字节
-            randomAccessFile.seek(DownloadManagerUtils.getStartPosition(skipBytes, torrent));
+            randomAccessFile.seek(startPosition);
             // 写入文件
             randomAccessFile.write(writeBlock);
             // 可能恰好下载完
@@ -105,10 +106,10 @@ public class SingletonDownloadManager {
         } catch (Exception e) {
             e.printStackTrace();
             logger.error("Client: error, torrent name: {}, torrent length: {}, item file name: {}, item file length: {}, " +
-                            "index: {}, begin: {}, block length: {}, write block length: {}, file length: {}, " +
+                            "index: {}, begin: {}, block length: {}, write block length: {}, " +
                             "skip bytes: {}, download sum: {}, bytes exceeded: {}, piece queue size: {}",
                     torrent.getName(), torrent.getTorrentLength(), torrentFileItem.getPath(), torrentFileItem.getLength(),
-                    payload.getIndex(), payload.getBegin(), block.length, writeBlock, file.length(),
+                    payload.getIndex(), payload.getBegin(), block.length, writeBlock,
                     skipBytes, downloadSum, bytesExceeded, pieceQueue.size());
             pieceQueue.offer(new RequestPiece(payload.getIndex(), payload.getBegin(), block.length));
         } finally {
@@ -133,7 +134,7 @@ public class SingletonDownloadManager {
      * @return true，下载完成，false没有下载完
      */
     public boolean saveSingleFile(Torrent torrent, PeerWirePayload payload, DownloadConfig downloadConfig,
-                                                       Queue<RequestPiece> pieceQueue) {
+                                  Queue<RequestPiece> pieceQueue) {
         // 跳过多少字节
         // index * onePieceRequestSum * 16Kb + begin
         long skipBytes = payload.getIndex() * downloadConfig.getOnePieceRequestSize() * HandshakeUtils.PIECE_MAX_LENGTH

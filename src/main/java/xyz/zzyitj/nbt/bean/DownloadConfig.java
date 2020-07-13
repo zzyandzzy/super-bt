@@ -22,7 +22,7 @@ public class DownloadConfig {
     /**
      * 区块下载完成进度
      */
-    private boolean[] pieceProcess;
+    private boolean[] pieceRequestProcess;
     /**
      * 下载大小
      */
@@ -79,14 +79,6 @@ public class DownloadConfig {
         this.pieceQueue = pieceQueue;
     }
 
-    public boolean[] getPieceProcess() {
-        return pieceProcess;
-    }
-
-    public void setPieceProcess(boolean[] pieceProcess) {
-        this.pieceProcess = pieceProcess;
-    }
-
     public int getPieceQueueSize() {
         return pieceQueueSize;
     }
@@ -101,5 +93,13 @@ public class DownloadConfig {
 
     public void setDownloadSum(AtomicLong downloadSum) {
         this.downloadSum = downloadSum;
+    }
+
+    public boolean[] getPieceRequestProcess() {
+        return pieceRequestProcess;
+    }
+
+    public void setPieceRequestProcess(boolean[] pieceRequestProcess) {
+        this.pieceRequestProcess = pieceRequestProcess;
     }
 }
