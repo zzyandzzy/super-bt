@@ -57,15 +57,37 @@ public class TCPClientHandler extends AbstractTCPHandler {
             return;
         }
         RequestPiece requestPiece = pieceQueue.poll();
+        // 下载队列里面已经完成了
         if (requestPiece == null) {
-            return;
+            // 但是还有些失败的区块
+            boolean[] pieceRequestProcess = downloadConfig.getPieceRequestProcess();
+            for (int i = 0; i < pieceRequestProcess.length; i++) {
+                if (!pieceRequestProcess[i]) {
+                    // 构造区块
+                    int onePieceRequestSize = downloadConfig.getOnePieceRequestSize();
+                    int index = i / onePieceRequestSize;
+                    int begin = i % onePieceRequestSize * HandshakeUtils.PIECE_MAX_LENGTH;
+                    // 如果不是最后一个区块，则大小都是16384
+                    if (i != pieceRequestProcess.length - 1) {
+                        requestPiece = new RequestPiece(index, begin, HandshakeUtils.PIECE_MAX_LENGTH);
+                    } else {
+                        // 最后一个区块，大小是种子大小减去前面区块的总大小
+                        long beforePieceRequestSize = i * HandshakeUtils.PIECE_MAX_LENGTH;
+                        requestPiece = new RequestPiece(index, begin, (int) (torrent.getTorrentLength() - beforePieceRequestSize));
+                    }
+                    logger.info("reply download: {}, onePieceRequestSize: {}, {}", i, onePieceRequestSize, requestPiece);
+                    break;
+                }
+            }
         }
-        ctx.writeAndFlush(Unpooled.copiedBuffer(
-                HandshakeUtils.requestPieceHandler(requestPiece)));
-        if (downloadConfig.isShowDownloadLog()) {
-            logger.info("Client: request {}, torrent name: {}, index: {}, begin: {}, length: {}, piece queue size: {}",
-                    ctx.channel().remoteAddress(), torrent.getName(),
-                    requestPiece.getIndex(), requestPiece.getBegin(), requestPiece.getLength(), pieceQueue.size());
+        if (requestPiece != null) {
+            ctx.writeAndFlush(Unpooled.copiedBuffer(
+                    HandshakeUtils.requestPieceHandler(requestPiece)));
+            if (downloadConfig.isShowDownloadLog()) {
+                logger.info("Client: request {}, torrent name: {}, index: {}, begin: {}, length: {}, piece queue size: {}",
+                        ctx.channel().remoteAddress(), torrent.getName(),
+                        requestPiece.getIndex(), requestPiece.getBegin(), requestPiece.getLength(), pieceQueue.size());
+            }
         }
     }
 

@@ -47,7 +47,7 @@ class ClientTest {
 //        String torrentPath = "/Users/intent/Desktop/sbt/一个文件多个区块.torrent";
 //        String torrentPath = "/Users/intent/Desktop/sbt/多个文件一个区块.torrent";
 //        String torrentPath = "/Users/intent/Desktop/sbt/多个文件多个区块.torrent";
-        String torrentPath = "/Users/intent/Desktop/sbt/test2.torrent";
+        String torrentPath = "/Users/intent/Desktop/sbt/test.torrent";
         File torrentFile = new File(torrentPath);
         torrent = TorrentUtils.getTorrent(torrentFile);
         // 创建文件夹
@@ -79,11 +79,11 @@ class ClientTest {
     void testTCPClient() throws InterruptedException {
         startReport();
         List<Peer> peerList = new ArrayList<>();
-//        peerList.add(new Peer(TEST_IP, 51413));
-//        peerList.add(new Peer(TEST_IP, 18357));
+        peerList.add(new Peer(TEST_IP, 51413));
+        peerList.add(new Peer(TEST_IP, 18357));
         Client client = new TCPClient.TCPClientBuilder(peerList, torrent, savePath, downloadManager)
-                .showDownloadLog(true)
-                .showDownloadProcess(true)
+                .showDownloadLog(false)
+                .showDownloadProcess(false)
 //                .loggingHandler(new LoggingHandler(LogLevel.INFO))
                 .builder();
         client.start();

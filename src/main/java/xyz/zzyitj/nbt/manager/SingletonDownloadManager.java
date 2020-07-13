@@ -89,8 +89,14 @@ public class SingletonDownloadManager {
             randomAccessFile.seek(startPosition);
             // 写入文件
             randomAccessFile.write(writeBlock);
+            downloadSum = atomicDownloadSum.addAndGet(writeBlock.length);
+            // 设置PieceRequestProcess
+            int pieceRequestIndex = DownloadManagerUtils.getPieceRequestIndex(payload, downloadConfig.getOnePieceRequestSize());
+            if (!downloadConfig.getPieceRequestProcess()[pieceRequestIndex]) {
+                downloadConfig.getPieceRequestProcess()[pieceRequestIndex] = true;
+            }
             // 可能恰好下载完
-            if (checkDownloadComplete(pieceQueue, atomicDownloadSum.addAndGet(writeBlock.length), torrent)) {
+            if (checkDownloadComplete(pieceQueue, downloadSum, torrent)) {
                 return true;
             }
             // 然后递归写入未完成的部分

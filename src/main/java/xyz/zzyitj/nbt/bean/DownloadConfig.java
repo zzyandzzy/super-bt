@@ -22,7 +22,7 @@ public class DownloadConfig {
     /**
      * 区块下载完成进度
      */
-    private boolean[] pieceRequestProcess;
+    private volatile boolean[] pieceRequestProcess;
     /**
      * 下载大小
      */

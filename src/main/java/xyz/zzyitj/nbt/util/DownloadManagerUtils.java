@@ -1,5 +1,7 @@
 package xyz.zzyitj.nbt.util;
 
+import xyz.zzyitj.nbt.bean.PeerWire;
+import xyz.zzyitj.nbt.bean.PeerWirePayload;
 import xyz.zzyitj.nbt.bean.Torrent;
 
 /**
@@ -50,5 +52,16 @@ public class DownloadManagerUtils {
             skipBytes -= torrent.getTorrentFileItemList().get(i).getLength();
         }
         return skipBytes;
+    }
+
+    /**
+     * 根据payload返回这是第几个区块请求
+     *
+     * @param payload             payload
+     * @param onePieceRequestSize 一个区块有几个request
+     * @return 返回这是第几个区块请求
+     */
+    public static int getPieceRequestIndex(PeerWirePayload payload, int onePieceRequestSize) {
+        return payload.getIndex() * onePieceRequestSize + payload.getBegin() / HandshakeUtils.PIECE_MAX_LENGTH;
     }
 }
