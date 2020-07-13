@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory;
 import xyz.zzyitj.nbt.bean.Peer;
 import xyz.zzyitj.nbt.bean.Torrent;
 import xyz.zzyitj.nbt.manager.AbstractDownloadManager;
-import xyz.zzyitj.nbt.manager.TCPDownloadManagerFactory;
+import xyz.zzyitj.nbt.manager.DownloadManager;
 import xyz.zzyitj.nbt.util.ByteUtils;
 import xyz.zzyitj.nbt.util.TorrentUtils;
 
@@ -46,8 +46,8 @@ class ClientTest {
 //        String torrentPath = "/Users/intent/Desktop/sbt/一个文件一个区块.torrent";
 //        String torrentPath = "/Users/intent/Desktop/sbt/一个文件多个区块.torrent";
 //        String torrentPath = "/Users/intent/Desktop/sbt/多个文件一个区块.torrent";
-//        String torrentPath = "/Users/intent/Desktop/sbt/多个文件多个区块.torrent";
-        String torrentPath = "/Users/intent/Desktop/sbt/test.torrent";
+        String torrentPath = "/Users/intent/Desktop/sbt/多个文件多个区块.torrent";
+//        String torrentPath = "/Users/intent/Desktop/sbt/test.torrent";
         File torrentFile = new File(torrentPath);
         torrent = TorrentUtils.getTorrent(torrentFile);
         // 创建文件夹
@@ -67,7 +67,7 @@ class ClientTest {
                 }
             });
         }
-        downloadManager = new TCPDownloadManagerFactory().getDownloadManager();
+        downloadManager = new DownloadManager();
     }
 
     /**
@@ -81,8 +81,9 @@ class ClientTest {
         List<Peer> peerList = new ArrayList<>();
 //        peerList.add(new Peer(TEST_IP, 51413));
         peerList.add(new Peer(TEST_IP, 18357));
+
         Client client = new TCPClient.TCPClientBuilder(peerList, torrent, savePath, downloadManager)
-                .showDownloadLog(true)
+                .showDownloadLog(false)
                 .showDownloadProcess(true)
 //                .loggingHandler(new LoggingHandler(LogLevel.INFO))
                 .builder();

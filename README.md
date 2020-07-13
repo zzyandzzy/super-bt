@@ -6,11 +6,9 @@
 
 ## 工厂方法(FactoryMethod)
 
-- [DownloadManager](./src/main/java/xyz/zzyitj/nbt/manager)
-    - [AbstractDownloadManager](./src/main/java/xyz/zzyitj/nbt/manager/AbstractDownloadManager.java)
-    - [DownloadManagerFactory](./src/main/java/xyz/zzyitj/nbt/manager/DownloadManagerFactory.java)
-    - [TCPDownloadManager](./src/main/java/xyz/zzyitj/nbt/manager/TCPDownloadManager.java)
-    - [TCPDownloadManagerFactory](./src/main/java/xyz/zzyitj/nbt/manager/TCPDownloadManagerFactory.java)
+## 单例(Singleton)
+
+- [SingletonDownloadManager](./src/main/java/xyz/zzyitj/nbt/manager/SingletonDownloadManager.java)
 
 ## 构建者(Builder)
 
