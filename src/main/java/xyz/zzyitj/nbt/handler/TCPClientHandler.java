@@ -1,6 +1,5 @@
 package xyz.zzyitj.nbt.handler;
 
-import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import org.slf4j.Logger;
@@ -10,7 +9,7 @@ import xyz.zzyitj.nbt.bean.*;
 import xyz.zzyitj.nbt.manager.AbstractDownloadManager;
 import xyz.zzyitj.nbt.util.HandshakeUtils;
 
-import java.util.Map;
+import java.util.Queue;
 
 /**
  * xyz.zzyitj.nbt.client
@@ -34,7 +33,7 @@ public class TCPClientHandler extends AbstractTCPHandler {
     }
 
     @Override
-    void doUnChock(ChannelHandlerContext ctx, ByteBuf data) {
+    void doUnChock(ChannelHandlerContext ctx, byte[] data) {
         unChoke = true;
         // 之后就可以请求下载区块了
         doDownload(ctx);
@@ -53,21 +52,20 @@ public class TCPClientHandler extends AbstractTCPHandler {
         if (downloadConfig == null) {
             return;
         }
-        Map<Integer, RequestPiece> pieceMap = downloadConfig.getPieceMap();
-        if (pieceMap == null) {
+        Queue<RequestPiece> pieceQueue = downloadConfig.getPieceQueue();
+        if (pieceQueue == null) {
             return;
         }
-        int downloadIndex = downloadConfig.getDownloadIndex().get();
-        RequestPiece requestPiece = pieceMap.get(downloadIndex);
+        RequestPiece requestPiece = pieceQueue.poll();
         if (requestPiece == null) {
             return;
         }
         ctx.writeAndFlush(Unpooled.copiedBuffer(
                 HandshakeUtils.requestPieceHandler(requestPiece)));
         if (downloadConfig.isShowDownloadLog()) {
-            logger.info("Client: request {}, torrent name: {}, index: {}, begin: {}, length: {}, download index: {}",
+            logger.info("Client: request {}, torrent name: {}, index: {}, begin: {}, length: {}, piece queue size: {}",
                     ctx.channel().remoteAddress(), torrent.getName(),
-                    requestPiece.getIndex(), requestPiece.getBegin(), requestPiece.getLength(), downloadIndex);
+                    requestPiece.getIndex(), requestPiece.getBegin(), requestPiece.getLength(), pieceQueue.size());
         }
     }
 
@@ -90,11 +88,11 @@ public class TCPClientHandler extends AbstractTCPHandler {
      * @param data 字节数组
      */
     @Override
-    void doBitField(ChannelHandlerContext ctx, ByteBuf data) {
+    void doBitField(ChannelHandlerContext ctx, byte[] data) {
         PeerWire peerWire = HandshakeUtils.parsePeerWire(data);
         // 根据peer返回的区块完成信息生成区块下载队列
         DownloadConfig downloadConfig = Application.downloadConfigMap.get(torrent);
-        if (downloadConfig != null && downloadConfig.getPieceMap() == null) {
+        if (downloadConfig != null && downloadConfig.getPieceQueue() == null) {
             downloadConfig.setOnePieceRequestSize(
                     HandshakeUtils.generateRequestPieceQueue(peerWire, torrent, downloadConfig));
         }
@@ -115,7 +113,7 @@ public class TCPClientHandler extends AbstractTCPHandler {
      * @param data data
      */
     @Override
-    void doPiece(ChannelHandlerContext ctx, ByteBuf data) {
+    void doPiece(ChannelHandlerContext ctx, byte[] data) {
         PeerWire peerWire = HandshakeUtils.parsePeerWire(data);
         PeerWirePayload peerWirePayload = (PeerWirePayload) peerWire.getPayload();
         if (downloadManager.save(peerWirePayload)) {

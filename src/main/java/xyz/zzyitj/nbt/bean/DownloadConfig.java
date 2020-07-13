@@ -1,7 +1,7 @@
 package xyz.zzyitj.nbt.bean;
 
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.Queue;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * xyz.zzyitj.nbt.bean
@@ -20,13 +20,21 @@ public class DownloadConfig {
      */
     private int onePieceRequestSize;
     /**
-     * 区块下载Map
+     * 区块下载完成进度
      */
-    private Map<Integer, RequestPiece> pieceMap;
+    private boolean[] pieceProcess;
     /**
-     * 当前下载下标，即pieceMap的key
+     * 下载大小
      */
-    private AtomicInteger downloadIndex;
+    private AtomicLong downloadSum;
+    /**
+     * pieceQueue原本大小
+     */
+    private int pieceQueueSize;
+    /**
+     * 区块下载队列
+     */
+    private Queue<RequestPiece> pieceQueue;
     /**
      * 启用下载log
      */
@@ -63,19 +71,35 @@ public class DownloadConfig {
         this.showDownloadLog = showDownloadLog;
     }
 
-    public Map<Integer, RequestPiece> getPieceMap() {
-        return pieceMap;
+    public Queue<RequestPiece> getPieceQueue() {
+        return pieceQueue;
     }
 
-    public void setPieceMap(Map<Integer, RequestPiece> pieceMap) {
-        this.pieceMap = pieceMap;
+    public void setPieceQueue(Queue<RequestPiece> pieceQueue) {
+        this.pieceQueue = pieceQueue;
     }
 
-    public AtomicInteger getDownloadIndex() {
-        return downloadIndex;
+    public boolean[] getPieceProcess() {
+        return pieceProcess;
     }
 
-    public void setDownloadIndex(AtomicInteger downloadIndex) {
-        this.downloadIndex = downloadIndex;
+    public void setPieceProcess(boolean[] pieceProcess) {
+        this.pieceProcess = pieceProcess;
+    }
+
+    public int getPieceQueueSize() {
+        return pieceQueueSize;
+    }
+
+    public void setPieceQueueSize(int pieceQueueSize) {
+        this.pieceQueueSize = pieceQueueSize;
+    }
+
+    public AtomicLong getDownloadSum() {
+        return downloadSum;
+    }
+
+    public void setDownloadSum(AtomicLong downloadSum) {
+        this.downloadSum = downloadSum;
     }
 }

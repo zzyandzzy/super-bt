@@ -7,10 +7,12 @@ import xyz.zzyitj.nbt.bean.DownloadConfig;
 import xyz.zzyitj.nbt.bean.PeerWirePayload;
 import xyz.zzyitj.nbt.bean.RequestPiece;
 
-import java.util.Map;
+import java.util.Queue;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * xyz.zzyitj.nbt.handler
@@ -24,17 +26,21 @@ public class ProgressDownloadManager extends AbstractDownloadManager {
 
     private final AbstractDownloadManager delegate;
 
+    private final ScheduledExecutorService scheduledExecutorService;
+    private static final float DOWNLOAD_COMPLETE = 100.0F;
+
     public ProgressDownloadManager(AbstractDownloadManager delegate) {
         this.delegate = delegate;
         this.setTorrent(delegate.getTorrent());
-        Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
+        scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
             @Override
             public Thread newThread(Runnable r) {
                 Thread thread = new Thread(r, "downloading_progress_monitor");
                 thread.setDaemon(true);
                 return thread;
             }
-        }).scheduleAtFixedRate(this::showProcess, 0, 1, TimeUnit.SECONDS);
+        });
+        scheduledExecutorService.scheduleAtFixedRate(this::showProcess, 0, 1, TimeUnit.SECONDS);
     }
 
     private void showProcess() {
@@ -45,15 +51,18 @@ public class ProgressDownloadManager extends AbstractDownloadManager {
         if (downloadConfig == null) {
             return;
         }
-        Map<Integer, RequestPiece> pieceMap = downloadConfig.getPieceMap();
-        if (pieceMap == null) {
+        Queue<RequestPiece> pieceQueue = downloadConfig.getPieceQueue();
+        if (pieceQueue == null) {
             return;
         }
         // 下载进度
-        int downloadIndex = downloadConfig.getDownloadIndex().get();
-        float progress = (downloadIndex * 1.0F) / pieceMap.size();
+        AtomicLong downloadSum = downloadConfig.getDownloadSum();
+        float progress = (downloadSum.get() * 1.0F) / getTorrent().getTorrentLength() * 100;
         logger.info("torrent name: {}, downloading progress: {}%",
-                getTorrent().getName(), progress * 100);
+                getTorrent().getName(), progress);
+        if (progress >= DOWNLOAD_COMPLETE) {
+            scheduledExecutorService.shutdownNow();
+        }
     }
 
     @Override

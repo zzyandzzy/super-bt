@@ -64,17 +64,17 @@ class HandshakeUtilsTest {
                 -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
                 -1, -1, -1, -1, -1, -1, -1, -1, -1, -2
         };
-        PeerWire peerWire = HandshakeUtils.parsePeerWire(Unpooled.copiedBuffer(data));
+        PeerWire peerWire = HandshakeUtils.parsePeerWire(data);
         System.out.println(peerWire);
         byte[] data1 = {
                 0x0, 0x0, 0x0, 0x2, 0x5, -128, 0x0, 0x0, 0x0, 0x1, 0x2,
         };
-        peerWire = HandshakeUtils.parsePeerWire(Unpooled.copiedBuffer(data1));
+        peerWire = HandshakeUtils.parsePeerWire(data1);
         System.out.println(peerWire);
         byte[] data2 = {
                 0x0, 0x0, 0x0, 0xb, 0x7, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x40, 0x0, 0x12, 0x32
         };
-        peerWire = HandshakeUtils.parsePeerWire(Unpooled.copiedBuffer(data2));
+        peerWire = HandshakeUtils.parsePeerWire(data2);
         System.out.println(peerWire);
     }
 

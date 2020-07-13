@@ -82,7 +82,7 @@ class ClientTest {
 //        peerList.add(new Peer(TEST_IP, 51413));
         peerList.add(new Peer(TEST_IP, 18357));
         Client client = new TCPClient.TCPClientBuilder(peerList, torrent, savePath, downloadManager)
-                .showDownloadLog(false)
+                .showDownloadLog(true)
                 .showDownloadProcess(true)
 //                .loggingHandler(new LoggingHandler(LogLevel.INFO))
                 .builder();

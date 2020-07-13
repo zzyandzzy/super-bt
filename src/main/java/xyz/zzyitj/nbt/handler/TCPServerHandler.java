@@ -1,6 +1,5 @@
 package xyz.zzyitj.nbt.handler;
 
-import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import xyz.zzyitj.nbt.bean.Torrent;
 
@@ -26,7 +25,7 @@ public class TCPServerHandler extends AbstractTCPHandler {
     }
 
     @Override
-    void doUnChock(ChannelHandlerContext ctx, ByteBuf data) {
+    void doUnChock(ChannelHandlerContext ctx, byte[] data) {
 
     }
 
@@ -46,7 +45,7 @@ public class TCPServerHandler extends AbstractTCPHandler {
     }
 
     @Override
-    void doBitField(ChannelHandlerContext ctx, ByteBuf data) {
+    void doBitField(ChannelHandlerContext ctx, byte[] data) {
 
     }
 
@@ -56,7 +55,7 @@ public class TCPServerHandler extends AbstractTCPHandler {
     }
 
     @Override
-    void doPiece(ChannelHandlerContext ctx, ByteBuf data) {
+    void doPiece(ChannelHandlerContext ctx, byte[] data) {
 
     }
 

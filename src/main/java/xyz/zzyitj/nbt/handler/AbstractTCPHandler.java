@@ -54,7 +54,7 @@ public abstract class AbstractTCPHandler extends ChannelInboundHandlerAdapter {
      * @param ctx  ctx
      * @param data data
      */
-    abstract void doUnChock(ChannelHandlerContext ctx, ByteBuf data);
+    abstract void doUnChock(ChannelHandlerContext ctx, byte[] data);
 
     /**
      * interested消息的长度固定，为5字节，消息长度占4个字节，消息编号占1个字节，没有负载。
@@ -89,7 +89,7 @@ public abstract class AbstractTCPHandler extends ChannelInboundHandlerAdapter {
      * @param ctx  ctx
      * @param data data
      */
-    abstract void doBitField(ChannelHandlerContext ctx, ByteBuf data);
+    abstract void doBitField(ChannelHandlerContext ctx, byte[] data);
 
     /**
      * request消息的长度固定，为17个字节，
@@ -112,7 +112,7 @@ public abstract class AbstractTCPHandler extends ChannelInboundHandlerAdapter {
      * @param ctx  ctx
      * @param data data
      */
-    abstract void doPiece(ChannelHandlerContext ctx, ByteBuf data);
+    abstract void doPiece(ChannelHandlerContext ctx, byte[] data);
 
     /**
      * cancel消息的长度固定，为17个字节，len、index、begin、length都占4字节。
@@ -183,12 +183,11 @@ public abstract class AbstractTCPHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
-//        byte[] data = (byte[]) msg;
-        ByteBuf buf = (ByteBuf) msg;
+        byte[] data = (byte[]) msg;
         // 作为客户端
         // 如果peer同意了我们的握手，说明该peer有该info_hash的文件在做种
         if (isFirstWriteHandshake && torrent != null) {
-            if (HandshakeUtils.isHandshake(buf)) {
+            if (HandshakeUtils.isHandshake(data)) {
                 // 还可以在上面判断对该peer_id是否感兴趣，即是否禁用改客户端
                 isFirstWriteHandshake = false;
                 // 发送对此peer感兴趣
@@ -203,14 +202,14 @@ public abstract class AbstractTCPHandler extends ChannelInboundHandlerAdapter {
         // 作为服务器
         // 如果客户端发送了握手给服务器，服务器检查了参数以后就构造握手返回
         else if (isFirstReadHandshake && torrentList != null) {
-            if (HandshakeUtils.isHandshake(buf)) {
+            if (HandshakeUtils.isHandshake(data)) {
                 // 还可以在上面判断对该peer_id是否感兴趣，即是否禁用改客户端
                 isFirstReadHandshake = false;
                 // 构造并发送自己的信息
                 logger.info("Server: {} send interested.", ctx.channel().remoteAddress());
             }
         } else {
-            doHandshakeHandler(ctx, buf);
+            doHandshakeHandler(ctx, data);
         }
     }
 
@@ -220,12 +219,12 @@ public abstract class AbstractTCPHandler extends ChannelInboundHandlerAdapter {
      * @param ctx ctx
      * @param buf 数据
      */
-    private void doHandshakeHandler(ChannelHandlerContext ctx, ByteBuf buf) {
-        if (buf.readableBytes() == PeerWireConst.PEER_WIRE_MIN_FRAME_LENGTH) {
+    private void doHandshakeHandler(ChannelHandlerContext ctx, byte[] buf) {
+        if (buf.length == PeerWireConst.PEER_WIRE_MIN_FRAME_LENGTH) {
             doKeepAlive(ctx);
             return;
         }
-        switch (buf.getByte(PeerWireConst.PEER_WIRE_ID_INDEX)) {
+        switch (buf[PeerWireConst.PEER_WIRE_ID_INDEX]) {
             case PeerWireConst.CHOKE:
                 doChock(ctx);
                 break;
@@ -262,8 +261,8 @@ public abstract class AbstractTCPHandler extends ChannelInboundHandlerAdapter {
             default:
                 // 其他情况
                 logger.error("{} error, buf len: {}, buf id: {}",
-                        ctx.channel().remoteAddress(), buf.readableBytes(),
-                        buf.getByte(PeerWireConst.PEER_WIRE_ID_INDEX));
+                        ctx.channel().remoteAddress(), buf.length,
+                        buf[PeerWireConst.PEER_WIRE_ID_INDEX]);
         }
     }
 
