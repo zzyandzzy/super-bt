@@ -3,8 +3,9 @@ package xyz.zzyitj.nbt.util;
 import io.netty.buffer.ByteBuf;
 import xyz.zzyitj.nbt.bean.*;
 
-import java.util.Queue;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author intent
@@ -172,7 +173,9 @@ public class HandshakeUtils {
         if (data == null || data.readableBytes() < PeerWireConst.PEER_WIRE_ID_INDEX) {
             return null;
         }
-        int size = (int) data.readBytes(PeerWireConst.PEER_WIRE_SIZE_LENGTH).getUnsignedInt(0);
+        ByteBuf sizeBuf = data.readBytes(PeerWireConst.PEER_WIRE_SIZE_LENGTH);
+        int size = (int) sizeBuf.getUnsignedInt(0);
+        sizeBuf.release();
         // id 为data的第4位
         byte id = data.readableBytes() > PeerWireConst.PEER_WIRE_ID_INDEX - PeerWireConst.PEER_WIRE_SIZE_LENGTH ? data.readByte() : 0;
         PeerWire peerWire = new PeerWire();
@@ -183,6 +186,7 @@ public class HandshakeUtils {
                 ByteBuf buf = data.readBytes(8);
                 int index = (int) buf.getUnsignedInt(0);
                 int begin = (int) buf.getUnsignedInt(4);
+                buf.release();
                 peerWire.setPayload(new PeerWirePayload(index, begin, data));
             } else {
                 peerWire.setPayload(data);
@@ -226,14 +230,14 @@ public class HandshakeUtils {
         int increment = torrent.getTorrentLength() % HandshakeUtils.PIECE_MAX_LENGTH == 0 ? 0 : 1;
         // 需要下载的次数，即下载队列的大小
         int capacity = (int) (torrent.getTorrentLength() / HandshakeUtils.PIECE_MAX_LENGTH + increment);
-        // 下载队列
-        Queue<RequestPiece> pieceQueue = downloadConfig.getPieceQueue();
-        if (pieceQueue == null) {
+        // 下载Map
+        Map<Integer, RequestPiece> pieceMap = downloadConfig.getPieceMap();
+        if (pieceMap == null) {
             // 确定下载队列大小
             // 为啥是16Kb呢？因为这是bt协议限制的，单次只能下载16Kb
             // 种子内容大小 / 16Kb = 要下载几次
-            pieceQueue = new LinkedBlockingQueue<>();
-            downloadConfig.setPieceQueue(pieceQueue);
+            pieceMap = new ConcurrentHashMap<>(capacity);
+            downloadConfig.setPieceMap(pieceMap);
 
             // 当前字节数
             int byteSum = 0;
@@ -252,17 +256,17 @@ public class HandshakeUtils {
                     // 因为最后一个下载请求的大小很大可能不是16Kb
                     if (currentIndex < capacity - 1) {
                         byteSum += length;
-                        pieceQueue.offer(new RequestPiece(i, begin, length));
+                        pieceMap.put(currentIndex, new RequestPiece(i, begin, length));
                     } else {
                         length = (int) (torrent.getTorrentLength() - byteSum);
                         byteSum += length;
-                        pieceQueue.offer(new RequestPiece(i, begin, length));
+                        pieceMap.put(currentIndex, new RequestPiece(i, begin, length));
                         break;
                     }
                     currentIndex++;
                 }
             }
-            downloadConfig.setRequestPieceSize(pieceQueue.size());
+            downloadConfig.setDownloadIndex(new AtomicInteger(0));
             return onePieceRequestSum;
         }
         return 0;

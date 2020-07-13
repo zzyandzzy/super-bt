@@ -11,7 +11,8 @@ import xyz.zzyitj.nbt.bean.DownloadConfig;
 import xyz.zzyitj.nbt.bean.Peer;
 import xyz.zzyitj.nbt.bean.Torrent;
 import xyz.zzyitj.nbt.codec.PeerWireProtocolDecoder;
-import xyz.zzyitj.nbt.handler.DownloadManager;
+import xyz.zzyitj.nbt.manager.AbstractDownloadManager;
+import xyz.zzyitj.nbt.manager.ProgressDownloadManager;
 import xyz.zzyitj.nbt.handler.TCPClientHandler;
 import xyz.zzyitj.nbt.util.PeerWireConst;
 
@@ -35,10 +36,9 @@ public class TCPClient implements Client {
     private final List<Peer> peerList;
     private final Torrent torrent;
     private final String savePath;
-    private final DownloadManager downloadManager;
+    private final AbstractDownloadManager downloadManager;
     private final LoggingHandler loggingHandler;
     private final boolean showDownloadLog;
-    private final boolean showDownloadProcess;
 
     private final ExecutorService es;
 
@@ -50,7 +50,6 @@ public class TCPClient implements Client {
         this.downloadManager = builder.downloadManager;
         this.loggingHandler = builder.loggingHandler;
         this.showDownloadLog = builder.showDownloadLog;
-        this.showDownloadProcess = builder.showDownloadProcess;
     }
 
     @Override
@@ -58,7 +57,6 @@ public class TCPClient implements Client {
         if (Application.downloadConfigMap.get(torrent) == null) {
             DownloadConfig downloadConfig = new DownloadConfig(savePath);
             downloadConfig.setShowDownloadLog(this.showDownloadLog);
-            downloadConfig.setShowDownloadProcess(this.showDownloadProcess);
             Application.downloadConfigMap.put(torrent, downloadConfig);
         }
         for (Peer peer : peerList) {
@@ -113,12 +111,11 @@ public class TCPClient implements Client {
         private final List<Peer> peerList;
         private Torrent torrent;
         private String savePath;
-        private DownloadManager downloadManager;
+        private AbstractDownloadManager downloadManager;
         private LoggingHandler loggingHandler;
         private boolean showDownloadLog;
-        private boolean showDownloadProcess;
 
-        public TCPClientBuilder(List<Peer> peerList, Torrent torrent, String savePath, DownloadManager downloadManager) {
+        public TCPClientBuilder(List<Peer> peerList, Torrent torrent, String savePath, AbstractDownloadManager downloadManager) {
             this.peerList = peerList;
             this.torrent = torrent;
             this.savePath = savePath;
@@ -145,7 +142,7 @@ public class TCPClient implements Client {
             return this;
         }
 
-        public TCPClientBuilder downloadManager(DownloadManager downloadManager) {
+        public TCPClientBuilder downloadManager(AbstractDownloadManager downloadManager) {
             this.downloadManager = downloadManager;
             return this;
         }
@@ -156,7 +153,10 @@ public class TCPClient implements Client {
         }
 
         public TCPClientBuilder showDownloadProcess(boolean showDownloadProcess) {
-            this.showDownloadProcess = showDownloadProcess;
+            if (showDownloadProcess) {
+                // 装饰者
+                this.downloadManager = new ProgressDownloadManager(this.downloadManager);
+            }
             return this;
         }
     }

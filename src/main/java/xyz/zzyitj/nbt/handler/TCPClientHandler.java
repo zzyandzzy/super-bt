@@ -7,9 +7,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import xyz.zzyitj.nbt.Application;
 import xyz.zzyitj.nbt.bean.*;
+import xyz.zzyitj.nbt.manager.AbstractDownloadManager;
 import xyz.zzyitj.nbt.util.HandshakeUtils;
 
-import java.util.Queue;
+import java.util.Map;
 
 /**
  * xyz.zzyitj.nbt.client
@@ -21,7 +22,7 @@ import java.util.Queue;
 public class TCPClientHandler extends AbstractTCPHandler {
     private static final Logger logger = LoggerFactory.getLogger(TCPClientHandler.class);
 
-    public TCPClientHandler(Torrent torrent, DownloadManager downloadManager) {
+    public TCPClientHandler(Torrent torrent, AbstractDownloadManager downloadManager) {
         super();
         this.torrent = torrent;
         this.downloadManager = downloadManager;
@@ -45,22 +46,28 @@ public class TCPClientHandler extends AbstractTCPHandler {
      * @param ctx ctx
      */
     private void doDownload(ChannelHandlerContext ctx) {
+        if (torrent == null) {
+            return;
+        }
         DownloadConfig downloadConfig = Application.downloadConfigMap.get(torrent);
-        if (downloadConfig != null) {
-            Queue<RequestPiece> pieceQueue = downloadConfig.getPieceQueue();
-            if (pieceQueue != null) {
-                RequestPiece requestPiece = pieceQueue.poll();
-                if (requestPiece != null) {
-                    ctx.writeAndFlush(Unpooled.copiedBuffer(
-                            HandshakeUtils.requestPieceHandler(requestPiece)));
-                    if (downloadConfig.isShowDownloadLog()) {
-                        logger.info("Client: request {}, torrent name: {}, index: {}, begin: {}, length: {}, piece queue size: {}",
-                                ctx.channel().remoteAddress(), torrent.getName(),
-                                requestPiece.getIndex(), requestPiece.getBegin(), requestPiece.getLength(),
-                                pieceQueue.size());
-                    }
-                }
-            }
+        if (downloadConfig == null) {
+            return;
+        }
+        Map<Integer, RequestPiece> pieceMap = downloadConfig.getPieceMap();
+        if (pieceMap == null) {
+            return;
+        }
+        int downloadIndex = downloadConfig.getDownloadIndex().get();
+        RequestPiece requestPiece = pieceMap.get(downloadIndex);
+        if (requestPiece == null) {
+            return;
+        }
+        ctx.writeAndFlush(Unpooled.copiedBuffer(
+                HandshakeUtils.requestPieceHandler(requestPiece)));
+        if (downloadConfig.isShowDownloadLog()) {
+            logger.info("Client: request {}, torrent name: {}, index: {}, begin: {}, length: {}, download index: {}",
+                    ctx.channel().remoteAddress(), torrent.getName(),
+                    requestPiece.getIndex(), requestPiece.getBegin(), requestPiece.getLength(), downloadIndex);
         }
     }
 
@@ -87,7 +94,7 @@ public class TCPClientHandler extends AbstractTCPHandler {
         PeerWire peerWire = HandshakeUtils.parsePeerWire(data);
         // 根据peer返回的区块完成信息生成区块下载队列
         DownloadConfig downloadConfig = Application.downloadConfigMap.get(torrent);
-        if (downloadConfig != null && downloadConfig.getPieceQueue() == null) {
+        if (downloadConfig != null && downloadConfig.getPieceMap() == null) {
             downloadConfig.setOnePieceRequestSize(
                     HandshakeUtils.generateRequestPieceQueue(peerWire, torrent, downloadConfig));
         }
@@ -111,7 +118,7 @@ public class TCPClientHandler extends AbstractTCPHandler {
     void doPiece(ChannelHandlerContext ctx, ByteBuf data) {
         PeerWire peerWire = HandshakeUtils.parsePeerWire(data);
         PeerWirePayload peerWirePayload = (PeerWirePayload) peerWire.getPayload();
-        if (downloadManager.saveBytesToFile(peerWirePayload)) {
+        if (downloadManager.save(peerWirePayload)) {
             logger.info("Client: download {} complete!", torrent.getName());
             closePeer(ctx);
         } else {

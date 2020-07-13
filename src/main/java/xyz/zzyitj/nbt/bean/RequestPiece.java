@@ -21,6 +21,10 @@ public class RequestPiece {
      * 指定请求的长度
      */
     private int length;
+    /**
+     * 该区块是否下载
+     */
+    private boolean download;
 
     @Override
     public String toString() {
@@ -28,6 +32,7 @@ public class RequestPiece {
                 "index=" + index +
                 ", begin=" + begin +
                 ", length=" + length +
+                ", download=" + download +
                 '}';
     }
 
@@ -59,5 +64,13 @@ public class RequestPiece {
 
     public void setLength(int length) {
         this.length = length;
+    }
+
+    public boolean isDownload() {
+        return download;
+    }
+
+    public void setDownload(boolean download) {
+        this.download = download;
     }
 }

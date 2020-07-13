@@ -6,6 +6,7 @@ import io.netty.channel.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import xyz.zzyitj.nbt.bean.Torrent;
+import xyz.zzyitj.nbt.manager.AbstractDownloadManager;
 import xyz.zzyitj.nbt.util.Const;
 import xyz.zzyitj.nbt.util.HandshakeUtils;
 import xyz.zzyitj.nbt.util.PeerWireConst;
@@ -155,7 +156,7 @@ public abstract class AbstractTCPHandler extends ChannelInboundHandlerAdapter {
     /**
      * 下载管理器
      */
-    protected DownloadManager downloadManager;
+    protected AbstractDownloadManager downloadManager;
     /**
      * 是否允许下载
      */

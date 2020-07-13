@@ -54,7 +54,7 @@
             <AppenderRef ref="superbt"/>
         </Root>
 
-        <Logger name="xyz.zzyitj.nbt.handler.TCPDownloadManager" level="info">
+        <Logger name="xyz.zzyitj.nbt.manager" level="info">
             <AppenderRef ref="download"/>
         </Logger>
 

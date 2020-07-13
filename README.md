@@ -4,12 +4,24 @@
 
 # 设计模式
 
-## Builder
+## 工厂方法(FactoryMethod)
+
+- [DownloadManager](./src/main/java/xyz/zzyitj/nbt/manager)
+    - [AbstractDownloadManager](./src/main/java/xyz/zzyitj/nbt/manager/AbstractDownloadManager.java)
+    - [DownloadManagerFactory](./src/main/java/xyz/zzyitj/nbt/manager/DownloadManagerFactory.java)
+    - [TCPDownloadManager](./src/main/java/xyz/zzyitj/nbt/manager/TCPDownloadManager.java)
+    - [TCPDownloadManagerFactory](./src/main/java/xyz/zzyitj/nbt/manager/TCPDownloadManagerFactory.java)
+
+## 构建者(Builder)
 
 - [TCPClient](./src/main/java/xyz/zzyitj/nbt/client/TCPClient.java)
 - [UTPClient](./src/main/java/xyz/zzyitj/nbt/client/UTPClient.java)
 - [TCPServer](./src/main/java/xyz/zzyitj/nbt/server/TCPServer.java)
 - [UTPServer](./src/main/java/xyz/zzyitj/nbt/server/UTPServer.java)
+
+## 装饰者(Decorator)
+
+- [ProgressDownloadManager](./src/main/java/xyz/zzyitj/nbt/manager/ProgressDownloadManager.java)
 
 # 功能
 

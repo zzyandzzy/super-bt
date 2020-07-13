@@ -1,6 +1,7 @@
 package xyz.zzyitj.nbt.bean;
 
-import java.util.Queue;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * xyz.zzyitj.nbt.bean
@@ -19,15 +20,17 @@ public class DownloadConfig {
      */
     private int onePieceRequestSize;
     /**
-     * 区块下载队列
+     * 区块下载Map
      */
-    private Queue<RequestPiece> pieceQueue;
+    private Map<Integer, RequestPiece> pieceMap;
     /**
-     * 区块请求下载个数，也就是区块下载队列的大小
+     * 当前下载下标，即pieceMap的key
      */
-    private int requestPieceSize;
+    private AtomicInteger downloadIndex;
+    /**
+     * 启用下载log
+     */
     private boolean showDownloadLog;
-    private boolean showDownloadProcess;
 
     public DownloadConfig() {
     }
@@ -42,22 +45,6 @@ public class DownloadConfig {
 
     public void setSavePath(String savePath) {
         this.savePath = savePath;
-    }
-
-    public Queue<RequestPiece> getPieceQueue() {
-        return pieceQueue;
-    }
-
-    public void setPieceQueue(Queue<RequestPiece> pieceQueue) {
-        this.pieceQueue = pieceQueue;
-    }
-
-    public int getRequestPieceSize() {
-        return requestPieceSize;
-    }
-
-    public void setRequestPieceSize(int requestPieceSize) {
-        this.requestPieceSize = requestPieceSize;
     }
 
     public int getOnePieceRequestSize() {
@@ -76,11 +63,19 @@ public class DownloadConfig {
         this.showDownloadLog = showDownloadLog;
     }
 
-    public boolean isShowDownloadProcess() {
-        return showDownloadProcess;
+    public Map<Integer, RequestPiece> getPieceMap() {
+        return pieceMap;
     }
 
-    public void setShowDownloadProcess(boolean showDownloadProcess) {
-        this.showDownloadProcess = showDownloadProcess;
+    public void setPieceMap(Map<Integer, RequestPiece> pieceMap) {
+        this.pieceMap = pieceMap;
+    }
+
+    public AtomicInteger getDownloadIndex() {
+        return downloadIndex;
+    }
+
+    public void setDownloadIndex(AtomicInteger downloadIndex) {
+        this.downloadIndex = downloadIndex;
     }
 }

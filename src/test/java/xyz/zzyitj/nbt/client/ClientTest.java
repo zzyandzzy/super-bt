@@ -6,10 +6,13 @@ import io.netty.util.internal.PlatformDependent;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import xyz.zzyitj.nbt.bean.Peer;
 import xyz.zzyitj.nbt.bean.Torrent;
-import xyz.zzyitj.nbt.handler.DownloadManager;
-import xyz.zzyitj.nbt.handler.TCPDownloadManager;
+import xyz.zzyitj.nbt.manager.AbstractDownloadManager;
+import xyz.zzyitj.nbt.manager.TCPDownloadManagerFactory;
+import xyz.zzyitj.nbt.util.ByteUtils;
 import xyz.zzyitj.nbt.util.TorrentUtils;
 
 import java.io.File;
@@ -26,6 +29,7 @@ import java.util.concurrent.TimeUnit;
  * @date 2020/3/17 7:15 下午
  */
 class ClientTest {
+    private static final Logger logger = LoggerFactory.getLogger(ClientTest.class);
     // Local Transmission/qBitTorrent host
     public static final String TEST_IP = "127.0.0.1";
     // Local qBitTorrent port
@@ -35,7 +39,7 @@ class ClientTest {
 
     private static final String savePath = "./download/";
     private static Torrent torrent;
-    private static DownloadManager downloadManager;
+    private static AbstractDownloadManager downloadManager;
 
     @BeforeAll
     static void init() throws IOException {
@@ -63,7 +67,7 @@ class ClientTest {
                 }
             });
         }
-        downloadManager = new TCPDownloadManager();
+        downloadManager = new TCPDownloadManagerFactory().getDownloadManager();
     }
 
     /**
@@ -76,7 +80,7 @@ class ClientTest {
         startReport();
         List<Peer> peerList = new ArrayList<>();
 //        peerList.add(new Peer(TEST_IP, 51413));
-//        peerList.add(new Peer(TEST_IP, 18357));
+        peerList.add(new Peer(TEST_IP, 18357));
         Client client = new TCPClient.TCPClientBuilder(peerList, torrent, savePath, downloadManager)
                 .showDownloadLog(false)
                 .showDownloadProcess(true)
@@ -101,11 +105,15 @@ class ClientTest {
                 thread.setDaemon(true);
                 return thread;
             }
-        }).scheduleAtFixedRate(this::doReport, 0, 1, TimeUnit.SECONDS);
+        }).scheduleAtFixedRate(this::doReport, 0, 5, TimeUnit.SECONDS);
     }
 
     private void doReport() {
-        System.out.println("当前 netty direct memory: " + PlatformDependent.usedDirectMemory());
+        logger.info("current netty direct memory: {}B, {}KB, {}MB, {}GB",
+                PlatformDependent.usedDirectMemory(),
+                PlatformDependent.usedDirectMemory() / ByteUtils.BYTE_KB,
+                PlatformDependent.usedDirectMemory() / ByteUtils.BYTE_MB,
+                PlatformDependent.usedDirectMemory() / ByteUtils.BYTE_GB);
     }
 
     /**
