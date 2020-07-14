@@ -10,11 +10,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import xyz.zzyitj.nbt.Application;
 import xyz.zzyitj.nbt.bean.Torrent;
+import xyz.zzyitj.nbt.bean.UTPHeader;
 import xyz.zzyitj.nbt.manager.AbstractDownloadManager;
 import xyz.zzyitj.nbt.util.UTPHeaderUtils;
 
 import java.net.InetSocketAddress;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -38,10 +38,7 @@ public abstract class AbstractUTPHandler extends SimpleChannelInboundHandler<Dat
      * 下载管理器
      */
     protected AbstractDownloadManager downloadManager;
-    /**
-     * 是否允许下载
-     */
-    protected boolean unChoke = false;
+    protected UTPHeader header;
     /**
      * 是否是第一次发送握手消息
      */
@@ -54,11 +51,12 @@ public abstract class AbstractUTPHandler extends SimpleChannelInboundHandler<Dat
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         if (torrent != null) {
+            header = UTPHeaderUtils.buildInitHeader();
             // 打开socket就发送握手
             ctx.writeAndFlush(new DatagramPacket(
-                    Unpooled.copiedBuffer(UTPHeaderUtils.buildInitHeaderBytes()),
-                    new InetSocketAddress("119.34.0.77", 51413)));
-            logger.info("Client: {} send handshake.", ctx.channel().remoteAddress());
+                    Unpooled.copiedBuffer(UTPHeaderUtils.utpHeaderToBytes(header)),
+                    (InetSocketAddress) ctx.channel().remoteAddress()));
+            logger.info("Client: {} send init utp header.", ctx.channel().remoteAddress());
         }
     }
 
@@ -67,7 +65,6 @@ public abstract class AbstractUTPHandler extends SimpleChannelInboundHandler<Dat
         ByteBuf buf = msg.content();
         byte[] data = new byte[buf.readableBytes()];
         buf.readBytes(data);
-        logger.info("data length: {}, data: {}", data.length, Arrays.toString(data));
     }
 
     /**
@@ -79,7 +76,6 @@ public abstract class AbstractUTPHandler extends SimpleChannelInboundHandler<Dat
         if (ctx == null) {
             return;
         }
-        unChoke = false;
         // 关闭这个peer
         ctx.writeAndFlush(Unpooled.EMPTY_BUFFER)
                 .addListener(ChannelFutureListener.CLOSE);
@@ -98,12 +94,6 @@ public abstract class AbstractUTPHandler extends SimpleChannelInboundHandler<Dat
     }
 
     /**
-     * 连接关闭，可能情况：
-     * 1、IP+Port无法连接
-     * 2、如果一个客户端接收到一个握手报文，并且该客户端没有服务这个报文的info_hash，那么该客户端必须丢弃该连接。
-     * 3、如果一个连接发起者接收到一个握手报文，并且该报文中peer_id与期望的peer_id不匹配，那么连接发起者应该丢弃该连接。
-     * 4、peer发送keep-alive（00 00 00 00 00 00 00 00）没有进行回答，2分钟后自动关闭
-     *
      * @param ctx ctx
      */
     @Override

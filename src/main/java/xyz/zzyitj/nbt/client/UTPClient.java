@@ -1,9 +1,7 @@
 package xyz.zzyitj.nbt.client;
 
 import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelOption;
-import io.netty.channel.EventLoopGroup;
+import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioDatagramChannel;
 import io.netty.handler.logging.LoggingHandler;
@@ -58,9 +56,16 @@ public class UTPClient implements Client {
                     // 通过NioDatagramChannel创建Channel，并设置Socket参数支持广播
                     .channel(NioDatagramChannel.class)
                     .option(ChannelOption.SO_BROADCAST, true)
-                    // UDP相对于TCP不需要在客户端和服务端建立实际的连接
-                    // 因此不需要为连接（ChannelPipeline）设置handler
-                    .handler(new UTPClientHandler(this.torrent, this.downloadManager));
+                    .handler(new ChannelInitializer<NioDatagramChannel>() {
+                        @Override
+                        public void initChannel(NioDatagramChannel ch) {
+                            ChannelPipeline p = ch.pipeline();
+                            if (loggingHandler != null) {
+                                p.addLast("logging", loggingHandler);
+                            }
+                            p.addLast("handler", new UTPClientHandler(torrent, downloadManager));
+                        }
+                    });
             ChannelFuture f = b.connect(new InetSocketAddress(peer.getIp(), peer.getPort())).sync();
             f.channel().closeFuture().sync();
             f.addListener(future -> {

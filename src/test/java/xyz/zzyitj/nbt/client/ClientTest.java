@@ -44,11 +44,11 @@ class ClientTest {
 
     @BeforeAll
     static void init() throws IOException {
-        String torrentPath = "/Users/intent/Desktop/sbt/一个文件一个区块.torrent";
+//        String torrentPath = "/Users/intent/Desktop/sbt/一个文件一个区块.torrent";
 //        String torrentPath = "/Users/intent/Desktop/sbt/一个文件多个区块.torrent";
 //        String torrentPath = "/Users/intent/Desktop/sbt/多个文件一个区块.torrent";
 //        String torrentPath = "/Users/intent/Desktop/sbt/多个文件多个区块.torrent";
-//        String torrentPath = "/Users/intent/Desktop/sbt/test.torrent";
+        String torrentPath = "/Users/intent/Desktop/sbt/test.torrent";
         File torrentFile = new File(torrentPath);
         torrent = TorrentUtils.getTorrent(torrentFile);
         // 创建文件夹
@@ -69,7 +69,8 @@ class ClientTest {
             });
         }
         downloadManager = new DownloadManager();
-        startReport();
+
+//        startReport();
         peerList = new ArrayList<>();
         addPeers(peerList);
     }
@@ -96,7 +97,7 @@ class ClientTest {
     }
 
     private static void addPeers(List<Peer> peerList) {
-        //        peerList.add(new Peer(TEST_IP, 51413));
+//                peerList.add(new Peer(TEST_IP, 51413));
         peerList.add(new Peer(TEST_IP, 18357));
     }
 

@@ -10,7 +10,7 @@ import java.util.Random;
  * @since 1.0
  */
 public class ByteUtils {
-    public static final long BYTE_KB = 1000L;
+    public static final long BYTE_KB = 1024L;
     public static final long BYTE_MB = BYTE_KB * BYTE_KB;
     public static final long BYTE_GB = BYTE_KB * BYTE_MB;
     public static final long BYTE_TB = BYTE_KB * BYTE_GB;
