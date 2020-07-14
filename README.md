@@ -21,6 +21,13 @@
 
 - [ProgressDownloadManager](./src/main/java/xyz/zzyitj/nbt/manager/ProgressDownloadManager.java)
 
+# 协议实现
+
+- [The BitTorrent Protocol Specification](https://www.bittorrent.org/beps/bep_0003.html)
+- [Extension Protocol](https://www.bittorrent.org/beps/bep_0010.html)
+- [Peer ID Conventions](https://bittorrent.org/beps/bep_0020.html)
+- [uTorrent transport protocol](https://www.bittorrent.org/beps/bep_0029.html)
+
 # 功能
 
 - 单Peer单文件单区块下载
@@ -34,7 +41,6 @@
 - 指定文件下载
 - 断点续传
 - 做种功能
-- UTP协议的实现
 
 # License
 

@@ -7,9 +7,16 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioDatagramChannel;
 import io.netty.handler.logging.LoggingHandler;
+import org.apache.commons.lang3.StringUtils;
+import xyz.zzyitj.nbt.Application;
+import xyz.zzyitj.nbt.bean.DownloadConfig;
+import xyz.zzyitj.nbt.bean.Peer;
 import xyz.zzyitj.nbt.bean.Torrent;
+import xyz.zzyitj.nbt.handler.UTPClientHandler;
+import xyz.zzyitj.nbt.manager.AbstractDownloadManager;
 
 import java.net.InetSocketAddress;
+import java.util.List;
 
 /**
  * xyz.zzyitj.nbt.client
@@ -23,76 +30,69 @@ import java.net.InetSocketAddress;
  * @since 1.0
  */
 public class UTPClient implements Client {
-    private final String ip;
-    private final int port;
+    private final List<Peer> peerList;
     private final Torrent torrent;
     private final String savePath;
+    private final AbstractDownloadManager downloadManager;
     private final LoggingHandler loggingHandler;
 
     public UTPClient(UTPClientBuilder builder) {
-        this.ip = builder.ip;
-        this.port = builder.port;
+        this.peerList = builder.peerList;
         this.torrent = builder.torrent;
         this.savePath = builder.savePath;
+        this.downloadManager = builder.downloadManager;
         this.loggingHandler = builder.loggingHandler;
     }
 
     @Override
-    public String toString() {
-        return "UTPClient{" +
-                "ip='" + ip + '\'' +
-                ", port=" + port +
-                ", torrent=" + torrent +
-                ", savePath='" + savePath + '\'' +
-                ", loggingHandler=" + loggingHandler +
-                '}';
-    }
-
-    @Override
     public void start() throws InterruptedException {
+        if (Application.downloadConfigMap.get(torrent) == null) {
+            DownloadConfig downloadConfig = new DownloadConfig(savePath);
+            Application.downloadConfigMap.put(torrent, downloadConfig);
+        }
+        Peer peer = peerList.get(0);
         EventLoopGroup workerGroup = new NioEventLoopGroup();
         try {
             Bootstrap b = new Bootstrap();
             b.group(workerGroup)
                     // 通过NioDatagramChannel创建Channel，并设置Socket参数支持广播
                     .channel(NioDatagramChannel.class)
-                    .option(ChannelOption.SO_BROADCAST, true);
-            // UDP相对于TCP不需要在客户端和服务端建立实际的连接
-            // 因此不需要为连接（ChannelPipeline）设置handler
-//                    .handler();
-            ChannelFuture f = b.connect(new InetSocketAddress(this.ip, this.port)).sync();
+                    .option(ChannelOption.SO_BROADCAST, true)
+                    // UDP相对于TCP不需要在客户端和服务端建立实际的连接
+                    // 因此不需要为连接（ChannelPipeline）设置handler
+                    .handler(new UTPClientHandler(this.torrent, this.downloadManager));
+            ChannelFuture f = b.connect(new InetSocketAddress(peer.getIp(), peer.getPort())).sync();
             f.channel().closeFuture().sync();
+            f.addListener(future -> {
+                if (!future.isSuccess()) {
+                    System.err.printf("%s:%d connect fail!", peer.getIp(), peer.getPort());
+                }
+            });
         } finally {
             workerGroup.shutdownGracefully();
         }
     }
 
     static class UTPClientBuilder {
-        private String ip;
-        private int port;
+        private final List<Peer> peerList;
         private Torrent torrent;
         private String savePath;
+        private AbstractDownloadManager downloadManager;
         private LoggingHandler loggingHandler;
 
-        public UTPClientBuilder(String ip, int port, Torrent torrent, String savePath) {
-            this.ip = ip;
-            this.port = port;
+        public UTPClientBuilder(List<Peer> peerList, Torrent torrent, String savePath, AbstractDownloadManager downloadManager) {
+            if (peerList == null || torrent == null || StringUtils.isBlank(savePath) || downloadManager == null) {
+                throw new NullPointerException("UTPClientBuilder constructor args may null.");
+            }
+            this.peerList = peerList;
             this.torrent = torrent;
             this.savePath = savePath;
+            this.downloadManager = downloadManager;
+            this.downloadManager.setTorrent(torrent);
         }
 
         UTPClient builder() {
             return new UTPClient(this);
-        }
-
-        public UTPClientBuilder ip(String ip) {
-            this.ip = ip;
-            return this;
-        }
-
-        public UTPClientBuilder port(int port) {
-            this.port = port;
-            return this;
         }
 
         public UTPClientBuilder torrent(Torrent torrent) {
@@ -102,6 +102,11 @@ public class UTPClient implements Client {
 
         public UTPClientBuilder savePath(String savePath) {
             this.savePath = savePath;
+            return this;
+        }
+
+        public UTPClientBuilder downloadManager(AbstractDownloadManager downloadManager) {
+            this.downloadManager = downloadManager;
             return this;
         }
 

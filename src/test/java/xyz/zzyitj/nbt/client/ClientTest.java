@@ -40,14 +40,15 @@ class ClientTest {
     private static final String savePath = "./download/";
     private static Torrent torrent;
     private static AbstractDownloadManager downloadManager;
+    private static List<Peer> peerList;
 
     @BeforeAll
     static void init() throws IOException {
-//        String torrentPath = "/Users/intent/Desktop/sbt/一个文件一个区块.torrent";
+        String torrentPath = "/Users/intent/Desktop/sbt/一个文件一个区块.torrent";
 //        String torrentPath = "/Users/intent/Desktop/sbt/一个文件多个区块.torrent";
 //        String torrentPath = "/Users/intent/Desktop/sbt/多个文件一个区块.torrent";
 //        String torrentPath = "/Users/intent/Desktop/sbt/多个文件多个区块.torrent";
-        String torrentPath = "/Users/intent/Desktop/sbt/test.torrent";
+//        String torrentPath = "/Users/intent/Desktop/sbt/test.torrent";
         File torrentFile = new File(torrentPath);
         torrent = TorrentUtils.getTorrent(torrentFile);
         // 创建文件夹
@@ -68,6 +69,9 @@ class ClientTest {
             });
         }
         downloadManager = new DownloadManager();
+        startReport();
+        peerList = new ArrayList<>();
+        addPeers(peerList);
     }
 
     /**
@@ -77,10 +81,6 @@ class ClientTest {
      */
     @Test
     void testTCPClient() throws InterruptedException {
-        startReport();
-        List<Peer> peerList = new ArrayList<>();
-//        peerList.add(new Peer(TEST_IP, 51413));
-//        peerList.add(new Peer(TEST_IP, 18357));
         Client client = new TCPClient.TCPClientBuilder(peerList, torrent, savePath, downloadManager)
                 .showDownloadLog(false)
                 .showRequestLog(true)
@@ -95,10 +95,15 @@ class ClientTest {
         }
     }
 
+    private static void addPeers(List<Peer> peerList) {
+        //        peerList.add(new Peer(TEST_IP, 51413));
+        peerList.add(new Peer(TEST_IP, 18357));
+    }
+
     /**
      * 监控堆外内存
      */
-    private void startReport() {
+    private static void startReport() {
         Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
             @Override
             public Thread newThread(Runnable r) {
@@ -106,10 +111,10 @@ class ClientTest {
                 thread.setDaemon(true);
                 return thread;
             }
-        }).scheduleAtFixedRate(this::doReport, 0, 5, TimeUnit.SECONDS);
+        }).scheduleAtFixedRate(ClientTest::doReport, 0, 5, TimeUnit.SECONDS);
     }
 
-    private void doReport() {
+    private static void doReport() {
         logger.info("current netty direct memory: {}B, {}KB, {}MB, {}GB",
                 PlatformDependent.usedDirectMemory(),
                 PlatformDependent.usedDirectMemory() / ByteUtils.BYTE_KB,
@@ -124,7 +129,7 @@ class ClientTest {
      */
     @Test
     void testUTPClient() throws InterruptedException {
-        Client client = new UTPClient.UTPClientBuilder(TEST_IP, TEST_PORT, torrent, savePath)
+        Client client = new UTPClient.UTPClientBuilder(peerList, torrent, savePath, downloadManager)
                 .loggingHandler(new LoggingHandler(LogLevel.INFO))
                 .builder();
         client.start();

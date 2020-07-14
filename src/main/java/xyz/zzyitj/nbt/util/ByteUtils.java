@@ -1,5 +1,7 @@
 package xyz.zzyitj.nbt.util;
 
+import java.util.Random;
+
 /**
  * xyz.zzyitj.nbt.util
  *
@@ -49,5 +51,20 @@ public class ByteUtils {
         data[1] = (byte) (val >> 16 & 0xff);
         data[0] = (byte) (val >> 24 & 0xff);
         return data;
+    }
+
+    /**
+     * 根据字节数返回随机的字节
+     *
+     * @param len
+     * @return
+     */
+    public static byte[] getRandBytes(int len) {
+        byte[] bytes = new byte[len];
+        Random random = new Random();
+        for (int i = 0; i < len; i++) {
+            bytes[i] = (byte) random.nextInt(255);
+        }
+        return bytes;
     }
 }

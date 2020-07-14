@@ -61,7 +61,7 @@ public class TCPClientHandler extends AbstractTCPHandler {
         int pieceRequestMapKey = atomicPieceRequestMapKey.getAndIncrement();
         // 说明了已经请求下载map里面全部都发送了请求，但是可能还没下载完，因为可能有失败的
         if (pieceRequestMapKey >= downloadConfig.getPieceRequestMapSize()) {
-            if (pieceRequestMap.isEmpty()){
+            if (pieceRequestMap.isEmpty()) {
                 return;
             }
             pieceRequestMapKey = pieceRequestMap.keySet().iterator().next();

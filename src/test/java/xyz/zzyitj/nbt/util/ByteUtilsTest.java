@@ -44,4 +44,10 @@ class ByteUtilsTest {
         System.out.println(Arrays.toString(ByteUtils.intToBytesBigEndian(237651)));
         System.out.println(Arrays.toString(ByteUtils.intToBytesLittleEndian(237651)));
     }
+
+    @Test
+    void getRandBytes() {
+        System.out.println(Arrays.toString(ByteUtils.getRandBytes(2)));
+        System.out.println(Arrays.toString(ByteUtils.getRandBytes(4)));
+    }
 }
