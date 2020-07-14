@@ -4,7 +4,7 @@
         <property name="LOG_HOME">./logs</property>
         <property name="FILE_NAME">superbt</property>
         <property name="DOWNLOAD_FILE_NAME">download</property>
-        <property name="TCP_CLIENT_FILE_NAME">tcpclient</property>
+        <property name="REQUEST_FILE_NAME">request</property>
         <property name="LOG_FORMAT">%-d{yyyy-MM-dd HH:mm:ss} - [ %c %M %L] - [ %p ] - %m%n</property>
         <property name="TIMER_LOG_FORMAT">%-d{yyyy-MM-dd HH:mm:ss} - [ %p ] - %m%n</property>
     </properties>
@@ -35,10 +35,10 @@
             <DefaultRolloverStrategy max="10"/>
         </RollingRandomAccessFile>
 
-        <!--TCP Client日志-->
-        <RollingRandomAccessFile name="tcpclient"
-                                 fileName="${LOG_HOME}/${TCP_CLIENT_FILE_NAME}/${TCP_CLIENT_FILE_NAME}.log"
-                                 filePattern="${LOG_HOME}/${TCP_CLIENT_FILE_NAME}/$${date:yyyy-MM}/${TCP_CLIENT_FILE_NAME}-%d{yyyy-MM-dd}.log">
+        <!--handler日志-->
+        <RollingRandomAccessFile name="request"
+                                 fileName="${LOG_HOME}/${REQUEST_FILE_NAME}/${REQUEST_FILE_NAME}.log"
+                                 filePattern="${LOG_HOME}/${REQUEST_FILE_NAME}/$${date:yyyy-MM}/${REQUEST_FILE_NAME}-%d{yyyy-MM-dd}.log">
             <PatternLayout pattern="${TIMER_LOG_FORMAT}"/>
             <Policies>
                 <TimeBasedTriggeringPolicy interval="1"/>
@@ -58,8 +58,8 @@
             <AppenderRef ref="download"/>
         </Logger>
 
-        <Logger name="xyz.zzyitj.nbt.handler.TCPClientHandler" level="info">
-            <AppenderRef ref="tcpclient"/>
+        <Logger name="xyz.zzyitj.nbt.handler" level="info">
+            <AppenderRef ref="request"/>
         </Logger>
     </Loggers>
 </Configuration>

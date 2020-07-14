@@ -6,6 +6,7 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.logging.LoggingHandler;
+import org.apache.commons.lang3.StringUtils;
 import xyz.zzyitj.nbt.Application;
 import xyz.zzyitj.nbt.bean.DownloadConfig;
 import xyz.zzyitj.nbt.bean.Peer;
@@ -39,6 +40,7 @@ public class TCPClient implements Client {
     private final AbstractDownloadManager downloadManager;
     private final LoggingHandler loggingHandler;
     private final boolean showDownloadLog;
+    private final boolean showRequestLog;
 
     private final ExecutorService es;
 
@@ -50,6 +52,7 @@ public class TCPClient implements Client {
         this.downloadManager = builder.downloadManager;
         this.loggingHandler = builder.loggingHandler;
         this.showDownloadLog = builder.showDownloadLog;
+        this.showRequestLog = builder.showRequestLog;
     }
 
     @Override
@@ -57,6 +60,7 @@ public class TCPClient implements Client {
         if (Application.downloadConfigMap.get(torrent) == null) {
             DownloadConfig downloadConfig = new DownloadConfig(savePath);
             downloadConfig.setShowDownloadLog(this.showDownloadLog);
+            downloadConfig.setShowRequestLog(this.showRequestLog);
             Application.downloadConfigMap.put(torrent, downloadConfig);
         }
         for (Peer peer : peerList) {
@@ -114,8 +118,12 @@ public class TCPClient implements Client {
         private AbstractDownloadManager downloadManager;
         private LoggingHandler loggingHandler;
         private boolean showDownloadLog;
+        private boolean showRequestLog;
 
         public TCPClientBuilder(List<Peer> peerList, Torrent torrent, String savePath, AbstractDownloadManager downloadManager) {
+            if (peerList == null || torrent == null || StringUtils.isBlank(savePath) || downloadManager == null) {
+                throw new NullPointerException("TCPClientBuilder constructor args may null.");
+            }
             this.peerList = peerList;
             this.torrent = torrent;
             this.savePath = savePath;
@@ -149,6 +157,11 @@ public class TCPClient implements Client {
 
         public TCPClientBuilder showDownloadLog(boolean showDownloadLog) {
             this.showDownloadLog = showDownloadLog;
+            return this;
+        }
+
+        public TCPClientBuilder showRequestLog(boolean showRequestLog) {
+            this.showRequestLog = showRequestLog;
             return this;
         }
 

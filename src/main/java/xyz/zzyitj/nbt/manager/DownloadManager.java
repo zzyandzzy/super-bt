@@ -3,7 +3,7 @@ package xyz.zzyitj.nbt.manager;
 import xyz.zzyitj.nbt.Application;
 import xyz.zzyitj.nbt.bean.*;
 
-import java.util.Queue;
+import java.util.Map;
 
 /**
  * xyz.zzyitj.nbt.handler
@@ -22,14 +22,14 @@ public class DownloadManager extends AbstractDownloadManager {
         if (downloadConfig == null) {
             return false;
         }
-        Queue<RequestPiece> pieceQueue = downloadConfig.getPieceQueue();
-        if (pieceQueue == null) {
+        Map<Integer, RequestPiece> pieceRequestMap = downloadConfig.getPieceRequestMap();
+        if (pieceRequestMap == null) {
             return false;
         }
         if (getTorrent().getTorrentFileItemList() == null) {
-            return SingletonDownloadManager.getInstance().saveSingleFile(getTorrent(), payload, downloadConfig, pieceQueue);
+            return SingletonDownloadManager.getInstance().saveSingleFile(getTorrent(), payload, downloadConfig, pieceRequestMap);
         } else {
-            return SingletonDownloadManager.getInstance().saveMultipleFile(getTorrent(), payload, downloadConfig, pieceQueue);
+            return SingletonDownloadManager.getInstance().saveMultipleFile(getTorrent(), payload, downloadConfig, pieceRequestMap);
         }
     }
 }

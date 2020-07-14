@@ -1,7 +1,7 @@
 package xyz.zzyitj.nbt.bean;
 
-import java.util.Queue;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * xyz.zzyitj.nbt.bean
@@ -18,27 +18,27 @@ public class DownloadConfig {
     /**
      * 一个区块需要请求的次数
      */
-    private int onePieceRequestSize;
+    private int onePieceSize;
     /**
-     * 区块下载完成进度
+     * pieceRequestMap原本大小
      */
-    private volatile boolean[] pieceRequestProcess;
+    private int pieceRequestMapSize;
     /**
-     * 下载大小
+     * 区块下载map
      */
-    private AtomicLong downloadSum;
+    private Map<Integer, RequestPiece> pieceRequestMap;
     /**
-     * pieceQueue原本大小
+     * 区块下载map的key
      */
-    private int pieceQueueSize;
-    /**
-     * 区块下载队列
-     */
-    private Queue<RequestPiece> pieceQueue;
+    private AtomicInteger pieceRequestMapKey;
     /**
      * 启用下载log
      */
     private boolean showDownloadLog;
+    /**
+     * 启用请求log
+     */
+    private boolean showRequestLog;
 
     public DownloadConfig() {
     }
@@ -55,14 +55,6 @@ public class DownloadConfig {
         this.savePath = savePath;
     }
 
-    public int getOnePieceRequestSize() {
-        return onePieceRequestSize;
-    }
-
-    public void setOnePieceRequestSize(int onePieceRequestSize) {
-        this.onePieceRequestSize = onePieceRequestSize;
-    }
-
     public boolean isShowDownloadLog() {
         return showDownloadLog;
     }
@@ -71,35 +63,44 @@ public class DownloadConfig {
         this.showDownloadLog = showDownloadLog;
     }
 
-    public Queue<RequestPiece> getPieceQueue() {
-        return pieceQueue;
+
+    public int getOnePieceSize() {
+        return onePieceSize;
     }
 
-    public void setPieceQueue(Queue<RequestPiece> pieceQueue) {
-        this.pieceQueue = pieceQueue;
+    public void setOnePieceSize(int onePieceSize) {
+        this.onePieceSize = onePieceSize;
     }
 
-    public int getPieceQueueSize() {
-        return pieceQueueSize;
+    public int getPieceRequestMapSize() {
+        return pieceRequestMapSize;
     }
 
-    public void setPieceQueueSize(int pieceQueueSize) {
-        this.pieceQueueSize = pieceQueueSize;
+    public void setPieceRequestMapSize(int pieceRequestMapSize) {
+        this.pieceRequestMapSize = pieceRequestMapSize;
     }
 
-    public AtomicLong getDownloadSum() {
-        return downloadSum;
+    public Map<Integer, RequestPiece> getPieceRequestMap() {
+        return pieceRequestMap;
     }
 
-    public void setDownloadSum(AtomicLong downloadSum) {
-        this.downloadSum = downloadSum;
+    public void setPieceRequestMap(Map<Integer, RequestPiece> pieceRequestMap) {
+        this.pieceRequestMap = pieceRequestMap;
     }
 
-    public boolean[] getPieceRequestProcess() {
-        return pieceRequestProcess;
+    public AtomicInteger getPieceRequestMapKey() {
+        return pieceRequestMapKey;
     }
 
-    public void setPieceRequestProcess(boolean[] pieceRequestProcess) {
-        this.pieceRequestProcess = pieceRequestProcess;
+    public void setPieceRequestMapKey(AtomicInteger pieceRequestMapKey) {
+        this.pieceRequestMapKey = pieceRequestMapKey;
+    }
+
+    public boolean isShowRequestLog() {
+        return showRequestLog;
+    }
+
+    public void setShowRequestLog(boolean showRequestLog) {
+        this.showRequestLog = showRequestLog;
     }
 }

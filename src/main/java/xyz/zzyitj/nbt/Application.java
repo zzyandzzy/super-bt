@@ -1,8 +1,10 @@
 package xyz.zzyitj.nbt;
 
+import io.netty.channel.ChannelHandlerContext;
 import xyz.zzyitj.nbt.bean.DownloadConfig;
 import xyz.zzyitj.nbt.bean.Torrent;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -17,4 +19,8 @@ public class Application {
      * 下载配置Map
      */
     public static Map<Torrent, DownloadConfig> downloadConfigMap = new ConcurrentHashMap<>();
+    /**
+     * peerMap
+     */
+    public static Map<Torrent, List<ChannelHandlerContext>> peerMap = new ConcurrentHashMap<>();
 }

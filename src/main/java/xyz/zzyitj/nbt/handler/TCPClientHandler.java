@@ -9,7 +9,8 @@ import xyz.zzyitj.nbt.bean.*;
 import xyz.zzyitj.nbt.manager.AbstractDownloadManager;
 import xyz.zzyitj.nbt.util.HandshakeUtils;
 
-import java.util.Queue;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * xyz.zzyitj.nbt.client
@@ -52,42 +53,32 @@ public class TCPClientHandler extends AbstractTCPHandler {
         if (downloadConfig == null) {
             return;
         }
-        Queue<RequestPiece> pieceQueue = downloadConfig.getPieceQueue();
-        if (pieceQueue == null) {
+        Map<Integer, RequestPiece> pieceRequestMap = downloadConfig.getPieceRequestMap();
+        if (pieceRequestMap == null) {
             return;
         }
-        RequestPiece requestPiece = pieceQueue.poll();
+        AtomicInteger atomicPieceRequestMapKey = downloadConfig.getPieceRequestMapKey();
+        int pieceRequestMapKey = atomicPieceRequestMapKey.getAndIncrement();
+        // 说明了已经请求下载map里面全部都发送了请求，但是可能还没下载完，因为可能有失败的
+        if (pieceRequestMapKey >= downloadConfig.getPieceRequestMapSize()) {
+            if (pieceRequestMap.isEmpty()){
+                return;
+            }
+            pieceRequestMapKey = pieceRequestMap.keySet().iterator().next();
+        }
+        RequestPiece requestPiece = pieceRequestMap.get(pieceRequestMapKey);
         // 下载队列里面已经完成了
         if (requestPiece == null) {
-            // 但是还有些失败的区块
-            boolean[] pieceRequestProcess = downloadConfig.getPieceRequestProcess();
-            for (int i = 0; i < pieceRequestProcess.length; i++) {
-                if (!pieceRequestProcess[i]) {
-                    // 构造区块
-                    int onePieceRequestSize = downloadConfig.getOnePieceRequestSize();
-                    int index = i / onePieceRequestSize;
-                    int begin = i % onePieceRequestSize * HandshakeUtils.PIECE_MAX_LENGTH;
-                    // 如果不是最后一个区块，则大小都是16384
-                    if (i != pieceRequestProcess.length - 1) {
-                        requestPiece = new RequestPiece(index, begin, HandshakeUtils.PIECE_MAX_LENGTH);
-                    } else {
-                        // 最后一个区块，大小是种子大小减去前面区块的总大小
-                        long beforePieceRequestSize = i * HandshakeUtils.PIECE_MAX_LENGTH;
-                        requestPiece = new RequestPiece(index, begin, (int) (torrent.getTorrentLength() - beforePieceRequestSize));
-                    }
-                    logger.info("reply download: {}, onePieceRequestSize: {}, {}", i, onePieceRequestSize, requestPiece);
-                    break;
-                }
-            }
+            return;
         }
-        if (requestPiece != null) {
-            ctx.writeAndFlush(Unpooled.copiedBuffer(
-                    HandshakeUtils.requestPieceHandler(requestPiece)));
-            if (downloadConfig.isShowDownloadLog()) {
-                logger.info("Client: request {}, torrent name: {}, index: {}, begin: {}, length: {}, piece queue size: {}",
-                        ctx.channel().remoteAddress(), torrent.getName(),
-                        requestPiece.getIndex(), requestPiece.getBegin(), requestPiece.getLength(), pieceQueue.size());
-            }
+        ctx.writeAndFlush(Unpooled.copiedBuffer(
+                HandshakeUtils.requestPieceHandler(requestPiece)));
+        if (downloadConfig.isShowRequestLog()) {
+            logger.info("Client: request {}, torrent name: {}, index: {}, begin: {}, length: {}," +
+                            " piece map size: {}, map key: {}",
+                    ctx.channel().remoteAddress(), torrent.getName(),
+                    requestPiece.getIndex(), requestPiece.getBegin(), requestPiece.getLength(),
+                    pieceRequestMap.size(), pieceRequestMapKey);
         }
     }
 
@@ -114,8 +105,8 @@ public class TCPClientHandler extends AbstractTCPHandler {
         PeerWire peerWire = HandshakeUtils.parsePeerWire(data);
         // 根据peer返回的区块完成信息生成区块下载队列
         DownloadConfig downloadConfig = Application.downloadConfigMap.get(torrent);
-        if (downloadConfig != null && downloadConfig.getPieceQueue() == null) {
-            HandshakeUtils.generateRequestPieceQueue(peerWire, torrent, downloadConfig);
+        if (downloadConfig != null && downloadConfig.getPieceRequestMap() == null) {
+            HandshakeUtils.generatePieceRequestMap(peerWire, torrent, downloadConfig);
         }
         if (unChoke) {
             // 之后就可以下载区块了
@@ -139,7 +130,7 @@ public class TCPClientHandler extends AbstractTCPHandler {
         PeerWirePayload peerWirePayload = (PeerWirePayload) peerWire.getPayload();
         if (downloadManager.save(peerWirePayload)) {
             logger.info("Client: download {} complete!", torrent.getName());
-            closePeer(ctx);
+            closeAllPeer();
         } else {
             doDownload(ctx);
         }

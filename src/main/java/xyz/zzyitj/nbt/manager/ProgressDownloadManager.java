@@ -7,12 +7,11 @@ import xyz.zzyitj.nbt.bean.DownloadConfig;
 import xyz.zzyitj.nbt.bean.PeerWirePayload;
 import xyz.zzyitj.nbt.bean.RequestPiece;
 
-import java.util.Queue;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * xyz.zzyitj.nbt.handler
@@ -51,13 +50,13 @@ public class ProgressDownloadManager extends AbstractDownloadManager {
         if (downloadConfig == null) {
             return;
         }
-        Queue<RequestPiece> pieceQueue = downloadConfig.getPieceQueue();
-        if (pieceQueue == null) {
+        Map<Integer, RequestPiece> pieceRequestMap = downloadConfig.getPieceRequestMap();
+        if (pieceRequestMap == null) {
             return;
         }
         // 下载进度
-        AtomicLong downloadSum = downloadConfig.getDownloadSum();
-        float progress = (downloadSum.get() * 1.0F) / getTorrent().getTorrentLength() * 100;
+        float progress = ((downloadConfig.getPieceRequestMapSize() - pieceRequestMap.size()) * 1.0F)
+                / downloadConfig.getPieceRequestMapSize() * 100;
         logger.info("torrent name: {}, downloading progress: {}%",
                 getTorrent().getName(), progress);
         if (progress >= DOWNLOAD_COMPLETE) {

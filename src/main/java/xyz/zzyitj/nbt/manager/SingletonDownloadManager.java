@@ -9,8 +9,7 @@ import xyz.zzyitj.nbt.util.HandshakeUtils;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.util.Queue;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.Map;
 
 /**
  * xyz.zzyitj.nbt.manager
@@ -40,16 +39,16 @@ public class SingletonDownloadManager {
     /**
      * 下载多个文件
      *
-     * @param torrent        种子
-     * @param payload        数据域
-     * @param downloadConfig 下载配置信息
-     * @param pieceQueue     下载队列
+     * @param torrent         种子
+     * @param payload         数据域
+     * @param downloadConfig  下载配置信息
+     * @param pieceRequestMap 请求下载map
      * @return true下载完成，false下载未完成
      */
     public boolean saveMultipleFile(Torrent torrent, PeerWirePayload payload, DownloadConfig downloadConfig,
-                                    Queue<RequestPiece> pieceQueue) {
+                                    Map<Integer, RequestPiece> pieceRequestMap) {
         // 跳过的字节数
-        long skipBytes = payload.getIndex() * downloadConfig.getOnePieceRequestSize() * HandshakeUtils.PIECE_MAX_LENGTH
+        long skipBytes = payload.getIndex() * downloadConfig.getOnePieceSize() * HandshakeUtils.PIECE_MAX_LENGTH
                 + payload.getBegin();
         // 根据跳过的字节数确定当前写入的文件的下标
         int fileIndex = DownloadManagerUtils.getFileIndex(skipBytes, torrent);
@@ -59,8 +58,7 @@ public class SingletonDownloadManager {
         byte[] writeBlock = null;
         long bytesExceeded = block.length;
         RandomAccessFile randomAccessFile = null;
-        AtomicLong atomicDownloadSum = downloadConfig.getDownloadSum();
-        long downloadSum = atomicDownloadSum.get();
+        int pieceRequestIndex = DownloadManagerUtils.getPieceRequestIndex(payload, downloadConfig.getOnePieceSize());
         try {
             long startPosition = DownloadManagerUtils.getStartPosition(skipBytes, torrent);
             // 大于0表示当前文件加上现在的字节还有超出
@@ -75,12 +73,12 @@ public class SingletonDownloadManager {
                 writeBlock = block;
             }
             if (downloadConfig.isShowDownloadLog()) {
-                logger.info("Client: response piece, torrent name: {}, torrent length: {}, item file name: {}, item file length: {}, " +
+                logger.info("Client: response piece, torrent name: {}, torrent length: {}, file item name: {}, file item length: {}, " +
                                 "index: {}, begin: {}, block length: {}, write block length: {}, " +
-                                "skip bytes: {}, download sum: {}, bytes exceeded: {}, piece map size: {}",
+                                "skip bytes: {}, bytes exceeded: {}, piece map size: {}",
                         torrent.getName(), torrent.getTorrentLength(), torrentFileItem.getPath(), torrentFileItem.getLength(),
                         payload.getIndex(), payload.getBegin(), block.length, writeBlock.length,
-                        skipBytes, downloadSum, bytesExceeded, pieceQueue.size());
+                        skipBytes, bytesExceeded, pieceRequestMap.size());
             }
             File file = new File(downloadConfig.getSavePath() + torrent.getName() +
                     File.separator + torrentFileItem.getPath());
@@ -89,14 +87,10 @@ public class SingletonDownloadManager {
             randomAccessFile.seek(startPosition);
             // 写入文件
             randomAccessFile.write(writeBlock);
-            downloadSum = atomicDownloadSum.addAndGet(writeBlock.length);
-            // 设置PieceRequestProcess
-            int pieceRequestIndex = DownloadManagerUtils.getPieceRequestIndex(payload, downloadConfig.getOnePieceRequestSize());
-            if (!downloadConfig.getPieceRequestProcess()[pieceRequestIndex]) {
-                downloadConfig.getPieceRequestProcess()[pieceRequestIndex] = true;
-            }
+            // 从请求下载map里面移除已经下载过的
+            pieceRequestMap.remove(pieceRequestIndex);
             // 可能恰好下载完
-            if (checkDownloadComplete(pieceQueue, downloadSum, torrent)) {
+            if (checkDownloadComplete(pieceRequestMap)) {
                 return true;
             }
             // 然后递归写入未完成的部分
@@ -105,19 +99,19 @@ public class SingletonDownloadManager {
                 byte[] newBlock = new byte[block.length - writeBlock.length];
                 System.arraycopy(block, writeBlock.length, newBlock, 0, newBlock.length);
                 payload.setBlock(newBlock);
-                return saveMultipleFile(torrent, payload, downloadConfig, pieceQueue);
+                return saveMultipleFile(torrent, payload, downloadConfig, pieceRequestMap);
             } else {
                 return false;
             }
         } catch (Exception e) {
             e.printStackTrace();
-            logger.error("Client: error, torrent name: {}, torrent length: {}, item file name: {}, item file length: {}, " +
+            logger.error("Client: error, torrent name: {}, torrent length: {}, file item name: {}, file item length: {}, " +
                             "index: {}, begin: {}, block length: {}, write block length: {}, " +
-                            "skip bytes: {}, download sum: {}, bytes exceeded: {}, piece queue size: {}",
+                            "skip bytes: {}, bytes exceeded: {}, piece queue size: {}",
                     torrent.getName(), torrent.getTorrentLength(), torrentFileItem.getPath(), torrentFileItem.getLength(),
                     payload.getIndex(), payload.getBegin(), block.length, writeBlock,
-                    skipBytes, downloadSum, bytesExceeded, pieceQueue.size());
-            pieceQueue.offer(new RequestPiece(payload.getIndex(), payload.getBegin(), block.length));
+                    skipBytes, bytesExceeded, pieceRequestMap.size());
+            pieceRequestMap.put(pieceRequestIndex, new RequestPiece(payload.getIndex(), payload.getBegin(), block.length));
         } finally {
             if (randomAccessFile != null) {
                 try {
@@ -133,23 +127,22 @@ public class SingletonDownloadManager {
     /**
      * 下载单个文件
      *
-     * @param torrent        种子
-     * @param payload        数据域
-     * @param downloadConfig 下载信息
-     * @param pieceQueue     下载队列
+     * @param torrent         种子
+     * @param payload         数据域
+     * @param downloadConfig  下载信息
+     * @param pieceRequestMap 请求下载map
      * @return true，下载完成，false没有下载完
      */
     public boolean saveSingleFile(Torrent torrent, PeerWirePayload payload, DownloadConfig downloadConfig,
-                                  Queue<RequestPiece> pieceQueue) {
+                                  Map<Integer, RequestPiece> pieceRequestMap) {
         // 跳过多少字节
         // index * onePieceRequestSum * 16Kb + begin
-        long skipBytes = payload.getIndex() * downloadConfig.getOnePieceRequestSize() * HandshakeUtils.PIECE_MAX_LENGTH
+        long skipBytes = payload.getIndex() * downloadConfig.getOnePieceSize() * HandshakeUtils.PIECE_MAX_LENGTH
                 + payload.getBegin();
         File file = new File(downloadConfig.getSavePath() + torrent.getName());
         RandomAccessFile randomAccessFile = null;
-        AtomicLong atomicDownloadSum = downloadConfig.getDownloadSum();
-        long downloadSum = atomicDownloadSum.get();
         byte[] block = payload.getBlock();
+        int pieceRequestIndex = DownloadManagerUtils.getPieceRequestIndex(payload, downloadConfig.getOnePieceSize());
         try {
             randomAccessFile = new RandomAccessFile(file, "rw");
             randomAccessFile.seek(skipBytes);
@@ -157,26 +150,26 @@ public class SingletonDownloadManager {
             if (downloadConfig.isShowDownloadLog()) {
                 logger.info("Client: response piece, torrent name: {}, torrent length: {}, " +
                                 "index: {}, begin: {}, block length: {}, " +
-                                "skip bytes: {}, random access file length: {}, download sum: {}" +
-                                "piece queue size: {}",
+                                "skip bytes: {}, random access file length: {}, piece map size: {}",
                         torrent.getName(), torrent.getTorrentLength(),
                         payload.getIndex(), payload.getBegin(), block.length,
-                        skipBytes, randomAccessFile.length(), downloadSum,
-                        pieceQueue.size());
+                        skipBytes, randomAccessFile.length(), pieceRequestMap.size());
             }
+            // 从请求下载map里面移除已经下载过的
+            pieceRequestMap.remove(pieceRequestIndex);
             // 判断是否要继续下载区块
-            if (checkDownloadComplete(pieceQueue, atomicDownloadSum.addAndGet(block.length), torrent)) {
+            if (checkDownloadComplete(pieceRequestMap)) {
                 return true;
             }
         } catch (IOException e) {
             e.printStackTrace();
             logger.error("Client: error, torrent name: {}, torrent length: {}, " +
                             "index: {}, begin: {}, block length: {}, file length: {}, " +
-                            "skip bytes: {}, download sum: {}, piece map size: {}",
+                            "skip bytes: {}, piece map size: {}",
                     torrent.getName(), torrent.getTorrentLength(),
                     payload.getIndex(), payload.getBegin(), block.length, file.length(),
-                    skipBytes, downloadSum, pieceQueue.size());
-            pieceQueue.offer(new RequestPiece(payload.getIndex(), payload.getBegin(), block.length));
+                    skipBytes, pieceRequestMap.size());
+            pieceRequestMap.put(pieceRequestIndex, new RequestPiece(payload.getIndex(), payload.getBegin(), block.length));
         } finally {
             if (randomAccessFile != null) {
                 try {
@@ -192,11 +185,11 @@ public class SingletonDownloadManager {
     /**
      * 检查是否下载完全部文件
      *
-     * @param pieceQueue 下载队列
+     * @param pieceRequestMap 请求下载map
      * @return true下载完成，false下载未完成
      */
-    private static boolean checkDownloadComplete(Queue<RequestPiece> pieceQueue, long downloadSum, Torrent torrent) {
-        return pieceQueue.size() == 0 && downloadSum == torrent.getTorrentLength();
+    private static boolean checkDownloadComplete(Map<Integer, RequestPiece> pieceRequestMap) {
+        return pieceRequestMap.isEmpty();
     }
 
 }

@@ -79,11 +79,12 @@ class ClientTest {
     void testTCPClient() throws InterruptedException {
         startReport();
         List<Peer> peerList = new ArrayList<>();
-        peerList.add(new Peer(TEST_IP, 51413));
-        peerList.add(new Peer(TEST_IP, 18357));
+//        peerList.add(new Peer(TEST_IP, 51413));
+//        peerList.add(new Peer(TEST_IP, 18357));
         Client client = new TCPClient.TCPClientBuilder(peerList, torrent, savePath, downloadManager)
                 .showDownloadLog(false)
-                .showDownloadProcess(false)
+                .showRequestLog(true)
+                .showDownloadProcess(true)
 //                .loggingHandler(new LoggingHandler(LogLevel.INFO))
                 .builder();
         client.start();

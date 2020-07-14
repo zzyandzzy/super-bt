@@ -5,6 +5,7 @@ import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import xyz.zzyitj.nbt.Application;
 import xyz.zzyitj.nbt.bean.Torrent;
 import xyz.zzyitj.nbt.manager.AbstractDownloadManager;
 import xyz.zzyitj.nbt.util.Const;
@@ -272,10 +273,25 @@ public abstract class AbstractTCPHandler extends ChannelInboundHandlerAdapter {
      * @param ctx ctx
      */
     protected void closePeer(ChannelHandlerContext ctx) {
+        if (ctx == null) {
+            return;
+        }
         unChoke = false;
         // 关闭这个peer
         ctx.writeAndFlush(Unpooled.EMPTY_BUFFER)
                 .addListener(ChannelFutureListener.CLOSE);
+    }
+
+    /**
+     * 关闭所有连接
+     */
+    protected void closeAllPeer() {
+        List<ChannelHandlerContext> peerList = Application.peerMap.get(torrent);
+        if (peerList != null) {
+            for (ChannelHandlerContext ctx : peerList) {
+                closePeer(ctx);
+            }
+        }
     }
 
     /**
