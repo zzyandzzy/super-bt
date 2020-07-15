@@ -8,6 +8,7 @@ import xyz.zzyitj.nbt.Application;
 import xyz.zzyitj.nbt.bean.*;
 import xyz.zzyitj.nbt.manager.AbstractDownloadManager;
 import xyz.zzyitj.nbt.util.Const;
+import xyz.zzyitj.nbt.util.HandlerUtils;
 import xyz.zzyitj.nbt.util.HandshakeUtils;
 
 import java.util.Map;
@@ -32,7 +33,9 @@ public class TCPClientHandler extends AbstractTCPHandler {
 
     @Override
     void doChock(ChannelHandlerContext ctx) {
-        closePeer(ctx);
+        if (HandlerUtils.closePeer(ctx)) {
+            unChoke = false;
+        }
     }
 
     @Override
@@ -155,7 +158,8 @@ public class TCPClientHandler extends AbstractTCPHandler {
             DownloadConfig downloadConfig = Application.downloadConfigMap.get(torrent);
             if (downloadConfig != null && !downloadConfig.isCloseAllPeer()) {
                 downloadConfig.setCloseAllPeer(true);
-                closeAllPeer();
+                HandlerUtils.closeAllPeer(torrent);
+                unChoke = false;
             }
         } else {
             doDownload(ctx);

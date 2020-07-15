@@ -9,6 +9,7 @@ import xyz.zzyitj.nbt.bean.DownloadConfig;
 import xyz.zzyitj.nbt.bean.Torrent;
 import xyz.zzyitj.nbt.manager.AbstractDownloadManager;
 import xyz.zzyitj.nbt.util.Const;
+import xyz.zzyitj.nbt.util.HandlerUtils;
 import xyz.zzyitj.nbt.util.HandshakeUtils;
 import xyz.zzyitj.nbt.util.PeerWireConst;
 
@@ -201,7 +202,9 @@ public abstract class AbstractTCPHandler extends ChannelInboundHandlerAdapter {
                 logger.info("Client: {} send interested.", ctx.channel().remoteAddress());
             } else {
                 // 不是bt协议，关闭连接
-                closePeer(ctx);
+                if (HandlerUtils.closePeer(ctx)) {
+                    unChoke = false;
+                }
             }
         }
         // 作为服务器
@@ -268,42 +271,6 @@ public abstract class AbstractTCPHandler extends ChannelInboundHandlerAdapter {
                 logger.error("{} error, buf len: {}, buf id: {}",
                         ctx.channel().remoteAddress(), buf.length,
                         buf[PeerWireConst.PEER_WIRE_ID_INDEX]);
-        }
-    }
-
-    /**
-     * 关闭连接
-     *
-     * @param ctx ctx
-     */
-    protected boolean closePeer(ChannelHandlerContext ctx) {
-        if (ctx == null) {
-            return false;
-        }
-        unChoke = false;
-        // 关闭这个peer
-        ctx.writeAndFlush(Unpooled.EMPTY_BUFFER)
-                .addListener(ChannelFutureListener.CLOSE);
-        return true;
-    }
-
-    /**
-     * 关闭所有连接
-     */
-    protected void closeAllPeer() {
-        List<ChannelHandlerContext> peerList = Application.peerMap.get(torrent);
-        DownloadConfig downloadConfig = Application.downloadConfigMap.get(torrent);
-        if (peerList != null && peerList.size() > 0) {
-            Iterator<ChannelHandlerContext> iterator = peerList.iterator();
-            while (iterator.hasNext()) {
-                ChannelHandlerContext ctx = iterator.next();
-                if (closePeer(ctx)) {
-                    if (downloadConfig != null && downloadConfig.isShowRequestLog()) {
-                        logger.info("{} close, peer list size: {}", ctx.channel().remoteAddress(), peerList.size());
-                    }
-                    iterator.remove();
-                }
-            }
         }
     }
 

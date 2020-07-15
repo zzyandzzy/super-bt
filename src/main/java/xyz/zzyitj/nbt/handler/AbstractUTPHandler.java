@@ -2,13 +2,11 @@ package xyz.zzyitj.nbt.handler;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.socket.DatagramPacket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import xyz.zzyitj.nbt.Application;
 import xyz.zzyitj.nbt.bean.Torrent;
 import xyz.zzyitj.nbt.bean.UTPHeader;
 import xyz.zzyitj.nbt.manager.AbstractDownloadManager;
@@ -65,40 +63,6 @@ public abstract class AbstractUTPHandler extends SimpleChannelInboundHandler<Dat
         ByteBuf buf = msg.content();
         byte[] data = new byte[buf.readableBytes()];
         buf.readBytes(data);
-    }
-
-    /**
-     * 关闭连接
-     *
-     * @param ctx ctx
-     */
-    protected void closePeer(ChannelHandlerContext ctx) {
-        if (ctx == null) {
-            return;
-        }
-        // 关闭这个peer
-        ctx.writeAndFlush(Unpooled.EMPTY_BUFFER)
-                .addListener(ChannelFutureListener.CLOSE);
-    }
-
-    /**
-     * 关闭所有连接
-     */
-    protected void closeAllPeer() {
-        List<ChannelHandlerContext> peerList = Application.peerMap.get(torrent);
-        if (peerList != null) {
-            for (ChannelHandlerContext ctx : peerList) {
-                closePeer(ctx);
-            }
-        }
-    }
-
-    /**
-     * @param ctx ctx
-     */
-    @Override
-    public void handlerRemoved(ChannelHandlerContext ctx) {
-        logger.info("{} close.", ctx.channel().remoteAddress());
     }
 
     @Override
