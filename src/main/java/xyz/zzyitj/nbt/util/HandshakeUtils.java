@@ -6,6 +6,7 @@ import xyz.zzyitj.nbt.bean.*;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -242,6 +243,7 @@ public class HandshakeUtils {
             downloadConfig.setPieceRequestMap(pieceRequestMap);
             downloadConfig.setPieceRequestMapSize(capacity);
             downloadConfig.setPieceRequestMapKey(new AtomicInteger(0));
+            downloadConfig.setFailPieceRequest(new LinkedBlockingQueue<>(capacity));
 
             // 当前字节数
             int byteSum = 0;

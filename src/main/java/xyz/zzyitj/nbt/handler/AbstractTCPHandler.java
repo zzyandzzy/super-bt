@@ -1,17 +1,19 @@
 package xyz.zzyitj.nbt.handler;
 
-import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import xyz.zzyitj.nbt.Application;
+import xyz.zzyitj.nbt.bean.DownloadConfig;
 import xyz.zzyitj.nbt.bean.Torrent;
 import xyz.zzyitj.nbt.manager.AbstractDownloadManager;
 import xyz.zzyitj.nbt.util.Const;
 import xyz.zzyitj.nbt.util.HandshakeUtils;
 import xyz.zzyitj.nbt.util.PeerWireConst;
 
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 
@@ -175,6 +177,8 @@ public abstract class AbstractTCPHandler extends ChannelInboundHandlerAdapter {
     public void channelActive(ChannelHandlerContext ctx) {
         // 作为客户端，一打开连接就要发送握手信息
         if (torrent != null) {
+            List<ChannelHandlerContext> peerList = Application.peerMap.computeIfAbsent(torrent, k -> new ArrayList<>());
+            peerList.add(ctx);
             // 打开socket就发送握手
             ctx.writeAndFlush(Unpooled.copiedBuffer(
                     HandshakeUtils.buildHandshake(torrent.getInfoHash(), Const.TEST_PEER_ID)));
@@ -272,14 +276,15 @@ public abstract class AbstractTCPHandler extends ChannelInboundHandlerAdapter {
      *
      * @param ctx ctx
      */
-    protected void closePeer(ChannelHandlerContext ctx) {
+    protected boolean closePeer(ChannelHandlerContext ctx) {
         if (ctx == null) {
-            return;
+            return false;
         }
         unChoke = false;
         // 关闭这个peer
         ctx.writeAndFlush(Unpooled.EMPTY_BUFFER)
                 .addListener(ChannelFutureListener.CLOSE);
+        return true;
     }
 
     /**
@@ -287,25 +292,19 @@ public abstract class AbstractTCPHandler extends ChannelInboundHandlerAdapter {
      */
     protected void closeAllPeer() {
         List<ChannelHandlerContext> peerList = Application.peerMap.get(torrent);
-        if (peerList != null) {
-            for (ChannelHandlerContext ctx : peerList) {
-                closePeer(ctx);
+        DownloadConfig downloadConfig = Application.downloadConfigMap.get(torrent);
+        if (peerList != null && peerList.size() > 0) {
+            Iterator<ChannelHandlerContext> iterator = peerList.iterator();
+            while (iterator.hasNext()) {
+                ChannelHandlerContext ctx = iterator.next();
+                if (closePeer(ctx)) {
+                    if (downloadConfig != null && downloadConfig.isShowRequestLog()) {
+                        logger.info("{} close, peer list size: {}", ctx.channel().remoteAddress(), peerList.size());
+                    }
+                    iterator.remove();
+                }
             }
         }
-    }
-
-    /**
-     * 连接关闭，可能情况：
-     * 1、IP+Port无法连接
-     * 2、如果一个客户端接收到一个握手报文，并且该客户端没有服务这个报文的info_hash，那么该客户端必须丢弃该连接。
-     * 3、如果一个连接发起者接收到一个握手报文，并且该报文中peer_id与期望的peer_id不匹配，那么连接发起者应该丢弃该连接。
-     * 4、peer发送keep-alive（00 00 00 00 00 00 00 00）没有进行回答，2分钟后自动关闭
-     *
-     * @param ctx ctx
-     */
-    @Override
-    public void handlerRemoved(ChannelHandlerContext ctx) {
-        logger.info("{} close.", ctx.channel().remoteAddress());
     }
 
     @Override

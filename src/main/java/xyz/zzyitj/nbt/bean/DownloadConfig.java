@@ -1,6 +1,7 @@
 package xyz.zzyitj.nbt.bean;
 
 import java.util.Map;
+import java.util.Queue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -31,6 +32,18 @@ public class DownloadConfig {
      * 区块下载map的key
      */
     private AtomicInteger pieceRequestMapKey;
+    /**
+     * 失败的区块请求
+     */
+    private Queue<RequestPiece> failPieceRequest;
+    /**
+     * 是否有失败的请求
+     */
+    private volatile boolean failDownloadPieceRequest;
+    /**
+     * 在下载完成后是否已经关闭了全部的peer
+     */
+    private volatile boolean closeAllPeer;
     /**
      * 启用下载log
      */
@@ -102,5 +115,29 @@ public class DownloadConfig {
 
     public void setShowRequestLog(boolean showRequestLog) {
         this.showRequestLog = showRequestLog;
+    }
+
+    public Queue<RequestPiece> getFailPieceRequest() {
+        return failPieceRequest;
+    }
+
+    public void setFailPieceRequest(Queue<RequestPiece> failPieceRequest) {
+        this.failPieceRequest = failPieceRequest;
+    }
+
+    public boolean isFailDownloadPieceRequest() {
+        return failDownloadPieceRequest;
+    }
+
+    public void setFailDownloadPieceRequest(boolean failDownloadPieceRequest) {
+        this.failDownloadPieceRequest = failDownloadPieceRequest;
+    }
+
+    public boolean isCloseAllPeer() {
+        return closeAllPeer;
+    }
+
+    public void setCloseAllPeer(boolean closeAllPeer) {
+        this.closeAllPeer = closeAllPeer;
     }
 }

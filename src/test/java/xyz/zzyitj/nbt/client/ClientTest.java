@@ -70,7 +70,7 @@ class ClientTest {
         }
         downloadManager = new DownloadManager();
 
-//        startReport();
+        startReport();
         peerList = new ArrayList<>();
         addPeers(peerList);
     }

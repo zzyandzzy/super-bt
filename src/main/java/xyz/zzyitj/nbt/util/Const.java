@@ -11,6 +11,11 @@ public class Const {
      * 服务端口
      */
     public static final int SERVER_PORT = 11280;
+    /**
+     * 超时时间
+     */
+    public static final int TIMEOUT = 5000;
+
 
     /**
      * Transmission 2.84的PeerID

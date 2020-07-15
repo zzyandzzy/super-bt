@@ -7,9 +7,11 @@ import org.slf4j.LoggerFactory;
 import xyz.zzyitj.nbt.Application;
 import xyz.zzyitj.nbt.bean.*;
 import xyz.zzyitj.nbt.manager.AbstractDownloadManager;
+import xyz.zzyitj.nbt.util.Const;
 import xyz.zzyitj.nbt.util.HandshakeUtils;
 
 import java.util.Map;
+import java.util.Queue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -59,14 +61,34 @@ public class TCPClientHandler extends AbstractTCPHandler {
         }
         AtomicInteger atomicPieceRequestMapKey = downloadConfig.getPieceRequestMapKey();
         int pieceRequestMapKey = atomicPieceRequestMapKey.getAndIncrement();
+        Queue<RequestPiece> failPieceRequestQueue = downloadConfig.getFailPieceRequest();
         // 说明了已经请求下载map里面全部都发送了请求，但是可能还没下载完，因为可能有失败的
-        if (pieceRequestMapKey >= downloadConfig.getPieceRequestMapSize()) {
+        if (pieceRequestMapKey == downloadConfig.getPieceRequestMapSize() ||
+                downloadConfig.isFailDownloadPieceRequest() && failPieceRequestQueue.size() == 0) {
             if (pieceRequestMap.isEmpty()) {
                 return;
             }
-            pieceRequestMapKey = pieceRequestMap.keySet().iterator().next();
+            downloadConfig.setFailDownloadPieceRequest(true);
+            atomicPieceRequestMapKey.set(downloadConfig.getPieceRequestMapSize() - 1);
+            try {
+                Thread.sleep(Const.TIMEOUT);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            synchronized (this) {
+                if (failPieceRequestQueue.size() == 0) {
+                    for (Integer integer : pieceRequestMap.keySet()) {
+                        failPieceRequestQueue.offer(pieceRequestMap.get(integer));
+                    }
+                }
+            }
         }
-        RequestPiece requestPiece = pieceRequestMap.get(pieceRequestMapKey);
+        RequestPiece requestPiece;
+        if (failPieceRequestQueue.size() == 0) {
+            requestPiece = pieceRequestMap.get(pieceRequestMapKey);
+        } else {
+            requestPiece = failPieceRequestQueue.poll();
+        }
         // 下载队列里面已经完成了
         if (requestPiece == null) {
             return;
@@ -75,10 +97,10 @@ public class TCPClientHandler extends AbstractTCPHandler {
                 HandshakeUtils.requestPieceHandler(requestPiece)));
         if (downloadConfig.isShowRequestLog()) {
             logger.info("Client: request {}, torrent name: {}, index: {}, begin: {}, length: {}," +
-                            " piece map size: {}, map key: {}",
+                            " piece map size: {}, map key: {}, fail piece size: {}",
                     ctx.channel().remoteAddress(), torrent.getName(),
                     requestPiece.getIndex(), requestPiece.getBegin(), requestPiece.getLength(),
-                    pieceRequestMap.size(), pieceRequestMapKey);
+                    pieceRequestMap.size(), pieceRequestMapKey, failPieceRequestQueue.size());
         }
     }
 
@@ -129,8 +151,12 @@ public class TCPClientHandler extends AbstractTCPHandler {
         PeerWire peerWire = HandshakeUtils.parsePeerWire(data);
         PeerWirePayload peerWirePayload = (PeerWirePayload) peerWire.getPayload();
         if (downloadManager.save(peerWirePayload)) {
-            logger.info("Client: download {} complete!", torrent.getName());
-            closeAllPeer();
+            // 关闭所有peer
+            DownloadConfig downloadConfig = Application.downloadConfigMap.get(torrent);
+            if (downloadConfig != null && !downloadConfig.isCloseAllPeer()) {
+                downloadConfig.setCloseAllPeer(true);
+                closeAllPeer();
+            }
         } else {
             doDownload(ctx);
         }
