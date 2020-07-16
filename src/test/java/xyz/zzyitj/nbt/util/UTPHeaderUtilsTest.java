@@ -33,4 +33,11 @@ class UTPHeaderUtilsTest {
         System.out.println(Arrays.toString(UTPHeaderUtils.utpHeaderToBytes(utpHeader)));
     }
 
+    @Test
+    void bytesToUtpHeader() {
+        UTPHeader utpHeader = UTPHeaderUtils.buildInitHeader();
+        System.out.println(utpHeader);
+        System.out.println(Arrays.toString(UTPHeaderUtils.utpHeaderToBytes(utpHeader)));
+        System.out.println(UTPHeaderUtils.bytesToUtpHeader(UTPHeaderUtils.utpHeaderToBytes(utpHeader)));
+    }
 }

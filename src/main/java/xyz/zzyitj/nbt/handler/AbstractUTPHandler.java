@@ -67,21 +67,29 @@ public abstract class AbstractUTPHandler extends SimpleChannelInboundHandler<Dat
         ByteBuf buf = msg.content();
         byte[] data = new byte[buf.readableBytes()];
         buf.readBytes(data);
-        if (data.length == 20) {
-            ByteBuf receiveConnectionIdBuf = Unpooled.copiedBuffer(data, 2, 2);
-            if (data[0] == UTPHeaderUtils.HEADER_TYPE_STATE && receiveConnectionIdBuf.readShort() == header.getConnectionId()) {
-                receiveConnectionIdBuf.release();
-                header.setType(UTPHeaderUtils.HEADER_TYPE_DATA);
-                header.setTimestampMicroseconds((int) System.currentTimeMillis());
-                ByteBuf receiveTimestampMicrosecondsBuf = Unpooled.copiedBuffer(data, 4, 4);
-                header.setTimestampDifferenceMicroseconds((int) (System.currentTimeMillis() - receiveTimestampMicrosecondsBuf.readInt()));
-                receiveTimestampMicrosecondsBuf.release();
-                header.setSeqNr((short) (header.getSeqNr() + 1));
-                ByteBuf receiveSeqNrBuf = Unpooled.copiedBuffer(data, 16, 2);
-                header.setAckNr((short) (receiveSeqNrBuf.readShort() - 1));
-                receiveSeqNrBuf.release();
-                header.setWndSize((int) (ByteUtils.BYTE_KB));
+        if (data.length >= UTPHeaderUtils.HEADER_LENGTH) {
+            UTPHeader receiveHeader = UTPHeaderUtils.bytesToUtpHeader(data);
+            // connectionId相同并且是确认帧说明是建立连接过程
+            if (receiveHeader.getType() == UTPHeaderUtils.TYPE_STATE
+                    && receiveHeader.getConnectionId() == header.getConnectionId()) {
+                header.setType((byte) (UTPHeaderUtils.TYPE_DATA | UTPHeaderUtils.VERSION));
                 header.setConnectionId(header.getSendConnectionId());
+                header.setTimestampMicroseconds((int) System.currentTimeMillis());
+                header.setTimestampDifferenceMicroseconds((int) (System.currentTimeMillis() - receiveHeader.getTimestampMicroseconds()));
+                header.setWndSize((int) (ByteUtils.BYTE_KB));
+                header.setSeqNr((short) (header.getSeqNr() + 1));
+                header.setAckNr((short) (receiveHeader.getSeqNr() - 1));
+                ctx.writeAndFlush(new DatagramPacket(
+                        Unpooled.copiedBuffer(UTPHeaderUtils.utpHeaderToBytes(header)), msg.sender()));
+            } else if (receiveHeader.getType() == UTPHeaderUtils.TYPE_FIN
+                    && receiveHeader.getConnectionId() == header.getReceiveConnectionId()) {
+                // 说明是断开连接帧
+                header.setType((byte) (UTPHeaderUtils.TYPE_FIN | UTPHeaderUtils.VERSION));
+                header.setTimestampMicroseconds((int) System.currentTimeMillis());
+                header.setTimestampDifferenceMicroseconds((int) (System.currentTimeMillis() - receiveHeader.getTimestampMicroseconds()));
+                header.setWndSize((int) (ByteUtils.BYTE_KB));
+                header.setSeqNr((short) (receiveHeader.getAckNr() + 1));
+                header.setAckNr(receiveHeader.getSeqNr());
                 ctx.writeAndFlush(new DatagramPacket(
                         Unpooled.copiedBuffer(UTPHeaderUtils.utpHeaderToBytes(header)), msg.sender()));
             }

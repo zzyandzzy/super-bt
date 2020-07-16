@@ -1,5 +1,7 @@
 package xyz.zzyitj.nbt.util;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import xyz.zzyitj.nbt.bean.UTPHeader;
 
 /**
@@ -17,7 +19,7 @@ public class UTPHeaderUtils {
      * 协议版本号，目前是1
      * This is the protocol version. The current version is 1.
      */
-    public static final byte HEADER_VERSION = 0x1;
+    public static final byte VERSION = 0x1;
     /**
      * 具体可以看
      * http://www.bittorrent.org/beps/bep_0029.html#type
@@ -25,7 +27,7 @@ public class UTPHeaderUtils {
      * regular data packet. Socket is in connected state and has data to send.
      * An ST_DATA packet always has a data payload.
      */
-    public static final byte HEADER_TYPE_DATA = HEADER_VERSION;
+    public static final byte TYPE_DATA = VERSION;
     /**
      * 断开连接帧
      * Finalize the connection.
@@ -34,14 +36,14 @@ public class UTPHeaderUtils {
      * The socket records this sequence number as eof_pkt.
      * This lets the socket wait for packets that might still be missing and arrive out of order even after receiving the ST_FIN packet.
      */
-    public static final byte HEADER_TYPE_FIN = 0x10 | HEADER_VERSION;
+    public static final byte TYPE_FIN = 0x10;
     /**
      * 确认帧
      * State packet.
      * Used to transmit an ACK with no data.
      * Packets that don't include any payload do not increase the seq_nr.
      */
-    public static final byte HEADER_TYPE_STATE = 0x20 | HEADER_VERSION;
+    public static final byte TYPE_STATE = 0x20;
     /**
      * 重建连接帧
      * Terminate connection forcefully.
@@ -49,7 +51,7 @@ public class UTPHeaderUtils {
      * The remote host does not have any state for this connection.
      * It is stale and should be terminated.
      */
-    public static final byte HEADER_TYPE_RESET = 0x30 | HEADER_VERSION;
+    public static final byte TYPE_RESET = 0x30;
     /**
      * 建立连接帧
      * Connect SYN.
@@ -64,12 +66,12 @@ public class UTPHeaderUtils {
      * The sequence number for the return channel is initialized to a random number.
      * The other end expects an ST_STATE packet (only an ACK) in response.
      */
-    public static final byte HEADER_TYPE_SYN = 0x40 | HEADER_VERSION;
+    public static final byte TYPE_SYN = 0x40;
     /**
      * http://www.bittorrent.org/beps/bep_0029.html#extension
      * 扩展字段，比如selective ack就需要这个字段非零，没有扩展置零即可。
      */
-    public static final byte HEADER_EXTENSION = 0x0;
+    public static final byte EXTENSION = 0x0;
     /**
      * http://www.bittorrent.org/beps/bep_0029.html#connection-id
      * <p>
@@ -82,7 +84,7 @@ public class UTPHeaderUtils {
      * Each socket has one connection ID for sending packets and a different connection ID for receiving packets.
      * The endpoint initiating the connection decides which ID to use, and the return path has the same ID + 1.
      */
-    public static final byte[] HEADER_CONNECTION_ID = {0x0, 0x0};
+    public static final byte[] CONNECTION_ID = {0x0, 0x0};
     /**
      * http://www.bittorrent.org/beps/bep_0029.html#timestamp-microseconds
      * 表示此帧的发送时间。
@@ -91,7 +93,7 @@ public class UTPHeaderUtils {
      * The higher resolution this timestamp has, the better.
      * The closer to the actual transmit time it is set, the better.
      */
-    public static final byte[] HEADER_TIMESTAMP_MICROSECONDS = {0x0, 0x0, 0x0, 0x0};
+    public static final byte[] TIMESTAMP_MICROSECONDS = {0x0, 0x0, 0x0, 0x0};
     /**
      * http://www.bittorrent.org/beps/bep_0029.html#timestamp-difference-microseconds
      * 单向传播时延，用帧的收到时间-timestamp_microseconds的时间。
@@ -101,7 +103,7 @@ public class UTPHeaderUtils {
      * <p>
      * When a socket is newly opened and doesn't have any delay samples yet, this must be set to 0.
      */
-    public static final byte[] HEADER_TIMESTAMP_DIFFERENCE_MICROSECONDS = {0x0, 0x0, 0x0, 0x0};
+    public static final byte[] TIMESTAMP_DIFFERENCE_MICROSECONDS = {0x0, 0x0, 0x0, 0x0};
     /**
      * http://www.bittorrent.org/beps/bep_0029.html#end-size
      * 窗口大小，这个和TCP里面的意义一样，是对端给的一个限制发送的标志，用于流量控制。
@@ -112,7 +114,7 @@ public class UTPHeaderUtils {
      * <p>
      * When sending packets, this should be set to the number of bytes left in the socket's receive buffer.
      */
-    public static final byte[] HEADER_WND_SIZE = {0x0, 0x0, 0x0, 0x0};
+    public static final byte[] WND_SIZE = {0x0, 0x0, 0x0, 0x0};
     /**
      * http://www.bittorrent.org/beps/bep_0029.html#seq-nr
      * 包序号。这个和TCP一样，双方各自维护一个序列来表示自己的发送。
@@ -120,13 +122,17 @@ public class UTPHeaderUtils {
      * As opposed to TCP, uTP sequence numbers are not referring to bytes, but packets.
      * The sequence number tells the other end in which order packets should be served back to the application layer.
      */
-    public static final byte[] HEADER_SEQ_NR = {0x0, 0x0};
+    public static final byte[] SEQ_NR = {0x0, 0x0};
     /**
      * http://www.bittorrent.org/beps/bep_0029.html#ack-nr
      * 确认号。注意这里和TCP不同，TCP是应答下一个期望得到的对方的seq。而这里是收到了哪个seq就ack那个seq。
      * This is the sequence number the sender of the packet last received in the other direction.
      */
-    public static final byte[] HEADER_ACK_NR = {0x0, 0x0};
+    public static final byte[] ACK_NR = {0x0, 0x0};
+    /**
+     * header length
+     */
+    public static final int HEADER_LENGTH = 20;
 
     public static UTPHeader buildInitHeader() {
         return new UTPHeader();
@@ -160,7 +166,7 @@ public class UTPHeaderUtils {
      * @return header bytes
      */
     public static byte[] utpHeaderToBytes(UTPHeader header) {
-        byte[] headerBytes = new byte[20 + header.getPayload().length];
+        byte[] headerBytes = new byte[HEADER_LENGTH + header.getPayload().length];
         headerBytes[0] = (byte) (header.getType() | header.getVersion());
         headerBytes[1] = header.getExtension();
         System.arraycopy(header.getConnectionIdBytes(), 0,
@@ -173,8 +179,39 @@ public class UTPHeaderUtils {
         System.arraycopy(header.getSeqNrBytes(), 0, headerBytes, 16, header.getSeqNrBytes().length);
         System.arraycopy(header.getAckNrBytes(), 0, headerBytes, 18, header.getAckNrBytes().length);
         if (header.getPayload() != null && header.getPayload().length != 0) {
-            System.arraycopy(header.getPayload(), 0, headerBytes, 20, header.getPayload().length);
+            System.arraycopy(header.getPayload(), 0, headerBytes, HEADER_LENGTH, header.getPayload().length);
         }
         return headerBytes;
+    }
+
+    /**
+     * 把bytes转换成UTPHeader
+     *
+     * @param data bytes
+     * @return UTPHeader
+     */
+    public static UTPHeader bytesToUtpHeader(byte[] data) {
+        return bytesToUtpHeader(data, 0);
+    }
+
+    private static UTPHeader bytesToUtpHeader(byte[] data, int start) {
+        if (start + HEADER_LENGTH > data.length) {
+            return null;
+        }
+        UTPHeader utpHeader = new UTPHeader();
+        utpHeader.setType((byte) (data[start] & 0xF0));
+        utpHeader.setVersion((byte) (data[start] & 0xF));
+        ByteBuf buf = Unpooled.copiedBuffer(data, start + 1, 19);
+        utpHeader.setExtension(buf.readByte());
+        utpHeader.setConnectionId(buf.readShort());
+        utpHeader.setSendConnectionId((short) (utpHeader.getConnectionId() + 1));
+        utpHeader.setReceiveConnectionId(utpHeader.getConnectionId());
+        utpHeader.setTimestampMicroseconds(buf.readInt());
+        utpHeader.setTimestampDifferenceMicroseconds(buf.readInt());
+        utpHeader.setWndSize(buf.readInt());
+        utpHeader.setSeqNr(buf.readShort());
+        utpHeader.setAckNr(buf.readShort());
+        buf.release();
+        return utpHeader;
     }
 }

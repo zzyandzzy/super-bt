@@ -45,9 +45,9 @@ public class UTPHeader {
     private byte[] payload;
 
     public UTPHeader() {
-        version = UTPHeaderUtils.HEADER_VERSION;
-        type = UTPHeaderUtils.HEADER_TYPE_SYN;
-        extension = UTPHeaderUtils.HEADER_EXTENSION;
+        version = UTPHeaderUtils.VERSION;
+        type = UTPHeaderUtils.TYPE_SYN;
+        extension = UTPHeaderUtils.EXTENSION;
         receiveConnectionId = RandomUtils.getRandShort();
         sendConnectionId = (short) (receiveConnectionId + 1);
         connectionId = receiveConnectionId;

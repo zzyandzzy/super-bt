@@ -99,6 +99,7 @@ class ClientTest {
     private static void addPeers(List<Peer> peerList) {
 //                peerList.add(new Peer(TEST_IP, 51413));
         peerList.add(new Peer(TEST_IP, 18357));
+
     }
 
     /**
