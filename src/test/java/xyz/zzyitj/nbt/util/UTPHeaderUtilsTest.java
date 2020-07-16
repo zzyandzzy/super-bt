@@ -1,6 +1,7 @@
 package xyz.zzyitj.nbt.util;
 
 import org.junit.jupiter.api.Test;
+import xyz.zzyitj.nbt.bean.UTPHeader;
 
 import java.util.Arrays;
 
@@ -17,10 +18,19 @@ class UTPHeaderUtilsTest {
 
     @Test
     void buildInitHeader() {
+        System.out.println(UTPHeaderUtils.buildInitHeader());
+    }
+
+    @Test
+    void buildInitHeaderBytes() {
         System.out.println(Arrays.toString(UTPHeaderUtils.buildInitHeaderBytes()));
     }
 
     @Test
     void utpHeaderToBytes() {
+        UTPHeader utpHeader = UTPHeaderUtils.buildInitHeader();
+        System.out.println(utpHeader);
+        System.out.println(Arrays.toString(UTPHeaderUtils.utpHeaderToBytes(utpHeader)));
     }
+
 }

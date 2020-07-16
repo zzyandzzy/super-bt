@@ -40,14 +40,32 @@ class ByteUtilsTest {
     }
 
     @Test
-    void intToBytes() {
-        System.out.println(Arrays.toString(ByteUtils.intToBytesBigEndian(237651)));
-        System.out.println(Arrays.toString(ByteUtils.intToBytesLittleEndian(237651)));
+    void shortToBytesBigEndian() {
+        short s1 = RandomUtils.getRandShort();
+        System.out.println(s1);
+        ByteBuf buf = Unpooled.copiedBuffer(ByteUtils.shortToBytesBigEndian(s1));
+        System.out.println(buf.readShort());
+        buf.release();
+        System.out.println(Arrays.toString(ByteUtils.shortToBytesBigEndian(s1)));
     }
 
     @Test
-    void getRandBytes() {
-        System.out.println(Arrays.toString(ByteUtils.getRandBytes(2)));
-        System.out.println(Arrays.toString(ByteUtils.getRandBytes(4)));
+    void intToBytesLittleEndian() {
+        System.out.println(Arrays.toString(ByteUtils.intToBytesLittleEndian(Integer.MAX_VALUE)));
+        ByteBuf buf = Unpooled.copiedBuffer(ByteUtils.intToBytesLittleEndian(Integer.MAX_VALUE));
+        byte[] bytes = new byte[buf.readableBytes()];
+        buf.readBytes(bytes);
+        System.out.println(Arrays.toString(bytes));
+        buf.release();
+    }
+
+    @Test
+    void intToBytesBigEndian() {
+        System.out.println(Arrays.toString(ByteUtils.intToBytesBigEndian(Integer.MIN_VALUE)));
+        ByteBuf buf = Unpooled.copiedBuffer(ByteUtils.intToBytesBigEndian(Integer.MIN_VALUE));
+        byte[] bytes = new byte[buf.readableBytes()];
+        buf.readBytes(bytes);
+        System.out.println(Arrays.toString(bytes));
+        buf.release();
     }
 }

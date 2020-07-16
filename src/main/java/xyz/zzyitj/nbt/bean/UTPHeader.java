@@ -1,6 +1,10 @@
 package xyz.zzyitj.nbt.bean;
 
+import xyz.zzyitj.nbt.util.ByteUtils;
+import xyz.zzyitj.nbt.util.RandomUtils;
 import xyz.zzyitj.nbt.util.UTPHeaderUtils;
+
+import java.util.Arrays;
 
 /**
  * xyz.zzyitj.nbt.bean
@@ -30,39 +34,48 @@ public class UTPHeader {
     private byte type;
     private byte version;
     private byte extension;
-    private byte[] connectionId;
-    private byte[] timestampMicroseconds;
-    private byte[] timestampDifferenceMicroseconds;
-    private byte[] wndSize;
-    private byte[] seqNr;
-    private byte[] ackNr;
+    private short connectionId;
+    private short sendConnectionId;
+    private short receiveConnectionId;
+    private int timestampMicroseconds;
+    private int timestampDifferenceMicroseconds;
+    private int wndSize;
+    private short seqNr;
+    private short ackNr;
+    private byte[] payload;
 
     public UTPHeader() {
-        type = UTPHeaderUtils.HEADER_TYPE_SYN;
         version = UTPHeaderUtils.HEADER_VERSION;
+        type = UTPHeaderUtils.HEADER_TYPE_SYN;
         extension = UTPHeaderUtils.HEADER_EXTENSION;
-        connectionId = UTPHeaderUtils.HEADER_CONNECTION_ID;
-        timestampMicroseconds = UTPHeaderUtils.HEADER_TIMESTAMP_MICROSECONDS;
-        timestampDifferenceMicroseconds = UTPHeaderUtils.HEADER_TIMESTAMP_DIFFERENCE_MICROSECONDS;
-        wndSize = UTPHeaderUtils.HEADER_WND_SIZE;
-        seqNr = UTPHeaderUtils.HEADER_SEQ_NR;
-        ackNr = UTPHeaderUtils.HEADER_ACK_NR;
+        receiveConnectionId = RandomUtils.getRandShort();
+        sendConnectionId = (short) (receiveConnectionId + 1);
+        connectionId = receiveConnectionId;
+        timestampMicroseconds = (int) System.currentTimeMillis();
+        timestampDifferenceMicroseconds = 0;
+        wndSize = 0;
+//        seqNr = RandomUtils.getRandShort();
+        seqNr = 1;
+        ackNr = 0;
+        payload = new byte[0];
     }
 
-    public UTPHeader(byte type, byte extension, byte[] connectionId,
-                     byte[] timestampMicroseconds,
-                     byte[] timestampDifferenceMicroseconds,
-                     byte[] wndSize,
-                     byte[] seqNr, byte[] ackNr) {
-        this.type = type;
-        this.version = UTPHeaderUtils.HEADER_VERSION;
-        this.extension = extension;
-        this.connectionId = connectionId;
-        this.timestampMicroseconds = timestampMicroseconds;
-        this.timestampDifferenceMicroseconds = timestampDifferenceMicroseconds;
-        this.wndSize = wndSize;
-        this.seqNr = seqNr;
-        this.ackNr = ackNr;
+    @Override
+    public String toString() {
+        return "UTPHeader{" +
+                "type=" + type +
+                ", version=" + version +
+                ", extension=" + extension +
+                ", connectionId=" + connectionId +
+                ", sendConnectionId=" + sendConnectionId +
+                ", receiveConnectionId=" + receiveConnectionId +
+                ", timestampMicroseconds=" + timestampMicroseconds +
+                ", timestampDifferenceMicroseconds=" + timestampDifferenceMicroseconds +
+                ", wndSize=" + wndSize +
+                ", seqNr=" + seqNr +
+                ", ackNr=" + ackNr +
+                ", payload=" + Arrays.toString(payload) +
+                '}';
     }
 
     public byte getType() {
@@ -89,51 +102,107 @@ public class UTPHeader {
         this.extension = extension;
     }
 
-    public byte[] getConnectionId() {
-        return connectionId;
+    public short getSendConnectionId() {
+        return sendConnectionId;
     }
 
-    public void setConnectionId(byte[] connectionId) {
-        this.connectionId = connectionId;
+    public byte[] getSendConnectionIdBytes() {
+        return ByteUtils.shortToBytesBigEndian(sendConnectionId);
     }
 
-    public byte[] getTimestampMicroseconds() {
+    public void setSendConnectionId(short sendConnectionId) {
+        this.sendConnectionId = sendConnectionId;
+    }
+
+    public short getReceiveConnectionId() {
+        return receiveConnectionId;
+    }
+
+    public byte[] getReceiveConnectionIdBytes() {
+        return ByteUtils.shortToBytesBigEndian(receiveConnectionId);
+    }
+
+    public void setReceiveConnectionId(short receiveConnectionId) {
+        this.receiveConnectionId = receiveConnectionId;
+    }
+
+    public int getTimestampMicroseconds() {
         return timestampMicroseconds;
     }
 
-    public void setTimestampMicroseconds(byte[] timestampMicroseconds) {
+    public byte[] getTimestampMicrosecondsBytes() {
+        return ByteUtils.intToBytesBigEndian(timestampMicroseconds);
+    }
+
+    public void setTimestampMicroseconds(int timestampMicroseconds) {
         this.timestampMicroseconds = timestampMicroseconds;
     }
 
-    public byte[] getTimestampDifferenceMicroseconds() {
+    public int getTimestampDifferenceMicroseconds() {
         return timestampDifferenceMicroseconds;
     }
 
-    public void setTimestampDifferenceMicroseconds(byte[] timestampDifferenceMicroseconds) {
+    public byte[] getTimestampDifferenceMicrosecondsBytes() {
+        return ByteUtils.intToBytesBigEndian(timestampDifferenceMicroseconds);
+    }
+
+    public void setTimestampDifferenceMicroseconds(int timestampDifferenceMicroseconds) {
         this.timestampDifferenceMicroseconds = timestampDifferenceMicroseconds;
     }
 
-    public byte[] getWndSize() {
+    public int getWndSize() {
         return wndSize;
     }
 
-    public void setWndSize(byte[] wndSize) {
+    public byte[] getWndSizeBytes() {
+        return ByteUtils.intToBytesBigEndian(wndSize);
+    }
+
+    public void setWndSize(int wndSize) {
         this.wndSize = wndSize;
     }
 
-    public byte[] getSeqNr() {
+    public short getSeqNr() {
         return seqNr;
     }
 
-    public void setSeqNr(byte[] seqNr) {
+    public byte[] getSeqNrBytes() {
+        return ByteUtils.shortToBytesBigEndian(seqNr);
+    }
+
+    public void setSeqNr(short seqNr) {
         this.seqNr = seqNr;
     }
 
-    public byte[] getAckNr() {
+    public short getAckNr() {
         return ackNr;
     }
 
-    public void setAckNr(byte[] ackNr) {
+    public byte[] getAckNrBytes() {
+        return ByteUtils.shortToBytesBigEndian(ackNr);
+    }
+
+    public void setAckNr(short ackNr) {
         this.ackNr = ackNr;
+    }
+
+    public short getConnectionId() {
+        return connectionId;
+    }
+
+    public byte[] getConnectionIdBytes() {
+        return ByteUtils.shortToBytesBigEndian(connectionId);
+    }
+
+    public void setConnectionId(short connectionId) {
+        this.connectionId = connectionId;
+    }
+
+    public byte[] getPayload() {
+        return payload;
+    }
+
+    public void setPayload(byte[] payload) {
+        this.payload = payload;
     }
 }

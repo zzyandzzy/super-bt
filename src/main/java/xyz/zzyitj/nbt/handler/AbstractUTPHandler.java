@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import xyz.zzyitj.nbt.bean.Torrent;
 import xyz.zzyitj.nbt.bean.UTPHeader;
 import xyz.zzyitj.nbt.manager.AbstractDownloadManager;
+import xyz.zzyitj.nbt.util.ByteUtils;
 import xyz.zzyitj.nbt.util.UTPHeaderUtils;
 
 import java.net.InetSocketAddress;
@@ -36,6 +37,9 @@ public abstract class AbstractUTPHandler extends SimpleChannelInboundHandler<Dat
      * 下载管理器
      */
     protected AbstractDownloadManager downloadManager;
+    /**
+     * utp头部
+     */
     protected UTPHeader header;
     /**
      * 是否是第一次发送握手消息
@@ -63,6 +67,25 @@ public abstract class AbstractUTPHandler extends SimpleChannelInboundHandler<Dat
         ByteBuf buf = msg.content();
         byte[] data = new byte[buf.readableBytes()];
         buf.readBytes(data);
+        if (data.length == 20) {
+            ByteBuf receiveConnectionIdBuf = Unpooled.copiedBuffer(data, 2, 2);
+            if (data[0] == UTPHeaderUtils.HEADER_TYPE_STATE && receiveConnectionIdBuf.readShort() == header.getConnectionId()) {
+                receiveConnectionIdBuf.release();
+                header.setType(UTPHeaderUtils.HEADER_TYPE_DATA);
+                header.setTimestampMicroseconds((int) System.currentTimeMillis());
+                ByteBuf receiveTimestampMicrosecondsBuf = Unpooled.copiedBuffer(data, 4, 4);
+                header.setTimestampDifferenceMicroseconds((int) (System.currentTimeMillis() - receiveTimestampMicrosecondsBuf.readInt()));
+                receiveTimestampMicrosecondsBuf.release();
+                header.setSeqNr((short) (header.getSeqNr() + 1));
+                ByteBuf receiveSeqNrBuf = Unpooled.copiedBuffer(data, 16, 2);
+                header.setAckNr((short) (receiveSeqNrBuf.readShort() - 1));
+                receiveSeqNrBuf.release();
+                header.setWndSize((int) (ByteUtils.BYTE_KB));
+                header.setConnectionId(header.getSendConnectionId());
+                ctx.writeAndFlush(new DatagramPacket(
+                        Unpooled.copiedBuffer(UTPHeaderUtils.utpHeaderToBytes(header)), msg.sender()));
+            }
+        }
     }
 
     @Override

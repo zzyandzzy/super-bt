@@ -13,13 +13,19 @@ import xyz.zzyitj.nbt.bean.UTPHeader;
  */
 public class UTPHeaderUtils {
     /**
+     * http://www.bittorrent.org/beps/bep_0029.html#version
+     * 协议版本号，目前是1
+     * This is the protocol version. The current version is 1.
+     */
+    public static final byte HEADER_VERSION = 0x1;
+    /**
      * 具体可以看
      * http://www.bittorrent.org/beps/bep_0029.html#type
      * 数据帧
      * regular data packet. Socket is in connected state and has data to send.
      * An ST_DATA packet always has a data payload.
      */
-    public static final byte HEADER_TYPE_DATA = 0x0;
+    public static final byte HEADER_TYPE_DATA = HEADER_VERSION;
     /**
      * 断开连接帧
      * Finalize the connection.
@@ -28,14 +34,14 @@ public class UTPHeaderUtils {
      * The socket records this sequence number as eof_pkt.
      * This lets the socket wait for packets that might still be missing and arrive out of order even after receiving the ST_FIN packet.
      */
-    public static final byte HEADER_TYPE_FIN = 0x10;
+    public static final byte HEADER_TYPE_FIN = 0x10 | HEADER_VERSION;
     /**
      * 确认帧
      * State packet.
      * Used to transmit an ACK with no data.
      * Packets that don't include any payload do not increase the seq_nr.
      */
-    public static final byte HEADER_TYPE_STATE = 0x20;
+    public static final byte HEADER_TYPE_STATE = 0x20 | HEADER_VERSION;
     /**
      * 重建连接帧
      * Terminate connection forcefully.
@@ -43,7 +49,7 @@ public class UTPHeaderUtils {
      * The remote host does not have any state for this connection.
      * It is stale and should be terminated.
      */
-    public static final byte HEADER_TYPE_RESET = 0x30;
+    public static final byte HEADER_TYPE_RESET = 0x30 | HEADER_VERSION;
     /**
      * 建立连接帧
      * Connect SYN.
@@ -58,13 +64,7 @@ public class UTPHeaderUtils {
      * The sequence number for the return channel is initialized to a random number.
      * The other end expects an ST_STATE packet (only an ACK) in response.
      */
-    public static final byte HEADER_TYPE_SYN = 0x40;
-    /**
-     * http://www.bittorrent.org/beps/bep_0029.html#version
-     * 协议版本号，目前是1
-     * This is the protocol version. The current version is 1.
-     */
-    public static final byte HEADER_VERSION = 0x1;
+    public static final byte HEADER_TYPE_SYN = 0x40 | HEADER_VERSION;
     /**
      * http://www.bittorrent.org/beps/bep_0029.html#extension
      * 扩展字段，比如selective ack就需要这个字段非零，没有扩展置零即可。
@@ -128,65 +128,53 @@ public class UTPHeaderUtils {
      */
     public static final byte[] HEADER_ACK_NR = {0x0, 0x0};
 
-    /**
-     * http://www.bittorrent.org/beps/bep_0029.html#header-format
-     * header format
-     * version 1 header:
-     * <p>
-     * 0       4       8               16              24              32
-     * +-------+-------+---------------+---------------+---------------+
-     * | type  | ver   | extension     | connection_id                 |
-     * +-------+-------+---------------+---------------+---------------+
-     * | timestamp_microseconds                                        |
-     * +---------------+---------------+---------------+---------------+
-     * | timestamp_difference_microseconds                             |
-     * +---------------+---------------+---------------+---------------+
-     * | wnd_size                                                      |
-     * +---------------+---------------+---------------+---------------+
-     * | seq_nr                        | ack_nr                        |
-     * +---------------+---------------+---------------+---------------+
-     *
-     * @return header
-     */
     public static UTPHeader buildInitHeader() {
-        UTPHeader utpHeader = new UTPHeader();
-        utpHeader.setConnectionId(ByteUtils.getRandBytes(2));
-        utpHeader.setTimestampMicroseconds(ByteUtils.intToBytesBigEndian((int) System.currentTimeMillis()));
-        utpHeader.setSeqNr(ByteUtils.getRandBytes(2));
-        return utpHeader;
+        return new UTPHeader();
     }
 
     public static byte[] buildInitHeaderBytes() {
         return utpHeaderToBytes(buildInitHeader());
     }
 
+    /**
+     * 把UTPHeader转换成字节数组
+     * //        byte[] headerBytes = new byte[]{0x0,
+     * //                // extension
+     * //                0x0,
+     * //                // connection_id
+     * //                0x0, 0x0,
+     * //                // timestamp_microseconds
+     * //                0x0, 0x0, 0x0, 0x0,
+     * //                // timestamp_difference_microseconds
+     * //                0x0, 0x0, 0x0, 0x0,
+     * //                // wnd_size
+     * //                0x0, 0x0, 0x0, 0x0,
+     * //                // seq_nr
+     * //                0x0, 0x0,
+     * //                // ack_nr
+     * //                0x0, 0x0
+     * //                // payload
+     * //        };
+     *
+     * @param header header
+     * @return header bytes
+     */
     public static byte[] utpHeaderToBytes(UTPHeader header) {
-        byte[] headerBytes = new byte[]{HEADER_TYPE_SYN | HEADER_VERSION,
-                // extension
-                HEADER_EXTENSION,
-                // connection_id
-                0x0, 0x0,
-                // timestamp_microseconds
-                0x0, 0x0, 0x0, 0x0,
-                // timestamp_difference_microseconds
-                0x0, 0x0, 0x0, 0x0,
-                // wnd_size
-                0x0, 0x0, 0x0, 0x0,
-                // seq_nr
-                0x0, 0x0,
-                // ack_nr
-                0x0, 0x0
-        };
+        byte[] headerBytes = new byte[20 + header.getPayload().length];
         headerBytes[0] = (byte) (header.getType() | header.getVersion());
         headerBytes[1] = header.getExtension();
-        System.arraycopy(header.getConnectionId(), 0, headerBytes, 2, header.getConnectionId().length);
-        System.arraycopy(header.getTimestampMicroseconds(), 0, headerBytes,
-                4, header.getTimestampMicroseconds().length);
-        System.arraycopy(header.getTimestampDifferenceMicroseconds(), 0, headerBytes,
-                8, header.getTimestampDifferenceMicroseconds().length);
-        System.arraycopy(header.getWndSize(), 0, headerBytes, 12, header.getWndSize().length);
-        System.arraycopy(header.getSeqNr(), 0, headerBytes, 16, header.getSeqNr().length);
-        System.arraycopy(header.getAckNr(), 0, headerBytes, 18, header.getAckNr().length);
+        System.arraycopy(header.getConnectionIdBytes(), 0,
+                headerBytes, 2, header.getConnectionIdBytes().length);
+        System.arraycopy(header.getTimestampMicrosecondsBytes(), 0,
+                headerBytes, 4, header.getTimestampMicrosecondsBytes().length);
+        System.arraycopy(header.getTimestampDifferenceMicrosecondsBytes(), 0,
+                headerBytes, 8, header.getTimestampDifferenceMicrosecondsBytes().length);
+        System.arraycopy(header.getWndSizeBytes(), 0, headerBytes, 12, header.getWndSizeBytes().length);
+        System.arraycopy(header.getSeqNrBytes(), 0, headerBytes, 16, header.getSeqNrBytes().length);
+        System.arraycopy(header.getAckNrBytes(), 0, headerBytes, 18, header.getAckNrBytes().length);
+        if (header.getPayload() != null && header.getPayload().length != 0) {
+            System.arraycopy(header.getPayload(), 0, headerBytes, 20, header.getPayload().length);
+        }
         return headerBytes;
     }
 }
