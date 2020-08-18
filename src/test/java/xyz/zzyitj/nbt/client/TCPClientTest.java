@@ -1,5 +1,7 @@
 package xyz.zzyitj.nbt.client;
 
+import io.netty.handler.logging.LogLevel;
+import io.netty.handler.logging.LoggingHandler;
 import org.junit.Before;
 import org.junit.Test;
 import xyz.zzyitj.nbt.ConfigTest;
@@ -29,8 +31,7 @@ public class TCPClientTest {
      */
     @Test
     public void testTCPClient() throws InterruptedException {
-        Client client = new TCPClient.TCPClientBuilder(ConfigTest.peerList, ConfigTest.torrent,
-                ConfigTest.SAVE_PATH, ConfigTest.downloadManager)
+        Client client = new TCPClient.Builder(ConfigTest.peerList, ConfigTest.torrent, ConfigTest.SAVE_PATH)
                 .showDownloadLog(false)
                 .showRequestLog(false)
                 .showDownloadProcess(true)

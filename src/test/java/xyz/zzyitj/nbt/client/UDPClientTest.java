@@ -31,8 +31,7 @@ public class UDPClientTest {
      */
     @Test
     public void testUTPClient() throws InterruptedException {
-        Client client = new UTPClient.UTPClientBuilder(ConfigTest.peerList, ConfigTest.torrent,
-                ConfigTest.SAVE_PATH, ConfigTest.downloadManager)
+        Client client = new UTPClient.Builder(ConfigTest.peerList, ConfigTest.torrent, ConfigTest.SAVE_PATH)
                 .loggingHandler(new LoggingHandler(LogLevel.INFO))
                 .builder();
         client.start();

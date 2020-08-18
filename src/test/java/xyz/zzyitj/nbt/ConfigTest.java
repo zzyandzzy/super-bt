@@ -7,8 +7,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import xyz.zzyitj.nbt.bean.Peer;
 import xyz.zzyitj.nbt.bean.Torrent;
-import xyz.zzyitj.nbt.manager.AbstractDownloadManager;
-import xyz.zzyitj.nbt.manager.DownloadManager;
 import xyz.zzyitj.nbt.util.ByteUtils;
 import xyz.zzyitj.nbt.util.TorrentUtils;
 
@@ -40,7 +38,6 @@ public class ConfigTest {
     public static final String SAVE_PATH = "./download/";
 
     public static Torrent torrent;
-    public static AbstractDownloadManager downloadManager;
     public static List<Peer> peerList;
 
     public static void init() throws IOException {
@@ -69,7 +66,6 @@ public class ConfigTest {
                 }
             });
         }
-        downloadManager = new DownloadManager();
 
         ConfigTest.startReport();
         peerList = new ArrayList<>();

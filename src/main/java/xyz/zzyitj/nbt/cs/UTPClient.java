@@ -5,7 +5,6 @@ import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioDatagramChannel;
 import io.netty.handler.logging.LoggingHandler;
-import org.apache.commons.lang3.StringUtils;
 import xyz.zzyitj.nbt.Configuration;
 import xyz.zzyitj.nbt.bean.DownloadConfig;
 import xyz.zzyitj.nbt.bean.Peer;
@@ -34,7 +33,7 @@ public class UTPClient implements Client {
     private final AbstractDownloadManager downloadManager;
     private final LoggingHandler loggingHandler;
 
-    public UTPClient(UTPClientBuilder builder) {
+    public UTPClient(Builder builder) {
         this.peerList = builder.peerList;
         this.torrent = builder.torrent;
         this.savePath = builder.savePath;
@@ -78,46 +77,15 @@ public class UTPClient implements Client {
         }
     }
 
-    public static class UTPClientBuilder {
-        private final List<Peer> peerList;
-        private Torrent torrent;
-        private String savePath;
-        private AbstractDownloadManager downloadManager;
-        private LoggingHandler loggingHandler;
+    public static class Builder extends AbstractClientBuilder {
 
-        public UTPClientBuilder(List<Peer> peerList, Torrent torrent, String savePath, AbstractDownloadManager downloadManager) {
-            if (peerList == null || torrent == null || StringUtils.isBlank(savePath) || downloadManager == null) {
-                throw new NullPointerException("UTPClientBuilder constructor args may null.");
-            }
-            this.peerList = peerList;
-            this.torrent = torrent;
-            this.savePath = savePath;
-            this.downloadManager = downloadManager;
-            this.downloadManager.setTorrent(torrent);
+        public Builder(List<Peer> peerList, Torrent torrent, String savePath) {
+            super(peerList, torrent, savePath);
         }
 
-        public UTPClient builder() {
+        @Override
+        protected Client buildClient() {
             return new UTPClient(this);
-        }
-
-        public UTPClientBuilder torrent(Torrent torrent) {
-            this.torrent = torrent;
-            return this;
-        }
-
-        public UTPClientBuilder savePath(String savePath) {
-            this.savePath = savePath;
-            return this;
-        }
-
-        public UTPClientBuilder downloadManager(AbstractDownloadManager downloadManager) {
-            this.downloadManager = downloadManager;
-            return this;
-        }
-
-        public UTPClientBuilder loggingHandler(LoggingHandler loggingHandler) {
-            this.loggingHandler = loggingHandler;
-            return this;
         }
     }
 }

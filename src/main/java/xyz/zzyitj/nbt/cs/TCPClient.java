@@ -6,14 +6,12 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.logging.LoggingHandler;
-import org.apache.commons.lang3.StringUtils;
 import xyz.zzyitj.nbt.Configuration;
 import xyz.zzyitj.nbt.bean.DownloadConfig;
 import xyz.zzyitj.nbt.bean.Peer;
 import xyz.zzyitj.nbt.bean.Torrent;
 import xyz.zzyitj.nbt.codec.PeerWireProtocolDecoder;
 import xyz.zzyitj.nbt.manager.AbstractDownloadManager;
-import xyz.zzyitj.nbt.manager.ProgressDownloadManager;
 import xyz.zzyitj.nbt.handler.TCPClientHandler;
 import xyz.zzyitj.nbt.util.PeerWireConst;
 
@@ -44,7 +42,7 @@ public class TCPClient implements Client {
 
     private final ExecutorService es;
 
-    public TCPClient(TCPClientBuilder builder) {
+    public TCPClient(Builder builder) {
         this.peerList = builder.peerList;
         es = Executors.newFixedThreadPool(peerList.size());
         this.torrent = builder.torrent;
@@ -111,66 +109,14 @@ public class TCPClient implements Client {
         }
     }
 
-    public static class TCPClientBuilder {
-        private final List<Peer> peerList;
-        private Torrent torrent;
-        private String savePath;
-        private AbstractDownloadManager downloadManager;
-        private LoggingHandler loggingHandler;
-        private boolean showDownloadLog;
-        private boolean showRequestLog;
-
-        public TCPClientBuilder(List<Peer> peerList, Torrent torrent, String savePath, AbstractDownloadManager downloadManager) {
-            if (peerList == null || torrent == null || StringUtils.isBlank(savePath) || downloadManager == null) {
-                throw new NullPointerException("TCPClientBuilder constructor args may null.");
-            }
-            this.peerList = peerList;
-            this.torrent = torrent;
-            this.savePath = savePath;
-            this.downloadManager = downloadManager;
-            this.downloadManager.setTorrent(torrent);
+    public static class Builder extends AbstractClientBuilder {
+        public Builder(List<Peer> peerList, Torrent torrent, String savePath) {
+            super(peerList, torrent, savePath);
         }
 
-        public TCPClient builder() {
+        @Override
+        protected Client buildClient() {
             return new TCPClient(this);
-        }
-
-        public TCPClientBuilder torrent(Torrent torrent) {
-            this.torrent = torrent;
-            return this;
-        }
-
-        public TCPClientBuilder savePath(String savePath) {
-            this.savePath = savePath;
-            return this;
-        }
-
-        public TCPClientBuilder loggingHandler(LoggingHandler loggingHandler) {
-            this.loggingHandler = loggingHandler;
-            return this;
-        }
-
-        public TCPClientBuilder downloadManager(AbstractDownloadManager downloadManager) {
-            this.downloadManager = downloadManager;
-            return this;
-        }
-
-        public TCPClientBuilder showDownloadLog(boolean showDownloadLog) {
-            this.showDownloadLog = showDownloadLog;
-            return this;
-        }
-
-        public TCPClientBuilder showRequestLog(boolean showRequestLog) {
-            this.showRequestLog = showRequestLog;
-            return this;
-        }
-
-        public TCPClientBuilder showDownloadProcess(boolean showDownloadProcess) {
-            if (showDownloadProcess) {
-                // 装饰者
-                this.downloadManager = new ProgressDownloadManager(this.downloadManager);
-            }
-            return this;
         }
     }
 }

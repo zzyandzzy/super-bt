@@ -30,7 +30,7 @@ public class UTPServer implements Server {
     private final List<Torrent> torrentList;
     private final LoggingHandler loggingHandler;
 
-    public UTPServer(UTPServerBuilder builder) {
+    public UTPServer(Builder builder) {
         this.port = builder.port;
         this.torrentList = builder.torrentList;
         this.loggingHandler = builder.loggingHandler;
@@ -62,36 +62,15 @@ public class UTPServer implements Server {
         }
     }
 
-    static class UTPServerBuilder {
-        private int port;
-        /**
-         * 做种的种子list
-         */
-        private List<Torrent> torrentList;
-        private LoggingHandler loggingHandler;
+    public static class Builder extends AbstractServerBuilder {
 
-        public UTPServerBuilder(int port, List<Torrent> torrentList) {
-            this.port = port;
-            this.torrentList = torrentList;
+        public Builder(int port, List<Torrent> torrentList) {
+            super(port, torrentList);
         }
 
-        public UTPServer builder() {
+        @Override
+        protected Server buildServer() {
             return new UTPServer(this);
-        }
-
-        public UTPServerBuilder port(int port) {
-            this.port = port;
-            return this;
-        }
-
-        public UTPServerBuilder torrentList(List<Torrent> torrentList) {
-            this.torrentList = torrentList;
-            return this;
-        }
-
-        public UTPServerBuilder loggingHandler(LoggingHandler loggingHandler) {
-            this.loggingHandler = loggingHandler;
-            return this;
         }
     }
 }

@@ -22,7 +22,7 @@ public class ServerTest {
      */
     @Test
     public void testTCPServer() throws InterruptedException {
-        Server server = new TCPServer.TCPServerBuilder(Const.SERVER_PORT, null)
+        Server server = new TCPServer.Builder(Const.SERVER_PORT, null)
                 .loggingHandler(new LoggingHandler(LogLevel.INFO))
                 .builder();
         server.start();

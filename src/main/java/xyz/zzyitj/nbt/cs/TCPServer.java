@@ -36,7 +36,7 @@ public class TCPServer implements Server {
     private final List<Torrent> torrentList;
     private final LoggingHandler loggingHandler;
 
-    public TCPServer(TCPServerBuilder builder) {
+    public TCPServer(Builder builder) {
         this.port = builder.port;
         this.torrentList = builder.torrentList;
         this.loggingHandler = builder.loggingHandler;
@@ -79,36 +79,15 @@ public class TCPServer implements Server {
         }
     }
 
-    public static class TCPServerBuilder {
-        private int port;
-        /**
-         * 做种的种子list
-         */
-        private List<Torrent> torrentList;
-        private LoggingHandler loggingHandler;
+    public static class Builder extends AbstractServerBuilder {
 
-        public TCPServerBuilder(int port, List<Torrent> torrentList) {
-            this.port = port;
-            this.torrentList = torrentList;
+        public Builder(int port, List<Torrent> torrentList) {
+            super(port, torrentList);
         }
 
-        public TCPServer builder() {
+        @Override
+        protected Server buildServer() {
             return new TCPServer(this);
-        }
-
-        public TCPServerBuilder port(int port) {
-            this.port = port;
-            return this;
-        }
-
-        public TCPServerBuilder torrentList(List<Torrent> torrentList) {
-            this.torrentList = torrentList;
-            return this;
-        }
-
-        public TCPServerBuilder loggingHandler(LoggingHandler loggingHandler) {
-            this.loggingHandler = loggingHandler;
-            return this;
         }
     }
 }
