@@ -5,6 +5,8 @@ import io.netty.handler.logging.LoggingHandler;
 import org.junit.Before;
 import org.junit.Test;
 import xyz.zzyitj.nbt.ConfigTest;
+import xyz.zzyitj.nbt.cs.Client;
+import xyz.zzyitj.nbt.cs.UTPClient;
 
 import java.io.IOException;
 

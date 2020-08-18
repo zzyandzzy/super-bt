@@ -1,10 +1,10 @@
 package xyz.zzyitj.nbt.client;
 
-import io.netty.handler.logging.LogLevel;
-import io.netty.handler.logging.LoggingHandler;
 import org.junit.Before;
 import org.junit.Test;
 import xyz.zzyitj.nbt.ConfigTest;
+import xyz.zzyitj.nbt.cs.Client;
+import xyz.zzyitj.nbt.cs.TCPClient;
 
 import java.io.IOException;
 

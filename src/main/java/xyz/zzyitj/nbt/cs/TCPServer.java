@@ -1,4 +1,4 @@
-package xyz.zzyitj.nbt.server;
+package xyz.zzyitj.nbt.cs;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
@@ -79,7 +79,7 @@ public class TCPServer implements Server {
         }
     }
 
-    static class TCPServerBuilder {
+    public static class TCPServerBuilder {
         private int port;
         /**
          * 做种的种子list

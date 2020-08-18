@@ -4,8 +4,7 @@ import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import xyz.zzyitj.nbt.Application;
-import xyz.zzyitj.nbt.bean.DownloadConfig;
+import xyz.zzyitj.nbt.Configuration;
 import xyz.zzyitj.nbt.bean.Torrent;
 import xyz.zzyitj.nbt.manager.AbstractDownloadManager;
 import xyz.zzyitj.nbt.util.Const;
@@ -14,7 +13,6 @@ import xyz.zzyitj.nbt.util.HandshakeUtils;
 import xyz.zzyitj.nbt.util.PeerWireConst;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 
@@ -178,7 +176,7 @@ public abstract class AbstractTCPHandler extends ChannelInboundHandlerAdapter {
     public void channelActive(ChannelHandlerContext ctx) {
         // 作为客户端，一打开连接就要发送握手信息
         if (torrent != null) {
-            List<ChannelHandlerContext> peerList = Application.peerMap.computeIfAbsent(torrent, k -> new ArrayList<>());
+            List<ChannelHandlerContext> peerList = Configuration.peerMap.computeIfAbsent(torrent, k -> new ArrayList<>());
             peerList.add(ctx);
             // 打开socket就发送握手
             ctx.writeAndFlush(Unpooled.copiedBuffer(

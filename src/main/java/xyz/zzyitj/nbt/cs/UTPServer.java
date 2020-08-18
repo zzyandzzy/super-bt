@@ -1,4 +1,4 @@
-package xyz.zzyitj.nbt.server;
+package xyz.zzyitj.nbt.cs;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;

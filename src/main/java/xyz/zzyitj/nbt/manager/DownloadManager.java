@@ -1,6 +1,6 @@
 package xyz.zzyitj.nbt.manager;
 
-import xyz.zzyitj.nbt.Application;
+import xyz.zzyitj.nbt.Configuration;
 import xyz.zzyitj.nbt.bean.*;
 
 import java.util.Map;
@@ -18,7 +18,7 @@ public class DownloadManager extends AbstractDownloadManager {
         if (getTorrent() == null) {
             return false;
         }
-        DownloadConfig downloadConfig = Application.downloadConfigMap.get(getTorrent());
+        DownloadConfig downloadConfig = Configuration.downloadConfigMap.get(getTorrent());
         if (downloadConfig == null) {
             return false;
         }

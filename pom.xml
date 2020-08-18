@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>xyz.zzyitj.netty</groupId>
-    <artifactId>bt</artifactId>
+    <artifactId>netty-bt</artifactId>
     <version>0.0.1-SNAPSHOT</version>
 
     <properties>

@@ -1,4 +1,4 @@
-package xyz.zzyitj.nbt.client;
+package xyz.zzyitj.nbt.cs;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
@@ -7,7 +7,7 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.logging.LoggingHandler;
 import org.apache.commons.lang3.StringUtils;
-import xyz.zzyitj.nbt.Application;
+import xyz.zzyitj.nbt.Configuration;
 import xyz.zzyitj.nbt.bean.DownloadConfig;
 import xyz.zzyitj.nbt.bean.Peer;
 import xyz.zzyitj.nbt.bean.Torrent;
@@ -57,11 +57,11 @@ public class TCPClient implements Client {
 
     @Override
     public void start() {
-        if (Application.downloadConfigMap.get(torrent) == null) {
+        if (Configuration.downloadConfigMap.get(torrent) == null) {
             DownloadConfig downloadConfig = new DownloadConfig(savePath);
             downloadConfig.setShowDownloadLog(this.showDownloadLog);
             downloadConfig.setShowRequestLog(this.showRequestLog);
-            Application.downloadConfigMap.put(torrent, downloadConfig);
+            Configuration.downloadConfigMap.put(torrent, downloadConfig);
         }
         for (Peer peer : peerList) {
             es.execute(new TCPClientTask(peer));
@@ -111,7 +111,7 @@ public class TCPClient implements Client {
         }
     }
 
-    static class TCPClientBuilder {
+    public static class TCPClientBuilder {
         private final List<Peer> peerList;
         private Torrent torrent;
         private String savePath;
@@ -131,7 +131,7 @@ public class TCPClient implements Client {
             this.downloadManager.setTorrent(torrent);
         }
 
-        TCPClient builder() {
+        public TCPClient builder() {
             return new TCPClient(this);
         }
 

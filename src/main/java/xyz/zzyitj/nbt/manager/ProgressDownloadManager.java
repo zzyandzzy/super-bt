@@ -2,7 +2,7 @@ package xyz.zzyitj.nbt.manager;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import xyz.zzyitj.nbt.Application;
+import xyz.zzyitj.nbt.Configuration;
 import xyz.zzyitj.nbt.bean.DownloadConfig;
 import xyz.zzyitj.nbt.bean.PeerWirePayload;
 import xyz.zzyitj.nbt.bean.RequestPiece;
@@ -46,7 +46,7 @@ public class ProgressDownloadManager extends AbstractDownloadManager {
         if (getTorrent() == null) {
             return;
         }
-        DownloadConfig downloadConfig = Application.downloadConfigMap.get(getTorrent());
+        DownloadConfig downloadConfig = Configuration.downloadConfigMap.get(getTorrent());
         if (downloadConfig == null) {
             return;
         }

@@ -1,4 +1,4 @@
-package xyz.zzyitj.nbt.server;
+package xyz.zzyitj.nbt.cs;
 
 /**
  * xyz.zzyitj.nbt.server
@@ -11,8 +11,8 @@ package xyz.zzyitj.nbt.server;
 public interface Server {
     /**
      * 开始连接目标
-     *
-     * @throws InterruptedException 连接异常
+     * start connect target.
+     * @throws InterruptedException 连接异常 connection exception
      */
     void start() throws InterruptedException;
 }

@@ -1,4 +1,4 @@
-package xyz.zzyitj.nbt.client;
+package xyz.zzyitj.nbt.cs;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
@@ -6,7 +6,7 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioDatagramChannel;
 import io.netty.handler.logging.LoggingHandler;
 import org.apache.commons.lang3.StringUtils;
-import xyz.zzyitj.nbt.Application;
+import xyz.zzyitj.nbt.Configuration;
 import xyz.zzyitj.nbt.bean.DownloadConfig;
 import xyz.zzyitj.nbt.bean.Peer;
 import xyz.zzyitj.nbt.bean.Torrent;
@@ -44,9 +44,9 @@ public class UTPClient implements Client {
 
     @Override
     public void start() throws InterruptedException {
-        if (Application.downloadConfigMap.get(torrent) == null) {
+        if (Configuration.downloadConfigMap.get(torrent) == null) {
             DownloadConfig downloadConfig = new DownloadConfig(savePath);
-            Application.downloadConfigMap.put(torrent, downloadConfig);
+            Configuration.downloadConfigMap.put(torrent, downloadConfig);
         }
         Peer peer = peerList.get(0);
         EventLoopGroup workerGroup = new NioEventLoopGroup();
@@ -78,7 +78,7 @@ public class UTPClient implements Client {
         }
     }
 
-    static class UTPClientBuilder {
+    public static class UTPClientBuilder {
         private final List<Peer> peerList;
         private Torrent torrent;
         private String savePath;
@@ -96,7 +96,7 @@ public class UTPClient implements Client {
             this.downloadManager.setTorrent(torrent);
         }
 
-        UTPClient builder() {
+        public UTPClient builder() {
             return new UTPClient(this);
         }
 

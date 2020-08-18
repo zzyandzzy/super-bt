@@ -5,7 +5,7 @@ import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import xyz.zzyitj.nbt.Application;
+import xyz.zzyitj.nbt.Configuration;
 import xyz.zzyitj.nbt.bean.DownloadConfig;
 import xyz.zzyitj.nbt.bean.Torrent;
 
@@ -41,8 +41,8 @@ public class HandlerUtils {
      * 关闭所有连接
      */
     public static void closeAllPeer(Torrent torrent) {
-        List<ChannelHandlerContext> peerList = Application.peerMap.get(torrent);
-        DownloadConfig downloadConfig = Application.downloadConfigMap.get(torrent);
+        List<ChannelHandlerContext> peerList = Configuration.peerMap.get(torrent);
+        DownloadConfig downloadConfig = Configuration.downloadConfigMap.get(torrent);
         if (peerList != null && peerList.size() > 0) {
             Iterator<ChannelHandlerContext> iterator = peerList.iterator();
             while (iterator.hasNext()) {

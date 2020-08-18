@@ -4,7 +4,7 @@ import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import xyz.zzyitj.nbt.Application;
+import xyz.zzyitj.nbt.Configuration;
 import xyz.zzyitj.nbt.bean.*;
 import xyz.zzyitj.nbt.manager.AbstractDownloadManager;
 import xyz.zzyitj.nbt.util.Const;
@@ -54,7 +54,7 @@ public class TCPClientHandler extends AbstractTCPHandler {
         if (torrent == null) {
             return;
         }
-        DownloadConfig downloadConfig = Application.downloadConfigMap.get(torrent);
+        DownloadConfig downloadConfig = Configuration.downloadConfigMap.get(torrent);
         if (downloadConfig == null) {
             return;
         }
@@ -129,7 +129,7 @@ public class TCPClientHandler extends AbstractTCPHandler {
     void doBitField(ChannelHandlerContext ctx, byte[] data) {
         PeerWire peerWire = HandshakeUtils.parsePeerWire(data);
         // 根据peer返回的区块完成信息生成区块下载队列
-        DownloadConfig downloadConfig = Application.downloadConfigMap.get(torrent);
+        DownloadConfig downloadConfig = Configuration.downloadConfigMap.get(torrent);
         if (downloadConfig != null && downloadConfig.getPieceRequestMap() == null) {
             HandshakeUtils.generatePieceRequestMap(peerWire, torrent, downloadConfig);
         }
@@ -155,7 +155,7 @@ public class TCPClientHandler extends AbstractTCPHandler {
         PeerWirePayload peerWirePayload = (PeerWirePayload) peerWire.getPayload();
         if (downloadManager.save(peerWirePayload)) {
             // 关闭所有peer
-            DownloadConfig downloadConfig = Application.downloadConfigMap.get(torrent);
+            DownloadConfig downloadConfig = Configuration.downloadConfigMap.get(torrent);
             if (downloadConfig != null && !downloadConfig.isCloseAllPeer()) {
                 downloadConfig.setCloseAllPeer(true);
                 HandlerUtils.closeAllPeer(torrent);
