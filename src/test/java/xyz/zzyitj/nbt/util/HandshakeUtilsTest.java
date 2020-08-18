@@ -1,8 +1,6 @@
 package xyz.zzyitj.nbt.util;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 import xyz.zzyitj.nbt.bean.PeerWire;
 import xyz.zzyitj.nbt.bean.RequestPiece;
 
@@ -14,20 +12,20 @@ import java.util.Arrays;
  * @date 2020/3/17 7:48 下午
  * @email zzy.main@gmail.com
  */
-class HandshakeUtilsTest {
+public class HandshakeUtilsTest {
 
     /**
      * {@link HandshakeUtils#isHandshake(byte[])}
      */
     @Test
-    void isHandshake() {
+    public void isHandshake() {
     }
 
     /**
      * {@link HandshakeUtils#buildHandshake(byte[], byte[])}
      */
     @Test
-    void buildHandshake() {
+    public void buildHandshake() {
         System.out.println(Arrays.toString(HandshakeUtils.buildHandshake(Const.TEST_PEER_ID, Const.TEST_PEER_ID)));
     }
 
@@ -36,7 +34,7 @@ class HandshakeUtilsTest {
      * {@link HandshakeUtils#buildMessage(byte, byte[])}
      */
     @Test
-    void buildMessage() {
+    public void buildMessage() {
         // no payload
         System.out.println(Arrays.toString(HandshakeUtils.buildMessage(PeerWireConst.KEEP_ALIVE)));
         System.out.println(Arrays.toString(HandshakeUtils.buildMessage(PeerWireConst.CHOKE)));
@@ -52,10 +50,10 @@ class HandshakeUtilsTest {
 
     /**
      * 测试data字节数组转换为PeerWire
-     * {@link HandshakeUtils#parsePeerWire(ByteBuf)}
+     * {@link HandshakeUtils#parsePeerWire(byte[])}
      */
     @Test
-    void parsePeerWire() {
+    public void parsePeerWire() {
         byte[] data = {
                 0x0, 0x0, 0x0, 0x56, 0x05, -2, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
                 -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
@@ -83,7 +81,7 @@ class HandshakeUtilsTest {
      * {@link HandshakeUtils#requestPieceHandler(RequestPiece)}
      */
     @Test
-    void requestPieceHandler() {
+    public void requestPieceHandler() {
         System.out.println(Arrays.toString(HandshakeUtils.requestPieceHandler(
                 new RequestPiece(0, 0, 237651))));
         System.out.println(Arrays.toString(HandshakeUtils.requestPieceHandler(

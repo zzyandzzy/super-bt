@@ -2,10 +2,8 @@ package xyz.zzyitj.nbt.server;
 
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 import xyz.zzyitj.nbt.util.Const;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * xyz.zzyitj.nbt.server
@@ -14,14 +12,14 @@ import static org.junit.jupiter.api.Assertions.*;
  * @date 2020/6/9 7:25 下午
  * @since 1.0
  */
-class ServerTest {
+public class ServerTest {
     /**
      * 测试TCPServer
      *
      * @throws InterruptedException 连接错误
      */
     @Test
-    void testTCPServer() throws InterruptedException {
+    public void testTCPServer() throws InterruptedException {
         Server server = new TCPServer.TCPServerBuilder(Const.SERVER_PORT, null)
                 .loggingHandler(new LoggingHandler(LogLevel.INFO))
                 .builder();

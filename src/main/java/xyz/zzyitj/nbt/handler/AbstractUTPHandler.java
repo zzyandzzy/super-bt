@@ -69,14 +69,14 @@ public abstract class AbstractUTPHandler extends SimpleChannelInboundHandler<Dat
         buf.readBytes(data);
         if (data.length >= UTPHeaderUtils.HEADER_LENGTH) {
             UTPHeader receiveHeader = UTPHeaderUtils.bytesToUtpHeader(data);
+            header.setTimestampMicroseconds((int) System.currentTimeMillis());
+            header.setTimestampDifferenceMicroseconds((int) (System.currentTimeMillis() - receiveHeader.getTimestampMicroseconds()));
+            header.setWndSize((int) (ByteUtils.BYTE_KB));
             // connectionId相同并且是确认帧说明是建立连接过程
             if (receiveHeader.getType() == UTPHeaderUtils.TYPE_STATE
                     && receiveHeader.getConnectionId() == header.getConnectionId()) {
                 header.setType((byte) (UTPHeaderUtils.TYPE_DATA | UTPHeaderUtils.VERSION));
                 header.setConnectionId(header.getSendConnectionId());
-                header.setTimestampMicroseconds((int) System.currentTimeMillis());
-                header.setTimestampDifferenceMicroseconds((int) (System.currentTimeMillis() - receiveHeader.getTimestampMicroseconds()));
-                header.setWndSize((int) (ByteUtils.BYTE_KB));
                 header.setSeqNr((short) (header.getSeqNr() + 1));
                 header.setAckNr((short) (receiveHeader.getSeqNr() - 1));
                 ctx.writeAndFlush(new DatagramPacket(
@@ -85,9 +85,6 @@ public abstract class AbstractUTPHandler extends SimpleChannelInboundHandler<Dat
                     && receiveHeader.getConnectionId() == header.getReceiveConnectionId()) {
                 // 说明是断开连接帧
                 header.setType((byte) (UTPHeaderUtils.TYPE_FIN | UTPHeaderUtils.VERSION));
-                header.setTimestampMicroseconds((int) System.currentTimeMillis());
-                header.setTimestampDifferenceMicroseconds((int) (System.currentTimeMillis() - receiveHeader.getTimestampMicroseconds()));
-                header.setWndSize((int) (ByteUtils.BYTE_KB));
                 header.setSeqNr((short) (receiveHeader.getAckNr() + 1));
                 header.setAckNr(receiveHeader.getSeqNr());
                 ctx.writeAndFlush(new DatagramPacket(

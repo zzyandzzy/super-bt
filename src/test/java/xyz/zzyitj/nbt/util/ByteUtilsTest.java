@@ -2,12 +2,10 @@ package xyz.zzyitj.nbt.util;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
 import java.util.Arrays;
 
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * xyz.zzyitj.nbt.util
@@ -16,13 +14,13 @@ import static org.junit.jupiter.api.Assertions.*;
  * @date 2020/5/31 11:10 上午
  * @since 1.0
  */
-class ByteUtilsTest {
+public class ByteUtilsTest {
 
     /**
      * 测试16进制的byte[]转换为10进制int
      */
     @Test
-    void bytes2int() {
+    public void bytes2int() {
         byte[] data = {
                 0x7F, 0x1C, 0x7F, 0x1C
         };
@@ -40,7 +38,7 @@ class ByteUtilsTest {
     }
 
     @Test
-    void shortToBytesBigEndian() {
+    public void shortToBytesBigEndian() {
         short s1 = RandomUtils.getRandShort();
         System.out.println(s1);
         ByteBuf buf = Unpooled.copiedBuffer(ByteUtils.shortToBytesBigEndian(s1));
@@ -50,7 +48,7 @@ class ByteUtilsTest {
     }
 
     @Test
-    void intToBytesLittleEndian() {
+    public void intToBytesLittleEndian() {
         System.out.println(Arrays.toString(ByteUtils.intToBytesLittleEndian(Integer.MAX_VALUE)));
         ByteBuf buf = Unpooled.copiedBuffer(ByteUtils.intToBytesLittleEndian(Integer.MAX_VALUE));
         byte[] bytes = new byte[buf.readableBytes()];
@@ -60,7 +58,7 @@ class ByteUtilsTest {
     }
 
     @Test
-    void intToBytesBigEndian() {
+    public void intToBytesBigEndian() {
         System.out.println(Arrays.toString(ByteUtils.intToBytesBigEndian(Integer.MIN_VALUE)));
         ByteBuf buf = Unpooled.copiedBuffer(ByteUtils.intToBytesBigEndian(Integer.MIN_VALUE));
         byte[] bytes = new byte[buf.readableBytes()];

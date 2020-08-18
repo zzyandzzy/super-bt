@@ -1,11 +1,8 @@
-package xyz.zzyitj.nbt.client;
+package xyz.zzyitj.nbt;
 
-import io.netty.handler.logging.LogLevel;
-import io.netty.handler.logging.LoggingHandler;
 import io.netty.util.internal.PlatformDependent;
 import org.apache.commons.io.FileUtils;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import xyz.zzyitj.nbt.bean.Peer;
@@ -17,6 +14,7 @@ import xyz.zzyitj.nbt.util.TorrentUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -24,12 +22,14 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 /**
- * @author intent
- * @version 1.0
- * @date 2020/3/17 7:15 下午
+ * xyz.zzyitj.nbt
+ *
+ * @author intent zzy.main@gmail.com
+ * @date 2020/8/18 10:14
+ * @since 1.0
  */
-class ClientTest {
-    private static final Logger logger = LoggerFactory.getLogger(ClientTest.class);
+public class ConfigTest {
+    private static final Logger logger = LoggerFactory.getLogger(ConfigTest.class);
     // Local Transmission/qBitTorrent host
     public static final String TEST_IP = "127.0.0.1";
     // Local qBitTorrent port
@@ -37,25 +37,26 @@ class ClientTest {
     // Local Transmission port
 //    public static final int TEST_PORT = 51413;
 
-    private static final String savePath = "./download/";
-    private static Torrent torrent;
-    private static AbstractDownloadManager downloadManager;
-    private static List<Peer> peerList;
+    public static final String SAVE_PATH = "./download/";
 
-    @BeforeAll
-    static void init() throws IOException {
-//        String torrentPath = "/Users/intent/Desktop/sbt/一个文件一个区块.torrent";
-//        String torrentPath = "/Users/intent/Desktop/sbt/一个文件多个区块.torrent";
-//        String torrentPath = "/Users/intent/Desktop/sbt/多个文件一个区块.torrent";
-//        String torrentPath = "/Users/intent/Desktop/sbt/多个文件多个区块.torrent";
-        String torrentPath = "/Users/intent/Desktop/sbt/test.torrent";
+    public static Torrent torrent;
+    public static AbstractDownloadManager downloadManager;
+    public static List<Peer> peerList;
+
+    public static void init() throws IOException {
+//        URL url = ConfigTest.class.getClassLoader().getResource("torrents/onefile_onepiece.torrent");
+//        URL url = ConfigTest.class.getClassLoader().getResource("torrents/onefile_multiplepiece.torrent");
+//        URL url = ConfigTest.class.getClassLoader().getResource("torrents/multiplefile_onepiece.torrent");
+        URL url = ConfigTest.class.getClassLoader().getResource("torrents/multiplefile_multiplepiece.torrent");
+        Assert.assertNotNull(url);
+        String torrentPath = url.getPath();
         File torrentFile = new File(torrentPath);
         torrent = TorrentUtils.getTorrent(torrentFile);
         // 创建文件夹
         if (torrent.getTorrentFileItemList() != null) {
             torrent.getTorrentFileItemList().forEach(torrentFileItem -> {
                 try {
-                    File file = new File(savePath +
+                    File file = new File(ConfigTest.SAVE_PATH +
                             torrent.getName() + File.separator + torrentFileItem.getPath());
                     // 创建文件夹
                     FileUtils.forceMkdirParent(file);
@@ -70,42 +71,15 @@ class ClientTest {
         }
         downloadManager = new DownloadManager();
 
-        startReport();
+        ConfigTest.startReport();
         peerList = new ArrayList<>();
-        addPeers(peerList);
-    }
-
-    /**
-     * 测试TCPClient
-     *
-     * @throws InterruptedException 连接错误
-     */
-    @Test
-    void testTCPClient() throws InterruptedException {
-        Client client = new TCPClient.TCPClientBuilder(peerList, torrent, savePath, downloadManager)
-                .showDownloadLog(false)
-                .showRequestLog(true)
-                .showDownloadProcess(true)
-//                .loggingHandler(new LoggingHandler(LogLevel.INFO))
-                .builder();
-        client.start();
-        try {
-            System.in.read();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private static void addPeers(List<Peer> peerList) {
-//                peerList.add(new Peer(TEST_IP, 51413));
-        peerList.add(new Peer(TEST_IP, 18357));
-
+        ConfigTest.addPeers(peerList);
     }
 
     /**
      * 监控堆外内存
      */
-    private static void startReport() {
+    public static void startReport() {
         Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
             @Override
             public Thread newThread(Runnable r) {
@@ -113,7 +87,7 @@ class ClientTest {
                 thread.setDaemon(true);
                 return thread;
             }
-        }).scheduleAtFixedRate(ClientTest::doReport, 0, 5, TimeUnit.SECONDS);
+        }).scheduleAtFixedRate(ConfigTest::doReport, 0, 5, TimeUnit.SECONDS);
     }
 
     private static void doReport() {
@@ -124,17 +98,8 @@ class ClientTest {
                 PlatformDependent.usedDirectMemory() / ByteUtils.BYTE_GB);
     }
 
-    /**
-     * 测试UTPClient
-     *
-     * @throws InterruptedException 连接错误
-     */
-    @Test
-    void testUTPClient() throws InterruptedException {
-        Client client = new UTPClient.UTPClientBuilder(peerList, torrent, savePath, downloadManager)
-                .loggingHandler(new LoggingHandler(LogLevel.INFO))
-                .builder();
-        client.start();
+    public static void addPeers(List<Peer> peerList) {
+//                peerList.add(new Peer(TEST_IP, 51413));
+        peerList.add(new Peer(TEST_IP, 18357));
     }
-
 }

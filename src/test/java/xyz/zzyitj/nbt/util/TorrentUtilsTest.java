@@ -1,11 +1,11 @@
 package xyz.zzyitj.nbt.util;
 
-import org.junit.jupiter.api.Test;
+import org.junit.Assert;
+import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
-
-import static org.junit.jupiter.api.Assertions.*;
+import java.net.URL;
 
 /**
  * xyz.zzyitj.nbt.util
@@ -14,16 +14,19 @@ import static org.junit.jupiter.api.Assertions.*;
  * @date 2020/5/30 5:45 下午
  * @since 1.0
  */
-class TorrentUtilsTest {
+public class TorrentUtilsTest {
 
     /**
      * 测试根据种子得到torrent信息
      * {@link TorrentUtils#getTorrent(File)}
+     *
      * @throws IOException 文件打开错误
      */
     @Test
-    void getTorrent() throws IOException {
-        File file = new File("/Users/intent/Desktop/sbt/1.torrent");
-        System.out.println(TorrentUtils.getTorrent(file));
+    public void getTorrent() throws IOException {
+        URL url = this.getClass().getClassLoader().getResource("torrents/onefile_onepiece.torrent");
+        Assert.assertNotNull(url);
+        File file = new File(url.getPath());
+        Assert.assertNotNull(TorrentUtils.getTorrent(file));
     }
 }

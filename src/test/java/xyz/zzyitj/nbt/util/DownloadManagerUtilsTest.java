@@ -1,14 +1,12 @@
 package xyz.zzyitj.nbt.util;
 
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+import org.junit.Before;
+import org.junit.Test;
 import xyz.zzyitj.nbt.bean.Torrent;
 import xyz.zzyitj.nbt.bean.TorrentFileItem;
 
 import java.io.File;
 import java.io.IOException;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * xyz.zzyitj.nbt.util
@@ -17,11 +15,11 @@ import static org.junit.jupiter.api.Assertions.*;
  * @date 2020/6/14 9:46 下午
  * @since 1.0
  */
-class DownloadManagerUtilsTest {
+public class DownloadManagerUtilsTest {
     private static Torrent torrent;
 
-    @BeforeAll
-    static void init() throws IOException {
+    @Before
+    public void init() throws IOException {
         String torrentPath = "/Users/intent/Desktop/sbt/多个文件多个区块.torrent";
         File torrentFile = new File(torrentPath);
         torrent = TorrentUtils.getTorrent(torrentFile);
@@ -31,7 +29,7 @@ class DownloadManagerUtilsTest {
     }
 
     @Test
-    void getStartPosition() {
+    public void getStartPosition() {
         System.out.println(DownloadManagerUtils.getStartPosition(0, torrent));
         System.out.println(DownloadManagerUtils.getStartPosition(15120, torrent));
         System.out.println(DownloadManagerUtils.getStartPosition(15246, torrent));
