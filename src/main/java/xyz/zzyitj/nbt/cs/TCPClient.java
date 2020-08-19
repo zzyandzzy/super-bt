@@ -6,6 +6,8 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.logging.LoggingHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import xyz.zzyitj.nbt.Configuration;
 import xyz.zzyitj.nbt.bean.DownloadConfig;
 import xyz.zzyitj.nbt.bean.Peer;
@@ -17,6 +19,7 @@ import xyz.zzyitj.nbt.util.PeerWireConst;
 
 import java.net.InetSocketAddress;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -32,6 +35,7 @@ import java.util.concurrent.Executors;
  * @since 1.0
  */
 public class TCPClient implements Client {
+    private static final Logger logger = LoggerFactory.getLogger(TCPClient.class);
     private final List<Peer> peerList;
     private final Torrent torrent;
     private final String savePath;
@@ -41,6 +45,7 @@ public class TCPClient implements Client {
     private final boolean showRequestLog;
 
     private final ExecutorService es;
+    private final CountDownLatch countDownLatch;
 
     public TCPClient(Builder builder) {
         this.peerList = builder.peerList;
@@ -51,6 +56,7 @@ public class TCPClient implements Client {
         this.loggingHandler = builder.loggingHandler;
         this.showDownloadLog = builder.showDownloadLog;
         this.showRequestLog = builder.showRequestLog;
+        this.countDownLatch = new CountDownLatch(peerList.size());
     }
 
     @Override
@@ -64,11 +70,15 @@ public class TCPClient implements Client {
         for (Peer peer : peerList) {
             es.execute(new TCPClientTask(peer));
         }
-        es.shutdown();
+        try {
+            countDownLatch.await();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     class TCPClientTask implements Runnable {
-        private Peer peer;
+        private final Peer peer;
 
         public TCPClientTask(Peer peer) {
             this.peer = peer;
@@ -88,8 +98,8 @@ public class TCPClient implements Client {
                         if (loggingHandler != null) {
                             p.addLast("logging", loggingHandler);
                         }
-                        PeerWireProtocolDecoder decoder = new PeerWireProtocolDecoder(PeerWireConst.PEER_WIRE_MAX_FRAME_LENGTH,
-                                0, 4, 0, 0, false);
+                        PeerWireProtocolDecoder decoder = new PeerWireProtocolDecoder(PeerWireConst.FRAME_MAX_LENGTH,
+                                0, PeerWireConst.PACKAGE_HEADER_LENGTH, 0, 0, false);
                         p.addLast("decoder", decoder);
                         p.addLast("handler", new TCPClientHandler(torrent, downloadManager));
                     }
@@ -98,12 +108,13 @@ public class TCPClient implements Client {
                 f.channel().closeFuture().sync();
                 f.addListener(future -> {
                     if (!future.isSuccess()) {
-                        System.err.printf("%s:%d connect fail!", peer.getIp(), peer.getPort());
+                        logger.error("{}:{} connection fail!", peer.getIp(), peer.getPort());
                     }
                 });
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                logger.error(String.format("%s:%d connection error!", peer.getIp(), peer.getPort()), e);
             } finally {
+                countDownLatch.countDown();
                 workerGroup.shutdownGracefully();
             }
         }

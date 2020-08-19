@@ -157,7 +157,7 @@ public class HandshakeUtils {
      */
     public static PeerWire parsePeerWire(byte[] data) {
         // size 为data的0-3位
-        ByteBuf buf = Unpooled.copiedBuffer(data, 0, PeerWireConst.PEER_WIRE_SIZE_LENGTH);
+        ByteBuf buf = Unpooled.copiedBuffer(data, 0, PeerWireConst.PACKAGE_HEADER_LENGTH);
         int size = (int) buf.getUnsignedInt(0);
         buf.release();
         return parsePeerWire(data, 0, size);

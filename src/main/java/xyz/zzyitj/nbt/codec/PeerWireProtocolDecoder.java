@@ -75,7 +75,7 @@ public class PeerWireProtocolDecoder extends LengthFieldBasedFrameDecoder {
 //            System.out.printf("Client: %s discard package.\n", ctx.channel().remoteAddress());
             return null;
         }
-        if (in.readableBytes() < PeerWireConst.PEER_WIRE_MIN_FRAME_LENGTH) {
+        if (in.readableBytes() < PeerWireConst.FRAME_MIN_LENGTH) {
             throw new Exception("Client: " + ctx.channel().remoteAddress() + " byte length: " + in.readableBytes() + " error.");
         }
         // 读取body

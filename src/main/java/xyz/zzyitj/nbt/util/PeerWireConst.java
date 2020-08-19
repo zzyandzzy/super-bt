@@ -108,18 +108,18 @@ public class PeerWireConst {
      */
     public static final int PEER_WIRE_ID_INDEX = 4;
     /**
-     * 包长度字节大小
+     * 包头长度字节大小
      */
-    public static final int PEER_WIRE_SIZE_LENGTH = 4;
+    public static final int PACKAGE_HEADER_LENGTH = 4;
     /**
      * 最小包大小
      */
-    public static final int PEER_WIRE_MIN_FRAME_LENGTH = 4;
+    public static final int FRAME_MIN_LENGTH = 4;
     /**
      * 这里帧最大长度加13是因为当帧id为7时
      * 帧长度为HandshakeUtils.PIECE_MAX_LENGTH + 4个byte头部length + 1个byte的id + 4个byte的index + 4个byte的begin
      * {@link xyz.zzyitj.nbt.util.PeerWireConst#PIECE}
      */
-    public static final int PEER_WIRE_MAX_FRAME_LENGTH = HandshakeUtils.PIECE_MAX_LENGTH + 13;
+    public static final int FRAME_MAX_LENGTH = HandshakeUtils.PIECE_MAX_LENGTH + 13;
 
 }

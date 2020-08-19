@@ -226,7 +226,7 @@ public abstract class AbstractTCPHandler extends ChannelInboundHandlerAdapter {
      * @param buf 数据
      */
     private void doHandshakeHandler(ChannelHandlerContext ctx, byte[] buf) {
-        if (buf.length == PeerWireConst.PEER_WIRE_MIN_FRAME_LENGTH) {
+        if (buf.length == PeerWireConst.FRAME_MIN_LENGTH) {
             doKeepAlive(ctx);
             return;
         }
@@ -274,7 +274,7 @@ public abstract class AbstractTCPHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-        cause.printStackTrace();
+        logger.error(String.format("%s connection error!", ctx.channel().remoteAddress()), cause);
         ctx.close();
     }
 }

@@ -66,8 +66,8 @@ public class TCPServer implements Server {
                     if (loggingHandler != null) {
                         p.addLast("logger", loggingHandler);
                     }
-                    p.addLast(new PeerWireProtocolDecoder(PeerWireConst.PEER_WIRE_MAX_FRAME_LENGTH,
-                            0, 4, 0, 0, false));
+                    p.addLast(new PeerWireProtocolDecoder(PeerWireConst.FRAME_MAX_LENGTH,
+                            0, PeerWireConst.PACKAGE_HEADER_LENGTH, 0, 0, false));
                     p.addLast(new TCPServerHandler(torrentList));
                 }
             });
