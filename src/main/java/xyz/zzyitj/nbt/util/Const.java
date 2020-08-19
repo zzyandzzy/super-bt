@@ -30,4 +30,5 @@ public class Const {
     public static final byte[] TEST_PEER_ID = {
             45, 84, 82, 50, 56, 52, 48, 45, 99, 120, 105, 98, 115, 110, 53, 100, 104, 114, 102, 101
     };
+    public static final String THREAD_NAME = "netty-bt-";
 }

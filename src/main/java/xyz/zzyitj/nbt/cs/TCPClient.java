@@ -16,12 +16,12 @@ import xyz.zzyitj.nbt.codec.PeerWireProtocolDecoder;
 import xyz.zzyitj.nbt.manager.AbstractDownloadManager;
 import xyz.zzyitj.nbt.handler.TCPClientHandler;
 import xyz.zzyitj.nbt.util.PeerWireConst;
+import xyz.zzyitj.nbt.util.ThreadPoolExecutorUtils;
 
 import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * xyz.zzyitj.nbt.client
@@ -44,12 +44,12 @@ public class TCPClient implements Client {
     private final boolean showDownloadLog;
     private final boolean showRequestLog;
 
-    private final ExecutorService es;
+    private final ThreadPoolExecutor threadPoolExecutor;
     private final CountDownLatch countDownLatch;
 
     public TCPClient(Builder builder) {
         this.peerList = builder.peerList;
-        es = Executors.newFixedThreadPool(peerList.size());
+        threadPoolExecutor = ThreadPoolExecutorUtils.getInstance();
         this.torrent = builder.torrent;
         this.savePath = builder.savePath;
         this.downloadManager = builder.downloadManager;
@@ -68,7 +68,7 @@ public class TCPClient implements Client {
             Configuration.downloadConfigMap.put(torrent, downloadConfig);
         }
         for (Peer peer : peerList) {
-            es.execute(new TCPClientTask(peer));
+            threadPoolExecutor.execute(new TCPClientTask(peer));
         }
         try {
             countDownLatch.await();
@@ -114,6 +114,7 @@ public class TCPClient implements Client {
             } catch (InterruptedException e) {
                 logger.error(String.format("%s:%d connection error!", peer.getIp(), peer.getPort()), e);
             } finally {
+                threadPoolExecutor.remove(this);
                 countDownLatch.countDown();
                 workerGroup.shutdownGracefully();
             }
