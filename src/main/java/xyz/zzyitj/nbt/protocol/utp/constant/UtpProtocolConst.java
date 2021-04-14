@@ -125,4 +125,25 @@ public class UtpProtocolConst {
      * header length
      */
     public static final int HEADER_LENGTH = 20;
+
+    /**
+     * 初始化状态
+     */
+    public static final byte CS_CLOSE = 0x0;
+    /**
+     * 发送连接帧状态
+     */
+    public static final byte CS_SYN_SENT = 0x1;
+    /**
+     * 接收到连接帧状态
+     */
+    public static final byte CS_SYN_RECV = 0x2;
+    /**
+     * 建立连接状态
+     */
+    public static final byte CS_CONNECTED = 0x3;
+    /**
+     * 监听的状态
+     */
+    public static final byte CS_LISTEN = 0x4;
 }

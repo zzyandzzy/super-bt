@@ -53,7 +53,6 @@ public class UtpHeader {
         timestampMicroseconds = (int) System.currentTimeMillis();
         timestampDifferenceMicroseconds = 0;
         wndSize = 0;
-//        seqNr = RandomUtils.getRandShort();
         seqNr = 1;
         ackNr = 0;
         payload = new byte[0];

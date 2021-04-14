@@ -19,6 +19,67 @@ import java.util.List;
 
 /**
  * 处理UTP客户端情况
+ * <p>
+ * Here is a diagram illustrating the exchanges and states to initiate a connection.
+ * The c.* refers to a state in the socket itself,
+ * pkt.* refers to a field in the packet header.
+ * <p>
+ * initiating endpoint              accepting endpoint
+ * <p>
+ * | c.state = CS_SYN_SENT                         |
+ * | c.seq_nr = 1                                  |
+ * | c.conn_id_recv = rand()                       |
+ * | c.conn_id_send = c.conn_id_recv + 1           |
+ * |                                               |
+ * |                                               |
+ * | ST_SYN                                        |
+ * |   seq_nr=c.seq_nr++                           |
+ * |   ack_nr=*                                    |
+ * |   conn_id=c.rcv_conn_id                       |
+ * | >-------------------------------------------> |
+ * |             c.receive_conn_id = pkt.conn_id+1 |
+ * |             c.send_conn_id = pkt.conn_id      |
+ * |             c.seq_nr = rand()                 |
+ * |             c.ack_nr = pkt.seq_nr             |
+ * |             c.state = CS_SYN_RECV             |
+ * |                                               |
+ * |                                               |
+ * |                                               |
+ * |                                               |
+ * |                     ST_STATE                  |
+ * |                       seq_nr=c.seq_nr++       |
+ * |                       ack_nr=c.ack_nr         |
+ * |                       conn_id=c.send_conn_id  |
+ * | <------------------------------------------<  |
+ * | c.state = CS_CONNECTED                        |
+ * | c.ack_nr = pkt.seq_nr                         |
+ * |                                               |
+ * |                                               |
+ * |                                               |
+ * | ST_DATA                                       |
+ * |   seq_nr=c.seq_nr++                           |
+ * |   ack_nr=c.ack_nr                             |
+ * |   conn_id=c.conn_id_send                      |
+ * | >-------------------------------------------> |
+ * |                        c.ack_nr = pkt.seq_nr  |
+ * |                        c.state = CS_CONNECTED |
+ * |                                               |
+ * |                                               | connection established
+ * .. ..|.. .. .. .. .. .. .. .. .. .. .. .. .. .. .. ..|.. ..
+ * |                                               |
+ * |                     ST_DATA                   |
+ * |                       seq_nr=c.seq_nr++       |
+ * |                       ack_nr=c.ack_nr         |
+ * |                       conn_id=c.send_conn_id  |
+ * | <------------------------------------------<  |
+ * | c.ack_nr = pkt.seq_nr                         |
+ * |                                               |
+ * |                                               |
+ * V                                               V
+ * Connections are identified by their conn_id header. If the connection ID of a new connection collides with an existing connection,
+ * the connection attempt will fails, since the ST_SYN packet will be unexpected in the existing stream, and ignored.
+ *
+ * <a herf="http://www.bittorrent.org/beps/bep_0029.html#connection-setup"></a>
  *
  * @author intent zzy.main@gmail.com
  * @date 2020/7/14 3:29 下午
@@ -43,17 +104,16 @@ public abstract class AbstractUtpHandler extends SimpleChannelInboundHandler<Dat
      */
     protected UtpHeader header;
     /**
-     * 是否是第一次发送握手消息
+     * 当前连接状态位
+     * 对比TCP三次握手的：
+     * CLOSE、SYN_SENT、SYN_RECV、ESTABLISHED、LISTEN
      */
-    private boolean isFirstWriteHandshake = true;
-    /**
-     * 是否是第一次收到握手消息
-     */
-    private boolean isFirstReadHandshake = true;
+    protected byte state = UtpProtocolConst.CS_CLOSE;
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         if (torrent != null) {
+            state = UtpProtocolConst.CS_SYN_SENT;
             header = UtpHeaderUtils.buildInitHeader();
             // 打开socket就发送握手
             ctx.writeAndFlush(new DatagramPacket(
@@ -76,6 +136,8 @@ public abstract class AbstractUtpHandler extends SimpleChannelInboundHandler<Dat
             // connectionId相同并且是确认帧说明是建立连接过程
             if (receiveHeader.getType() == UtpProtocolConst.TYPE_STATE
                     && receiveHeader.getConnectionId() == header.getConnectionId()) {
+                // 建立连接了！！！
+                state = UtpProtocolConst.CS_CONNECTED;
                 header.setType((byte) (UtpProtocolConst.TYPE_DATA | UtpProtocolConst.VERSION));
                 header.setConnectionId(header.getSendConnectionId());
                 header.setSeqNr((short) (header.getSeqNr() + 1));
@@ -84,7 +146,8 @@ public abstract class AbstractUtpHandler extends SimpleChannelInboundHandler<Dat
                         Unpooled.copiedBuffer(UtpHeaderUtils.utpHeaderToBytes(header)), msg.sender()));
             } else if (receiveHeader.getType() == UtpProtocolConst.TYPE_FIN
                     && receiveHeader.getConnectionId() == header.getReceiveConnectionId()) {
-                // 说明是断开连接帧
+                // 断开连接
+                state = UtpProtocolConst.CS_CLOSE;
                 header.setType((byte) (UtpProtocolConst.TYPE_FIN | UtpProtocolConst.VERSION));
                 header.setSeqNr((short) (receiveHeader.getAckNr() + 1));
                 header.setAckNr(receiveHeader.getSeqNr());
