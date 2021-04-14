@@ -1,4 +1,4 @@
-package xyz.zzyitj.nbt.cs;
+package xyz.zzyitj.nbt.protocol.utp.cs;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
@@ -7,6 +7,8 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioDatagramChannel;
 import io.netty.handler.logging.LoggingHandler;
 import xyz.zzyitj.nbt.bean.Torrent;
+import xyz.zzyitj.nbt.cs.AbstractServerBuilder;
+import xyz.zzyitj.nbt.cs.Server;
 
 import java.net.InetSocketAddress;
 import java.util.List;
@@ -22,7 +24,7 @@ import java.util.List;
  * @date 2020/6/9 9:10 上午
  * @since 1.0
  */
-public class UTPServer implements Server {
+public class UtpServer implements Server {
     private final int port;
     /**
      * 做种的种子list
@@ -30,10 +32,10 @@ public class UTPServer implements Server {
     private final List<Torrent> torrentList;
     private final LoggingHandler loggingHandler;
 
-    public UTPServer(Builder builder) {
-        this.port = builder.port;
-        this.torrentList = builder.torrentList;
-        this.loggingHandler = builder.loggingHandler;
+    public UtpServer(Builder builder) {
+        this.port = builder.getPort();
+        this.torrentList = builder.getTorrentList();
+        this.loggingHandler = builder.getLoggingHandler();
     }
 
     @Override
@@ -70,7 +72,7 @@ public class UTPServer implements Server {
 
         @Override
         protected Server buildServer() {
-            return new UTPServer(this);
+            return new UtpServer(this);
         }
     }
 }

@@ -2,6 +2,7 @@ package xyz.zzyitj.nbt;
 
 import io.netty.util.internal.PlatformDependent;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,10 +11,10 @@ import xyz.zzyitj.nbt.bean.Torrent;
 import xyz.zzyitj.nbt.util.ByteUtils;
 import xyz.zzyitj.nbt.util.TorrentUtils;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
@@ -41,12 +42,14 @@ public class ConfigTest {
     public static List<Peer> peerList;
 
     public static void init() throws IOException {
-//        URL url = ConfigTest.class.getClassLoader().getResource("torrents/onefile_onepiece.torrent");
+        URL url = ConfigTest.class.getClassLoader().getResource("torrents/onefile_onepiece.torrent");
 //        URL url = ConfigTest.class.getClassLoader().getResource("torrents/onefile_multiplepiece.torrent");
 //        URL url = ConfigTest.class.getClassLoader().getResource("torrents/multiplefile_onepiece.torrent");
-        URL url = ConfigTest.class.getClassLoader().getResource("torrents/multiplefile_multiplepiece.torrent");
-        Assert.assertNotNull(url);
+//        URL url = ConfigTest.class.getClassLoader().getResource("torrents/multiplefile_multiplepiece.torrent");
+//        URL url = ConfigTest.class.getClassLoader().getResource("torrents/test.torrent");
+//        Assert.assertNotNull(url);
         String torrentPath = url.getPath();
+//        String torrentPath = "/Users/intent/Documents/sbt/test/712m-4file.torrent";
         File torrentFile = new File(torrentPath);
         torrent = TorrentUtils.getTorrent(torrentFile);
         // 创建文件夹
@@ -70,6 +73,7 @@ public class ConfigTest {
         ConfigTest.startReport();
         peerList = new ArrayList<>();
         ConfigTest.addPeers(peerList);
+//        ConfigTest.addPeers(peerList, torrentPath);
     }
 
     /**
@@ -97,5 +101,43 @@ public class ConfigTest {
     public static void addPeers(List<Peer> peerList) {
 //                peerList.add(new Peer(TEST_IP, 51413));
         peerList.add(new Peer(TEST_IP, 18357));
+    }
+
+    public static void addPeers(List<Peer> peerList, String torrentPath) throws IOException {
+        String peerTxtPath = torrentPath.replace(".torrent", ".txt");
+        File file = new File(peerTxtPath);
+        if (file.exists()) {
+            String s = readFile(file);
+            if (StringUtils.isNotBlank(s)) {
+                String[] lines = s.split("\n");
+                for (String line : lines) {
+                    if (StringUtils.isNotBlank(StringUtils.deleteWhitespace(line))) {
+                        String[] ip = line.split(":");
+                        if (ip.length == 2) {
+                            peerList.add(new Peer(ip[0], Integer.parseInt(ip[1])));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    public static String readFile(File file) throws IOException {
+        FileInputStream fileInputStream = null;
+        try {
+            StringBuilder sb = new StringBuilder();
+            fileInputStream = new FileInputStream(file);
+            byte[] b = new byte[1024];
+            while (fileInputStream.read(b) != -1) {
+                sb.append(new String(b));
+            }
+            return sb.toString();
+        } catch (Exception ignored) {
+        } finally {
+            if (fileInputStream != null) {
+                fileInputStream.close();
+            }
+        }
+        return null;
     }
 }

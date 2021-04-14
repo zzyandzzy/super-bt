@@ -1,6 +1,7 @@
 package xyz.zzyitj.nbt.cs;
 
 import io.netty.handler.logging.LoggingHandler;
+import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 import xyz.zzyitj.nbt.bean.Peer;
 import xyz.zzyitj.nbt.bean.Torrent;
@@ -17,6 +18,7 @@ import java.util.List;
  * @date 2020/8/18 19:59
  * @since 1.0
  */
+@Getter
 public abstract class AbstractClientBuilder {
     List<Peer> peerList;
     Torrent torrent;

@@ -1,4 +1,4 @@
-package xyz.zzyitj.nbt.cs;
+package xyz.zzyitj.nbt.protocol.utp.cs;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
@@ -9,14 +9,15 @@ import xyz.zzyitj.nbt.Configuration;
 import xyz.zzyitj.nbt.bean.DownloadConfig;
 import xyz.zzyitj.nbt.bean.Peer;
 import xyz.zzyitj.nbt.bean.Torrent;
-import xyz.zzyitj.nbt.handler.UTPClientHandler;
+import xyz.zzyitj.nbt.cs.AbstractClientBuilder;
+import xyz.zzyitj.nbt.cs.Client;
+import xyz.zzyitj.nbt.protocol.utp.handler.UtpClientHandler;
 import xyz.zzyitj.nbt.manager.AbstractDownloadManager;
 
 import java.net.InetSocketAddress;
 import java.util.List;
 
 /**
- * xyz.zzyitj.nbt.client
  * BT协议的UTP实现客服端
  * 使用Builder设计模式
  * <p>
@@ -26,19 +27,19 @@ import java.util.List;
  * @date 2020/6/9 8:45 上午
  * @since 1.0
  */
-public class UTPClient implements Client {
+public class UtpClient implements Client {
     private final List<Peer> peerList;
     private final Torrent torrent;
     private final String savePath;
     private final AbstractDownloadManager downloadManager;
     private final LoggingHandler loggingHandler;
 
-    public UTPClient(Builder builder) {
-        this.peerList = builder.peerList;
-        this.torrent = builder.torrent;
-        this.savePath = builder.savePath;
-        this.downloadManager = builder.downloadManager;
-        this.loggingHandler = builder.loggingHandler;
+    public UtpClient(Builder builder) {
+        this.peerList = builder.getPeerList();
+        this.torrent = builder.getTorrent();
+        this.savePath = builder.getSavePath();
+        this.downloadManager = builder.getDownloadManager();
+        this.loggingHandler = builder.getLoggingHandler();
     }
 
     @Override
@@ -62,7 +63,7 @@ public class UTPClient implements Client {
                             if (loggingHandler != null) {
                                 p.addLast("logging", loggingHandler);
                             }
-                            p.addLast("handler", new UTPClientHandler(torrent, downloadManager));
+                            p.addLast("handler", new UtpClientHandler(torrent, downloadManager));
                         }
                     });
             ChannelFuture f = b.connect(new InetSocketAddress(peer.getIp(), peer.getPort())).sync();
@@ -85,7 +86,7 @@ public class UTPClient implements Client {
 
         @Override
         protected Client buildClient() {
-            return new UTPClient(this);
+            return new UtpClient(this);
         }
     }
 }

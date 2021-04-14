@@ -22,7 +22,7 @@ public class SingletonDownloadManager {
     private static final Logger logger = LoggerFactory.getLogger(SingletonDownloadManager.class);
     private static volatile SingletonDownloadManager INSTANCE;
 
-    public SingletonDownloadManager() {
+    private SingletonDownloadManager() {
     }
 
     public static SingletonDownloadManager getInstance() {

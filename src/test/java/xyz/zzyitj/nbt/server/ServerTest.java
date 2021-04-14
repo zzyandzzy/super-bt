@@ -4,7 +4,7 @@ import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import org.junit.Test;
 import xyz.zzyitj.nbt.cs.Server;
-import xyz.zzyitj.nbt.cs.TCPServer;
+import xyz.zzyitj.nbt.cs.TcpServer;
 import xyz.zzyitj.nbt.util.Const;
 
 /**
@@ -22,7 +22,7 @@ public class ServerTest {
      */
     @Test
     public void testTCPServer() throws InterruptedException {
-        Server server = new TCPServer.Builder(Const.SERVER_PORT, null)
+        Server server = new TcpServer.Builder(Const.SERVER_PORT, null)
                 .loggingHandler(new LoggingHandler(LogLevel.INFO))
                 .builder();
         server.start();

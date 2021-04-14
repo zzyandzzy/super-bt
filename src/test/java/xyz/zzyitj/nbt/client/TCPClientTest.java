@@ -1,12 +1,10 @@
 package xyz.zzyitj.nbt.client;
 
-import io.netty.handler.logging.LogLevel;
-import io.netty.handler.logging.LoggingHandler;
 import org.junit.Before;
 import org.junit.Test;
 import xyz.zzyitj.nbt.ConfigTest;
 import xyz.zzyitj.nbt.cs.Client;
-import xyz.zzyitj.nbt.cs.TCPClient;
+import xyz.zzyitj.nbt.cs.TcpClient;
 
 import java.io.IOException;
 
@@ -31,7 +29,7 @@ public class TCPClientTest {
      */
     @Test
     public void testTCPClient() throws InterruptedException {
-        Client client = new TCPClient.Builder(ConfigTest.peerList, ConfigTest.torrent, ConfigTest.SAVE_PATH)
+        Client client = new TcpClient.Builder(ConfigTest.peerList, ConfigTest.torrent, ConfigTest.SAVE_PATH)
                 .showDownloadLog(false)
                 .showRequestLog(false)
                 .showDownloadProcess(true)

@@ -1,5 +1,4 @@
 /**
- * xyz.zzyitj.nbt.cs
  * cs: client and server
  *
  * @author intent zzy.main@gmail.com

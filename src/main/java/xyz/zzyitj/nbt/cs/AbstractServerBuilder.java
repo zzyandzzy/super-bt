@@ -1,6 +1,7 @@
 package xyz.zzyitj.nbt.cs;
 
 import io.netty.handler.logging.LoggingHandler;
+import lombok.Getter;
 import xyz.zzyitj.nbt.bean.Torrent;
 
 import java.util.List;
@@ -12,6 +13,7 @@ import java.util.List;
  * @date 2020/8/18 20:05
  * @since 1.0
  */
+@Getter
 public abstract class AbstractServerBuilder {
     int port;
     /**

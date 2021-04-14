@@ -6,7 +6,7 @@ import org.junit.Before;
 import org.junit.Test;
 import xyz.zzyitj.nbt.ConfigTest;
 import xyz.zzyitj.nbt.cs.Client;
-import xyz.zzyitj.nbt.cs.UTPClient;
+import xyz.zzyitj.nbt.protocol.utp.cs.UtpClient;
 
 import java.io.IOException;
 
@@ -31,7 +31,7 @@ public class UDPClientTest {
      */
     @Test
     public void testUTPClient() throws InterruptedException {
-        Client client = new UTPClient.Builder(ConfigTest.peerList, ConfigTest.torrent, ConfigTest.SAVE_PATH)
+        Client client = new UtpClient.Builder(ConfigTest.peerList, ConfigTest.torrent, ConfigTest.SAVE_PATH)
                 .loggingHandler(new LoggingHandler(LogLevel.INFO))
                 .builder();
         client.start();

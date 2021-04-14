@@ -1,7 +1,8 @@
 package xyz.zzyitj.nbt.util;
 
 import org.junit.Test;
-import xyz.zzyitj.nbt.bean.UTPHeader;
+import xyz.zzyitj.nbt.protocol.utp.entity.UtpHeader;
+import xyz.zzyitj.nbt.protocol.utp.util.UtpHeaderUtils;
 
 import java.util.Arrays;
 
@@ -17,26 +18,26 @@ public class UTPHeaderUtilsTest {
 
     @Test
     public void buildInitHeader() {
-        System.out.println(UTPHeaderUtils.buildInitHeader());
+        System.out.println(UtpHeaderUtils.buildInitHeader());
     }
 
     @Test
     public void buildInitHeaderBytes() {
-        System.out.println(Arrays.toString(UTPHeaderUtils.buildInitHeaderBytes()));
+        System.out.println(Arrays.toString(UtpHeaderUtils.buildInitHeaderBytes()));
     }
 
     @Test
     public void utpHeaderToBytes() {
-        UTPHeader utpHeader = UTPHeaderUtils.buildInitHeader();
+        UtpHeader utpHeader = UtpHeaderUtils.buildInitHeader();
         System.out.println(utpHeader);
-        System.out.println(Arrays.toString(UTPHeaderUtils.utpHeaderToBytes(utpHeader)));
+        System.out.println(Arrays.toString(UtpHeaderUtils.utpHeaderToBytes(utpHeader)));
     }
 
     @Test
     public void bytesToUtpHeader() {
-        UTPHeader utpHeader = UTPHeaderUtils.buildInitHeader();
+        UtpHeader utpHeader = UtpHeaderUtils.buildInitHeader();
         System.out.println(utpHeader);
-        System.out.println(Arrays.toString(UTPHeaderUtils.utpHeaderToBytes(utpHeader)));
-        System.out.println(UTPHeaderUtils.bytesToUtpHeader(UTPHeaderUtils.utpHeaderToBytes(utpHeader)));
+        System.out.println(Arrays.toString(UtpHeaderUtils.utpHeaderToBytes(utpHeader)));
+        System.out.println(UtpHeaderUtils.bytesToUtpHeader(UtpHeaderUtils.utpHeaderToBytes(utpHeader)));
     }
 }
