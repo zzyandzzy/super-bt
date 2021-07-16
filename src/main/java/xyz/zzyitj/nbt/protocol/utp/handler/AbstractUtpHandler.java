@@ -28,17 +28,17 @@ import java.util.List;
  * <p>
  * | c.state = CS_SYN_SENT                         |
  * | c.seq_nr = 1                                  |
- * | c.conn_id_recv = rand()                       |
- * | c.conn_id_send = c.conn_id_recv + 1           |
+ * | c.conn_id_recv = rand()                       | = 0
+ * | c.conn_id_send = c.conn_id_recv + 1           | = 1
  * |                                               |
  * |                                               |
  * | ST_SYN                                        |
  * |   seq_nr=c.seq_nr++                           |
  * |   ack_nr=*                                    |
- * |   conn_id=c.rcv_conn_id                       |
+ * |   conn_id=c.rcv_conn_id                       | = 0
  * | >-------------------------------------------> |
- * |             c.receive_conn_id = pkt.conn_id+1 |
- * |             c.send_conn_id = pkt.conn_id      |
+ * |             c.receive_conn_id = pkt.conn_id+1 | = 1
+ * |             c.send_conn_id = pkt.conn_id      | = 0
  * |             c.seq_nr = rand()                 |
  * |             c.ack_nr = pkt.seq_nr             |
  * |             c.state = CS_SYN_RECV             |
@@ -49,7 +49,7 @@ import java.util.List;
  * |                     ST_STATE                  |
  * |                       seq_nr=c.seq_nr++       |
  * |                       ack_nr=c.ack_nr         |
- * |                       conn_id=c.send_conn_id  |
+ * |                       conn_id=c.send_conn_id  | = 0
  * | <------------------------------------------<  |
  * | c.state = CS_CONNECTED                        |
  * | c.ack_nr = pkt.seq_nr                         |
@@ -59,7 +59,7 @@ import java.util.List;
  * | ST_DATA                                       |
  * |   seq_nr=c.seq_nr++                           |
  * |   ack_nr=c.ack_nr                             |
- * |   conn_id=c.conn_id_send                      |
+ * |   conn_id=c.conn_id_send                      | = 1
  * | >-------------------------------------------> |
  * |                        c.ack_nr = pkt.seq_nr  |
  * |                        c.state = CS_CONNECTED |
@@ -70,7 +70,7 @@ import java.util.List;
  * |                     ST_DATA                   |
  * |                       seq_nr=c.seq_nr++       |
  * |                       ack_nr=c.ack_nr         |
- * |                       conn_id=c.send_conn_id  |
+ * |                       conn_id=c.send_conn_id  | = 0
  * | <------------------------------------------<  |
  * | c.ack_nr = pkt.seq_nr                         |
  * |                                               |
